@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pancreatitis</string>
+    <string name="title_home">Home</string>
+    <string name="title_questionnaires">Questionnaire Management</string>
+    <string name="title_predict">Predict Diagnosis</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_helps">Helps</string>
+</resources>

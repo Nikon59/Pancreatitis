@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.pancreatitis.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_home_to_questionnaire"
+            app:destination="@id/navigation_questionnaires" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_helps"
+        android:name="com.pancreatitis.ui.helps.HelpsFragment"
+        android:label="@string/title_helps"
+        tools:layout="@layout/fragment_helps" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.pancreatitis.ui.profile.ProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/navigation_questionnaires"
+        android:name="com.pancreatitis.ui.questionnaires.AllQuestionnaireFragment"
+        android:label="@string/title_questionnaires"
+        tools:layout="@layout/fragment_questionnaires">
+
+        <action
+            android:id="@+id/action_questionnaires_to_anket"
+            app:destination="@id/navigation_anket" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_anket"
+        android:name="com.pancreatitis.ui.questionnaire.PatientInformationFragment"
+        android:label="@string/title_predict"/>
+</navigation>

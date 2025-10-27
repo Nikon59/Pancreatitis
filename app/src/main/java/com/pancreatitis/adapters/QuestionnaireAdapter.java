@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.QuestionnaireItem;
 import java.util.List;
+import java.util.Objects;
 
 public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdapter.QuestionnaireViewHolder> {
 
@@ -56,16 +57,23 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
     static class QuestionnaireViewHolder extends RecyclerView.ViewHolder {
         private TextView textPatientName;
         private TextView textDiagnosis;
+        private TextView textStatus;
 
         public QuestionnaireViewHolder(@NonNull View itemView) {
             super(itemView);
             textPatientName = itemView.findViewById(R.id.text_fio);
             textDiagnosis = itemView.findViewById(R.id.text_diagnosis);
+            textStatus = itemView.findViewById(R.id.text_status);
         }
 
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
             textPatientName.setText(questionnaire.getPatientName());
-            textDiagnosis.setText(questionnaire.getDiagnosis());
+            textDiagnosis.setText(
+                   questionnaire.getDiagnosis().length() > 30
+                            ? questionnaire.getDiagnosis().substring(0, 30)
+                            : questionnaire.getDiagnosis()
+            );
+            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "In Progress" : "Completed");
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

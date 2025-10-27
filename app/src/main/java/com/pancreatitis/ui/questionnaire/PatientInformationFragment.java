@@ -1,6 +1,8 @@
 package com.pancreatitis.ui.questionnaire;
 
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,18 +13,19 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pancreatitis.DatabaseHelper;
 import com.pancreatitis.adapters.CharacteristicAdapter;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.R;
+import com.pancreatitis.models.QuestionnaireItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PatientInformationFragment extends Fragment {
 
+    private RecyclerView recyclerViewAnket;
     private RecyclerView recyclerView;
-    private CharacteristicAdapter adapter;
-    private List<Characteristic> characteristics = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -32,7 +35,6 @@ public class PatientInformationFragment extends Fragment {
         receiveArguments();
 
         initRecyclerView(view);
-        loadCharacteristics();
 
         return view;
     }
@@ -50,40 +52,60 @@ public class PatientInformationFragment extends Fragment {
                     "Диагноз: " + diagnosis + "\n" +
                     "ID: " + questionnaireId;
 
-            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getContext(), "Данные не переданы", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void initRecyclerView(View view) {
+        recyclerViewAnket = view.findViewById(R.id.recycler_view_ankets_characteristics);
+        recyclerViewAnket.setLayoutManager(new LinearLayoutManager(getContext()));
+        CharacteristicAdapter adapterAnket = new CharacteristicAdapter(loadCharacteristicsAnket());
+        recyclerViewAnket.setAdapter(adapterAnket);
+
         recyclerView = view.findViewById(R.id.recycler_view_characteristics);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new CharacteristicAdapter(characteristics);
+        CharacteristicAdapter adapter = new CharacteristicAdapter(loadCharacteristics());
         recyclerView.setAdapter(adapter);
     }
 
-    private void loadCharacteristics() {
-        // Заглушка с примерами характеристик
-        characteristics.add(new Characteristic("Full Name", "", android.text.InputType.TYPE_CLASS_TEXT));
-        characteristics.add(new Characteristic("Age", "", android.text.InputType.TYPE_CLASS_NUMBER));
-        characteristics.add(new Characteristic("Gender", "", android.text.InputType.TYPE_CLASS_TEXT));
-        characteristics.add(new Characteristic("Phone", "", android.text.InputType.TYPE_CLASS_PHONE));
-        characteristics.add(new Characteristic("Email", "", android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS));
-        characteristics.add(new Characteristic("Address", "", android.text.InputType.TYPE_CLASS_TEXT));
-        characteristics.add(new Characteristic("Medical History", "", android.text.InputType.TYPE_CLASS_TEXT));
+    private List<Characteristic> loadCharacteristicsAnket() {
+        List<Characteristic> list = new ArrayList<>();
 
-        adapter.notifyDataSetChanged();
+        list.add(new Characteristic("Full Name", "...", android.text.InputType.TYPE_CLASS_TEXT));
+        list.add(new Characteristic("Date of completion", "...", android.text.InputType.TYPE_CLASS_TEXT));
+        list.add(new Characteristic("Admitted from", "...", android.text.InputType.TYPE_CLASS_TEXT));
+
+        return list;
+    }
+
+    private List<Characteristic> loadCharacteristics() {
+        List<Characteristic> list = new ArrayList<>();
+
+        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        String query = "select name from characteristic";
+        Cursor cursor = database.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String name = cursor.getString(0);
+                list.add(new Characteristic(name, "...", android.text.InputType.TYPE_CLASS_TEXT));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        database.close();
+
+        return list;
     }
 
     // Метод для получения заполненных данных
-    private List<Characteristic> getPatientData() {
-        return adapter.getCharacteristics();
-    }
-
-    // Метод для обновления данных
-    public void updateCharacteristics(List<Characteristic> newCharacteristics) {
-        adapter.updateData(newCharacteristics);
-    }
+//    private List<Characteristic> getPatientData() {
+//        return adapter.getCharacteristics();
+//    }
+//
+//    // Метод для обновления данных
+//    public void updateCharacteristics(List<Characteristic> newCharacteristics) {
+//        adapter.updateData(newCharacteristics);
+//    }
 }

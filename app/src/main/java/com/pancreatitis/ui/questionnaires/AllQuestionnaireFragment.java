@@ -1,5 +1,7 @@
 package com.pancreatitis.ui.questionnaires;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,10 +13,13 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.pancreatitis.DatabaseHelper;
 import com.pancreatitis.adapters.QuestionnaireAdapter;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.R;
 
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +36,7 @@ public class AllQuestionnaireFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_questionnaires, container, false);
 
         initRecyclerView(view);
-        loadQuestionnaires(); // Загружаем данные
+        loadQuestionnaires();
 
         return view;
     }
@@ -65,13 +70,11 @@ public class AllQuestionnaireFragment extends Fragment {
 
     private void loadQuestionnaires() {
         // Временная заглушка на 20 элементов
-        List<QuestionnaireItem> tempData = createTempData();
+        // List<QuestionnaireItem> tempData = createTempData();
+        List<QuestionnaireItem> tempData = loadFromDatabase();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.notifyDataSetChanged();
-
-        // TODO: Замените этот метод на реальную загрузку из БД
-        // loadFromDatabase();
     }
 
     private List<QuestionnaireItem> createTempData() {
@@ -87,15 +90,23 @@ public class AllQuestionnaireFragment extends Fragment {
         return tempList;
     }
 
-    // Метод для загрузки из БД (заглушка)
-    private void loadFromDatabase() {
-        // TODO: Реализуйте загрузку из вашей БД
-        // Пример:
-        // DatabaseHelper dbHelper = new DatabaseHelper(getContext());
-        // List<Questionnaire> dbQuestionnaires = dbHelper.getAllQuestionnaires();
-        // questionnaireList.clear();
-        // questionnaireList.addAll(dbQuestionnaires);
-        // adapter.notifyDataSetChanged();
+    private List<QuestionnaireItem> loadFromDatabase() {
+        List<QuestionnaireItem> questionnaireItems = new ArrayList<>();
+        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        String query = "select ankets.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id";
+        Cursor cursor = database.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(0);
+                String fio = cursor.getString(1);
+                String diagnosis = cursor.getString(2);
+                questionnaireItems.add(new QuestionnaireItem(id, fio, diagnosis));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        database.close();
+        return questionnaireItems;
     }
 
     @Override

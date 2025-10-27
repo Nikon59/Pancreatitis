@@ -38,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
+        databaseHelper.create_db();
+
         // Убираем ActionBar
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();

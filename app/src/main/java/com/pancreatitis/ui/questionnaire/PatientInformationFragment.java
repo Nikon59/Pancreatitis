@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.DatabaseHelper;
 import com.pancreatitis.adapters.CharacteristicAdapter;
+import com.pancreatitis.adapters.TitleAdapter;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.R;
 import com.pancreatitis.models.QuestionnaireItem;
@@ -24,7 +25,6 @@ import java.util.List;
 
 public class PatientInformationFragment extends Fragment {
 
-    private RecyclerView recyclerViewAnket;
     private RecyclerView recyclerView;
 
     @Override
@@ -59,15 +59,24 @@ public class PatientInformationFragment extends Fragment {
     }
 
     private void initRecyclerView(View view) {
-        recyclerViewAnket = view.findViewById(R.id.recycler_view_ankets_characteristics);
-        recyclerViewAnket.setLayoutManager(new LinearLayoutManager(getContext()));
-        CharacteristicAdapter adapterAnket = new CharacteristicAdapter(loadCharacteristicsAnket());
-        recyclerViewAnket.setAdapter(adapterAnket);
-
         recyclerView = view.findViewById(R.id.recycler_view_characteristics);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        CharacteristicAdapter adapter = new CharacteristicAdapter(loadCharacteristics());
-        recyclerView.setAdapter(adapter);
+        // Данные
+        List<Characteristic> patientInfo = loadCharacteristicsAnket();
+        List<Characteristic> clinicalInfo = loadCharacteristics();
+
+        // Создаём адаптеры
+        TitleAdapter title1 = new TitleAdapter("Patient Information");
+        CharacteristicAdapter chars1 = new CharacteristicAdapter(patientInfo); // ваш исходный адаптер без заголовка
+
+        TitleAdapter title2 = new TitleAdapter("Clinical Characteristics");
+        CharacteristicAdapter chars2 = new CharacteristicAdapter(clinicalInfo);
+
+        // Конкатенируем: title1, chars1, title2, chars2
+        androidx.recyclerview.widget.ConcatAdapter concat =
+                new androidx.recyclerview.widget.ConcatAdapter(title1, chars1, title2, chars2);
+
+        recyclerView.setAdapter(concat);
     }
 
     private List<Characteristic> loadCharacteristicsAnket() {
@@ -99,13 +108,4 @@ public class PatientInformationFragment extends Fragment {
         return list;
     }
 
-    // Метод для получения заполненных данных
-//    private List<Characteristic> getPatientData() {
-//        return adapter.getCharacteristics();
-//    }
-//
-//    // Метод для обновления данных
-//    public void updateCharacteristics(List<Characteristic> newCharacteristics) {
-//        adapter.updateData(newCharacteristics);
-//    }
 }

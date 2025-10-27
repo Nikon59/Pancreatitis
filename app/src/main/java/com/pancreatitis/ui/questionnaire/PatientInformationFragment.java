@@ -26,6 +26,7 @@ import java.util.List;
 public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
+    private int questionnaireId = -1;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -33,7 +34,6 @@ public class PatientInformationFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_questionnaire, container, false);
 
         receiveArguments();
-
         initRecyclerView(view);
 
         return view;
@@ -42,17 +42,8 @@ public class PatientInformationFragment extends Fragment {
     private void receiveArguments() {
         Bundle args = getArguments();
         if (args != null) {
-            String patientName = args.getString("patientName", "");
-            String diagnosis = args.getString("diagnosis", "");
-            int questionnaireId = args.getInt("questionnaireId", 0);
-
-            // Выводим через Toast
-            String message = "Получены данные:\n" +
-                    "Имя: " + patientName + "\n" +
-                    "Диагноз: " + diagnosis + "\n" +
-                    "ID: " + questionnaireId;
-
-            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            questionnaireId = args.getInt("questionnaireId");
+            Toast.makeText(getContext(), String.format("%d", questionnaireId), Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getContext(), "Данные не переданы", Toast.LENGTH_SHORT).show();
         }
@@ -61,51 +52,121 @@ public class PatientInformationFragment extends Fragment {
     private void initRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.recycler_view_characteristics);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        // Данные
-        List<Characteristic> patientInfo = loadCharacteristicsAnket();
-        List<Characteristic> clinicalInfo = loadCharacteristics();
 
-        // Создаём адаптеры
+        // Загружаем данные с учетом questionnaireId
+        loadAndDisplayData();
+    }
+
+    private void loadAndDisplayData() {
+        // Загружаем данные из БД по questionnaireId
+        List<Characteristic> patientInfo = loadPatientInfoFromDB();
+        List<Characteristic> clinicalInfo = loadClinicalInfoFromDB();
+        List<Characteristic> diagnosisInfo = loadDiagnosisInfoFromDB();
+
+        // Создаём адаптеры с реальными данными
         TitleAdapter title1 = new TitleAdapter("Patient Information");
-        CharacteristicAdapter chars1 = new CharacteristicAdapter(patientInfo); // ваш исходный адаптер без заголовка
+        CharacteristicAdapter chars1 = new CharacteristicAdapter(patientInfo);
 
         TitleAdapter title2 = new TitleAdapter("Clinical Characteristics");
         CharacteristicAdapter chars2 = new CharacteristicAdapter(clinicalInfo);
 
-        // Конкатенируем: title1, chars1, title2, chars2
+        TitleAdapter title3 = new TitleAdapter("Predict Diagnosis");
+        CharacteristicAdapter chars3 = new CharacteristicAdapter(diagnosisInfo);
+
         androidx.recyclerview.widget.ConcatAdapter concat =
-                new androidx.recyclerview.widget.ConcatAdapter(title1, chars1, title2, chars2);
+                new androidx.recyclerview.widget.ConcatAdapter(title1, chars1, title2, chars2, title3, chars3);
 
         recyclerView.setAdapter(concat);
     }
 
-    private List<Characteristic> loadCharacteristicsAnket() {
+    private List<Characteristic> loadPatientInfoFromDB() {
         List<Characteristic> list = new ArrayList<>();
 
-        list.add(new Characteristic("Full Name", "...", android.text.InputType.TYPE_CLASS_TEXT));
-        list.add(new Characteristic("Date of completion", "...", android.text.InputType.TYPE_CLASS_TEXT));
-        list.add(new Characteristic("Admitted from", "...", android.text.InputType.TYPE_CLASS_TEXT));
+        if (questionnaireId != -1) {
+            // Заглушка - в реальности делайте запрос к БД
+            DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+            SQLiteDatabase database = dbHelper.getReadableDatabase();
 
+            // Пример запроса - адаптируйте под вашу структуру БД
+            String query = String.format("select patients.fio, ankets.date_of_completion, ankets.admitted_from from ankets join patients on ankets.id_patient = patients.id where ankets.id = %d", questionnaireId);
+            Cursor cursor = database.rawQuery(query, null);
+            cursor.moveToFirst();
+            String fullName = cursor.getString(0);
+            String completionDate = cursor.getString(1);
+            String admittedFrom = cursor.getString(2);
+
+            list.add(new Characteristic("Full Name", fullName, android.text.InputType.TYPE_CLASS_TEXT));
+            list.add(new Characteristic("Date of completion", completionDate, android.text.InputType.TYPE_CLASS_TEXT));
+            list.add(new Characteristic("Admitted from", admittedFrom, android.text.InputType.TYPE_CLASS_TEXT));
+
+            cursor.close();
+            database.close();
+        } else {
+            // Если данных нет, используем значения по умолчанию
+            list.add(new Characteristic("Full Name", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
+            list.add(new Characteristic("Date of completion", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
+            list.add(new Characteristic("Admitted from", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
+        }
         return list;
     }
 
-    private List<Characteristic> loadCharacteristics() {
+    private List<Characteristic> loadClinicalInfoFromDB() {
         List<Characteristic> list = new ArrayList<>();
 
+        // Запрос для получения клинических характеристик по questionnaireId
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        String query = "select name from characteristic";
-        Cursor cursor = database.rawQuery(query, null);
-        if (cursor.moveToFirst()) {
+
+        if (questionnaireId != -1) {
+            String query = "select characteristic.name, characterization_anket_patient.value from ankets join characterization_anket_patient on characterization_anket_patient.id_anket = ankets.id join characteristic on characterization_anket_patient.id_characteristic = characteristic.id where ankets.id = ?";
+            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
+            cursor.moveToFirst();
             do {
                 String name = cursor.getString(0);
-                list.add(new Characteristic(name, "...", android.text.InputType.TYPE_CLASS_TEXT));
+                String value = cursor.getString(1);
+                list.add(new Characteristic(name, value != null ? value : "...",
+                        android.text.InputType.TYPE_CLASS_TEXT));
             } while (cursor.moveToNext());
+            cursor.close();
+        } else {
+            // Если нет данных, загружаем базовый список характеристик
+            String baseQuery = "SELECT name FROM characteristic";
+            Cursor baseCursor = database.rawQuery(baseQuery, null);
+            if (baseCursor.moveToFirst()) {
+                do {
+                    String name = baseCursor.getString(0);
+                    list.add(new Characteristic(name, "...", android.text.InputType.TYPE_CLASS_TEXT));
+                } while (baseCursor.moveToNext());
+            }
+            baseCursor.close();
         }
-        cursor.close();
-        database.close();
 
+        database.close();
         return list;
     }
 
+    private List<Characteristic> loadDiagnosisInfoFromDB() {
+        List<Characteristic> list = new ArrayList<>();
+
+        // Запрос для получения диагноза
+        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+
+        if (questionnaireId != -1) {
+            String query = "SELECT diagnosis FROM ankets WHERE id = ?";
+            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
+            cursor.moveToFirst();
+            String diagnosis = cursor.getString(0);
+
+            list.add(new Characteristic("Diagnosis", diagnosis != null ? diagnosis : "Не установлен",
+                    android.text.InputType.TYPE_CLASS_TEXT));
+
+            cursor.close();
+            database.close();
+        } else {
+            list.add(new Characteristic("Diagnosis", "Не установлен", android.text.InputType.TYPE_CLASS_TEXT));
+        }
+
+        return list;
+    }
 }

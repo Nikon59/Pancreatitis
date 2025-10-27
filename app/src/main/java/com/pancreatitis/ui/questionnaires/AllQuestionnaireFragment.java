@@ -69,25 +69,10 @@ public class AllQuestionnaireFragment extends Fragment {
     }
 
     private void loadQuestionnaires() {
-        // Временная заглушка на 20 элементов
-        // List<QuestionnaireItem> tempData = createTempData();
         List<QuestionnaireItem> tempData = loadFromDatabase();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.notifyDataSetChanged();
-    }
-
-    private List<QuestionnaireItem> createTempData() {
-        List<QuestionnaireItem> tempList = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            QuestionnaireItem questionnaire = new QuestionnaireItem(
-                    i,
-                    "Patient " + i,
-                    "Diagnosis " + i
-            );
-            tempList.add(questionnaire);
-        }
-        return tempList;
     }
 
     private List<QuestionnaireItem> loadFromDatabase() {

@@ -92,8 +92,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
             // Создаем Bundle для передачи данных
             Bundle args = new Bundle();
             args.putInt("questionnaireId", questionnaire.getId());
-            args.putString("patientName", questionnaire.getPatientName());
-            args.putString("diagnosis", questionnaire.getDiagnosis());
+            //args.putString("diagnosis", questionnaire.getDiagnosis());
 
             // Выполняем переход с аргументами
             navController.navigate(R.id.action_questionnaires_to_anket, args);

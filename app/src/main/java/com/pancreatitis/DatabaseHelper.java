@@ -32,7 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         File file = new File(DB_PATH);
 
-        if (!file.exists()){
+        if (file.exists()){
             return;
         }
 

@@ -35,6 +35,7 @@ public class PatientInformationFragment extends Fragment {
     private Button btnPredict, btnSave;
     private CharacteristicAdapter chars1, chars2, chars3;
     private int questionnaireId = -1;
+    private int questionnairePatientId = -1;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,7 +52,7 @@ public class PatientInformationFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             questionnaireId = args.getInt("questionnaireId");
-            Toast.makeText(getContext(), String.format("%d", questionnaireId), Toast.LENGTH_SHORT).show();
+            questionnairePatientId = args.getInt("questionnairePatientId");
         } else {
             Toast.makeText(getContext(), "Данные не переданы", Toast.LENGTH_SHORT).show();
         }
@@ -111,35 +112,52 @@ public class PatientInformationFragment extends Fragment {
 
                     // 1. Вставляем пациента
                     String patientName = anketsChars.get("Full Name").getValue();
-                    ContentValues patientValues = new ContentValues();
-                    patientValues.put("fio", patientName);
 
-                    long patientRowId = database.insert("patients", null, patientValues);
-                    if (patientRowId == -1) {
-                        throw new SQLException("Failed to insert patient");
+                    // Сначала проверяем существование пациента
+                    String query = "SELECT id FROM patients WHERE fio = ?";
+                    Cursor cursor = database.rawQuery(query, new String[]{patientName});
+
+                    long patientRowId;
+                    if (cursor != null && cursor.moveToFirst()) {
+                        // Пациент существует - используем существующий ID
+                        patientRowId = cursor.getLong(cursor.getColumnIndexOrThrow("_id"));
+                        cursor.close();
+                    } else {
+                        // Пациент не существует - вставляем нового
+                        if (cursor != null) cursor.close();
+
+                        ContentValues patientValues = new ContentValues();
+                        patientValues.put("fio", patientName);
+
+                        patientRowId = database.insert("patients", null, patientValues);
+                        if (patientRowId == -1 && questionnairePatientId != patientRowId) {
+                            throw new SQLException("Failed to insert patient");
+                        }
                     }
 
 
                     // 2. Вставляем анкету
-                    int id_doctor = 2;
-                    int id_expert = 1;
-                    String diagnosis = diagnosisChars.get("Diagnosis").getValue();
-                    String date_of_completion = anketsChars.get("Date of completion").getValue();
-                    String admitted_from = anketsChars.get("Admitted from").getValue();
+                    long anketRowId = questionnaireId;
+                    if (questionnaireId != -1) {
+                        int id_doctor = 2;
+                        int id_expert = 1;
+                        String diagnosis = diagnosisToCode(diagnosisChars.get("Diagnosis").getValue());
+                        String date_of_completion = anketsChars.get("Date of completion").getValue();
+                        String admitted_from = anketsChars.get("Admitted from").getValue();
 
-                    ContentValues anketValues = new ContentValues();
-                    anketValues.put("id_patient", patientRowId);
-                    anketValues.put("id_doctor", id_doctor);
-                    anketValues.put("id_expert", id_expert);
-                    anketValues.put("diagnosis", diagnosis);
-                    anketValues.put("date_of_completion", date_of_completion);
-                    anketValues.put("admitted_from", admitted_from);
+                        ContentValues anketValues = new ContentValues();
+                        anketValues.put("id_patient", patientRowId);
+                        anketValues.put("id_doctor", id_doctor);
+                        anketValues.put("id_expert", id_expert);
+                        anketValues.put("diagnosis", diagnosis);
+                        anketValues.put("date_of_completion", date_of_completion);
+                        anketValues.put("admitted_from", admitted_from);
 
-                    long anketRowId = database.insert("ankets", null, anketValues);
-                    if (anketRowId == -1) {
-                        throw new SQLException("Failed to insert anket");
+                        anketRowId = database.insert("ankets", null, anketValues);
+                        if (anketRowId == -1) {
+                            throw new SQLException("Failed to insert anket");
+                        }
                     }
-
                     
                     // 3. Сохраняем характеристики
                     for (Map.Entry<String, Characteristic> entry : patientChars.entrySet()) {
@@ -178,6 +196,7 @@ public class PatientInformationFragment extends Fragment {
 
         return formData;
     }
+
     private Map<String, Characteristic> getFormData(CharacteristicAdapter chars) {
         Map<String, Characteristic> formData = new HashMap<>();
 
@@ -189,6 +208,7 @@ public class PatientInformationFragment extends Fragment {
 
         return formData;
     }
+
     private void loadAndDisplayData() {
         List<Characteristic> patientInfo = loadPatientInfoFromDB();
         List<Characteristic> clinicalInfo = loadClinicalInfoFromDB();
@@ -328,7 +348,8 @@ public class PatientInformationFragment extends Fragment {
                 // ПРОВЕРКА на наличие данных
                 if (cursor != null && cursor.moveToFirst()) {
                     String diagnosis = cursor.getString(cursor.getColumnIndexOrThrow("diagnosis"));
-                    list.add(new Characteristic("Diagnosis", "", diagnosis != null ? diagnosis : "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    diagnosis = codeToDiagnosis(diagnosis);
+                    list.add(new Characteristic("Diagnosis", "", diagnosis, android.text.InputType.TYPE_CLASS_TEXT, -1));
                 } else {
                     list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
                 }
@@ -343,5 +364,19 @@ public class PatientInformationFragment extends Fragment {
             dbHelper.close();
         }
         return list;
+    }
+    private String codeToDiagnosis(String code){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("1", "Отечный панкреатит");
+        diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
+        return diagnosisMap.get(code);
+    }
+    private String diagnosisToCode(String diagnosis){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("Отечный панкреатит", "1");
+        diagnosisMap.put("Панкреонекроз среднетяжелое течение", "5");
+        diagnosisMap.put("Панкреонекроз тяжелое течение", "6");
+        return diagnosisMap.get(diagnosis);
     }
 }

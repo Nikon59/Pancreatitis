@@ -19,9 +19,7 @@ import com.pancreatitis.adapters.QuestionnaireAdapter;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.R;
 
-import java.sql.Array;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class AllQuestionnaireFragment extends Fragment {
 
@@ -79,19 +77,28 @@ public class AllQuestionnaireFragment extends Fragment {
         List<QuestionnaireItem> questionnaireItems = new ArrayList<>();
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        String query = "select ankets.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id";
+        String query = "select ankets.id,patients.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id order by ankets.id";
         Cursor cursor = database.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             do {
                 int id = cursor.getInt(0);
-                String fio = cursor.getString(1);
-                String diagnosis = cursor.getString(2);
-                questionnaireItems.add(new QuestionnaireItem(id, fio, diagnosis));
+                int patientId = cursor.getInt(1);
+                String fio = cursor.getString(2);
+                String diagnosis = cursor.getString(3);
+                questionnaireItems.add(new QuestionnaireItem(id, patientId, fio, codeToDiagnosis(diagnosis)));
             } while (cursor.moveToNext());
         }
         cursor.close();
         database.close();
         return questionnaireItems;
+    }
+
+    private String codeToDiagnosis(String code){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("1", "Отечный панкреатит");
+        diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
+        return diagnosisMap.get(code);
     }
 
     @Override

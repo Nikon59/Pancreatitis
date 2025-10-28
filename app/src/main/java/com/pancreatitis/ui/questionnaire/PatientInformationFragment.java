@@ -151,7 +151,7 @@ public class PatientInformationFragment extends Fragment {
                         database.insert("characterization_anket_patient", null, values);
                     }
 
-
+                    Toast.makeText(getContext(), "Luck!", Toast.LENGTH_SHORT).show();
                     database.setTransactionSuccessful();
                 } catch (Exception e) {
                     Toast.makeText(getContext(), "Ошибка сохранения: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -266,7 +266,7 @@ public class PatientInformationFragment extends Fragment {
                 String query = "SELECT characteristic.name, characteristic.type, characterization_anket_patient.value, characteristic.id " +
                         "FROM ankets JOIN characterization_anket_patient ON characterization_anket_patient.id_anket = ankets.id " +
                         "JOIN characteristic ON characterization_anket_patient.id_characteristic = characteristic.id " +
-                        "WHERE ankets.id = ?";
+                        "WHERE ankets.id = ? ORDER BY characteristic.id";
                 cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
 
                 // ПРОВЕРКА на наличие данных

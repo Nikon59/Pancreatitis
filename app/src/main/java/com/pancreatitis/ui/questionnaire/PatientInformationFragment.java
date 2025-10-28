@@ -1,12 +1,15 @@
 package com.pancreatitis.ui.questionnaire;
 
 
+import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -14,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.DatabaseHelper;
+import com.pancreatitis.DiagnosisPredictor;
 import com.pancreatitis.adapters.CharacteristicAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
 import com.pancreatitis.models.Characteristic;
@@ -21,11 +25,15 @@ import com.pancreatitis.R;
 import com.pancreatitis.models.QuestionnaireItem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
+    private Button btnPredict, btnSave;
+    private CharacteristicAdapter chars1, chars2, chars3;
     private int questionnaireId = -1;
 
     @Override
@@ -51,27 +59,149 @@ public class PatientInformationFragment extends Fragment {
 
     private void initRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.recycler_view_characteristics);
+        btnSave = view.findViewById(R.id.btn_save);
+        btnPredict = view.findViewById(R.id.btn_predict);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // Загружаем данные с учетом questionnaireId
         loadAndDisplayData();
-    }
 
+        // Устанавливаем обработчики кликов
+        btnPredict.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+                SQLiteDatabase database = dbHelper.getReadableDatabase();
+
+                Map<String, DiagnosisPredictor.ValueWithType> patientChars = getFormDataChar(chars2);
+
+                DiagnosisPredictor predictor = new DiagnosisPredictor();
+                try {
+                    Map<Integer, Float> probs = predictor.predict(database, patientChars);
+
+                    float p1 = probs.get(1);
+                    float p5 = probs.get(5);
+                    float p6 = probs.get(6);
+
+                    //String diagnosis = diagnosisMap.get(Integer.toString(max_key));
+                    Toast.makeText(getContext(), String.format("%.5f\n%.5f\n%.5f", p1, p5, p6), Toast.LENGTH_SHORT).show();
+                } catch (Exception e){
+                    Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                } finally {
+                    database.close();
+                    dbHelper.close();
+                }
+            }
+        });
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Map<String, Characteristic> anketsChars = getFormData(chars1);
+                Map<String, Characteristic> patientChars = getFormData(chars2);
+                Map<String, Characteristic> diagnosisChars = getFormData(chars3);
+
+                DatabaseHelper dbHelper = null;
+                SQLiteDatabase database = null;
+
+                try {
+                    dbHelper = new DatabaseHelper(getContext());
+                    database = dbHelper.getWritableDatabase();
+                    database.beginTransaction();
+
+                    // 1. Вставляем пациента
+                    String patientName = anketsChars.get("Full Name").getValue();
+                    ContentValues patientValues = new ContentValues();
+                    patientValues.put("fio", patientName);
+
+                    long patientRowId = database.insert("patients", null, patientValues);
+                    if (patientRowId == -1) {
+                        throw new SQLException("Failed to insert patient");
+                    }
+
+
+                    // 2. Вставляем анкету
+                    int id_doctor = 2;
+                    int id_expert = 1;
+                    String diagnosis = diagnosisChars.get("Diagnosis").getValue();
+                    String date_of_completion = anketsChars.get("Date of completion").getValue();
+                    String admitted_from = anketsChars.get("Admitted from").getValue();
+
+                    ContentValues anketValues = new ContentValues();
+                    anketValues.put("id_patient", patientRowId);
+                    anketValues.put("id_doctor", id_doctor);
+                    anketValues.put("id_expert", id_expert);
+                    anketValues.put("diagnosis", diagnosis);
+                    anketValues.put("date_of_completion", date_of_completion);
+                    anketValues.put("admitted_from", admitted_from);
+
+                    long anketRowId = database.insert("ankets", null, anketValues);
+                    if (anketRowId == -1) {
+                        throw new SQLException("Failed to insert anket");
+                    }
+
+                    
+                    // 3. Сохраняем характеристики
+                    for (Map.Entry<String, Characteristic> entry : patientChars.entrySet()) {
+                        ContentValues values = new ContentValues();
+                        values.put("id_characteristic", entry.getValue().getId());
+                        values.put("id_anket", anketRowId); // Используем реальный ID
+                        values.put("value", entry.getValue().getValue());
+
+                        database.insert("characterization_anket_patient", null, values);
+                    }
+
+
+                    database.setTransactionSuccessful();
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Ошибка сохранения: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                } finally {
+                    if (database != null) {
+                        database.endTransaction();
+                        database.close();
+                    }
+                    if (dbHelper != null) {
+                        dbHelper.close();
+                    }
+                }
+            }
+        });
+    }
+    private Map<String, DiagnosisPredictor.ValueWithType> getFormDataChar(CharacteristicAdapter chars) {
+        Map<String, DiagnosisPredictor.ValueWithType> formData = new HashMap<>();
+
+        if (chars != null) {
+            for (Characteristic characteristic : chars.getCharacteristics()) {
+                formData.put(characteristic.getTitle(), new DiagnosisPredictor.ValueWithType(characteristic.getType(), Integer.parseInt(characteristic.getValue())));
+            }
+        }
+
+        return formData;
+    }
+    private Map<String, Characteristic> getFormData(CharacteristicAdapter chars) {
+        Map<String, Characteristic> formData = new HashMap<>();
+
+        if (chars != null) {
+            for (Characteristic characteristic : chars.getCharacteristics()) {
+                formData.put(characteristic.getTitle(), characteristic);
+            }
+        }
+
+        return formData;
+    }
     private void loadAndDisplayData() {
-        // Загружаем данные из БД по questionnaireId
         List<Characteristic> patientInfo = loadPatientInfoFromDB();
         List<Characteristic> clinicalInfo = loadClinicalInfoFromDB();
         List<Characteristic> diagnosisInfo = loadDiagnosisInfoFromDB();
 
-        // Создаём адаптеры с реальными данными
+        // Сохраняем ссылки на адаптеры
+        chars1 = new CharacteristicAdapter(patientInfo);
+        chars2 = new CharacteristicAdapter(clinicalInfo);
+        chars3 = new CharacteristicAdapter(diagnosisInfo);
+
         TitleAdapter title1 = new TitleAdapter("Patient Information");
-        CharacteristicAdapter chars1 = new CharacteristicAdapter(patientInfo);
-
         TitleAdapter title2 = new TitleAdapter("Clinical Characteristics");
-        CharacteristicAdapter chars2 = new CharacteristicAdapter(clinicalInfo);
-
         TitleAdapter title3 = new TitleAdapter("Predict Diagnosis");
-        CharacteristicAdapter chars3 = new CharacteristicAdapter(diagnosisInfo);
 
         androidx.recyclerview.widget.ConcatAdapter concat =
                 new androidx.recyclerview.widget.ConcatAdapter(title1, chars1, title2, chars2, title3, chars3);
@@ -83,90 +213,135 @@ public class PatientInformationFragment extends Fragment {
         List<Characteristic> list = new ArrayList<>();
 
         if (questionnaireId != -1) {
-            // Заглушка - в реальности делайте запрос к БД
             DatabaseHelper dbHelper = new DatabaseHelper(getContext());
             SQLiteDatabase database = dbHelper.getReadableDatabase();
+            Cursor cursor = null;
 
-            // Пример запроса - адаптируйте под вашу структуру БД
-            String query = String.format("select patients.fio, ankets.date_of_completion, ankets.admitted_from from ankets join patients on ankets.id_patient = patients.id where ankets.id = %d", questionnaireId);
-            Cursor cursor = database.rawQuery(query, null);
-            cursor.moveToFirst();
-            String fullName = cursor.getString(0);
-            String completionDate = cursor.getString(1);
-            String admittedFrom = cursor.getString(2);
+            try {
+                String query = "SELECT patients.fio, ankets.date_of_completion, ankets.admitted_from " +
+                        "FROM ankets JOIN patients ON ankets.id_patient = patients.id " +
+                        "WHERE ankets.id = ?";
+                cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
 
-            list.add(new Characteristic("Full Name", fullName, android.text.InputType.TYPE_CLASS_TEXT));
-            list.add(new Characteristic("Date of completion", completionDate, android.text.InputType.TYPE_CLASS_TEXT));
-            list.add(new Characteristic("Admitted from", admittedFrom, android.text.InputType.TYPE_CLASS_TEXT));
+                // ПРОВЕРЯЕМ есть ли данные в курсоре!
+                if (cursor != null && cursor.moveToFirst()) {
+                    String fullName = cursor.getString(cursor.getColumnIndexOrThrow("fio"));
+                    String completionDate = cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion"));
+                    String admittedFrom = cursor.getString(cursor.getColumnIndexOrThrow("admitted_from"));
 
-            cursor.close();
-            database.close();
+                    list.add(new Characteristic("Full Name", "", fullName != null ? fullName : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Date of completion", "", completionDate != null ? completionDate : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Admitted from", "", admittedFrom != null ? admittedFrom : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                } else {
+                    // Если данных нет - пустые поля
+                    addDefaultPatientInfo(list);
+                }
+            } catch (Exception e) {
+                addDefaultPatientInfo(list);
+            } finally {
+                if (cursor != null) cursor.close();
+                database.close();
+                dbHelper.close();
+            }
         } else {
-            // Если данных нет, используем значения по умолчанию
-            list.add(new Characteristic("Full Name", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
-            list.add(new Characteristic("Date of completion", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
-            list.add(new Characteristic("Admitted from", "Не указано", android.text.InputType.TYPE_CLASS_TEXT));
+            addDefaultPatientInfo(list);
         }
         return list;
     }
 
+    private void addDefaultPatientInfo(List<Characteristic> list) {
+        list.add(new Characteristic("Full Name", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Date of completion", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Admitted from", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+    }
+
     private List<Characteristic> loadClinicalInfoFromDB() {
         List<Characteristic> list = new ArrayList<>();
-
-        // Запрос для получения клинических характеристик по questionnaireId
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
 
-        if (questionnaireId != -1) {
-            String query = "select characteristic.name, characterization_anket_patient.value from ankets join characterization_anket_patient on characterization_anket_patient.id_anket = ankets.id join characteristic on characterization_anket_patient.id_characteristic = characteristic.id where ankets.id = ?";
-            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
-            cursor.moveToFirst();
-            do {
-                String name = cursor.getString(0);
-                String value = cursor.getString(1);
-                list.add(new Characteristic(name, value != null ? value : "...",
-                        android.text.InputType.TYPE_CLASS_TEXT));
-            } while (cursor.moveToNext());
-            cursor.close();
-        } else {
-            // Если нет данных, загружаем базовый список характеристик
-            String baseQuery = "SELECT name FROM characteristic";
-            Cursor baseCursor = database.rawQuery(baseQuery, null);
-            if (baseCursor.moveToFirst()) {
+        try {
+            if (questionnaireId != -1) {
+                String query = "SELECT characteristic.name, characteristic.type, characterization_anket_patient.value, characteristic.id " +
+                        "FROM ankets JOIN characterization_anket_patient ON characterization_anket_patient.id_anket = ankets.id " +
+                        "JOIN characteristic ON characterization_anket_patient.id_characteristic = characteristic.id " +
+                        "WHERE ankets.id = ?";
+                cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
+
+                // ПРОВЕРКА на наличие данных
+                if (cursor != null && cursor.moveToFirst()) {
+                    do {
+                        String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                        String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
+                        String value = cursor.getString(cursor.getColumnIndexOrThrow("value"));
+                        long id = cursor.getLong(3);
+                        list.add(new Characteristic(name, type, value != null ? value : "...", android.text.InputType.TYPE_CLASS_TEXT, id));
+                    } while (cursor.moveToNext());
+                } else {
+                    // Если нет данных для этого questionnaireId, загружаем базовый список
+                    loadBaseCharacteristics(database, list);
+                }
+            } else {
+                loadBaseCharacteristics(database, list);
+            }
+        } catch (Exception e) {
+            loadBaseCharacteristics(database, list);
+        } finally {
+            if (cursor != null) cursor.close();
+            database.close();
+            dbHelper.close();
+        }
+        return list;
+    }
+
+    private void loadBaseCharacteristics(SQLiteDatabase database, List<Characteristic> list) {
+        Cursor baseCursor = null;
+        try {
+            String baseQuery = "SELECT id, name, type FROM characteristic ORDER BY id";
+            baseCursor = database.rawQuery(baseQuery, null);
+            if (baseCursor != null && baseCursor.moveToFirst()) {
                 do {
-                    String name = baseCursor.getString(0);
-                    list.add(new Characteristic(name, "...", android.text.InputType.TYPE_CLASS_TEXT));
+                    long id = baseCursor.getLong(0);
+                    String name = baseCursor.getString(baseCursor.getColumnIndexOrThrow("name"));
+                    String type = baseCursor.getString(baseCursor.getColumnIndexOrThrow("type"));
+                    list.add(new Characteristic(name, type, "...", android.text.InputType.TYPE_CLASS_TEXT, id));
                 } while (baseCursor.moveToNext());
             }
-            baseCursor.close();
+        } finally {
+            if (baseCursor != null) baseCursor.close();
         }
-
-        database.close();
-        return list;
     }
 
     private List<Characteristic> loadDiagnosisInfoFromDB() {
         List<Characteristic> list = new ArrayList<>();
 
-        // Запрос для получения диагноза
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
 
-        if (questionnaireId != -1) {
-            String query = "SELECT diagnosis FROM ankets WHERE id = ?";
-            Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
-            cursor.moveToFirst();
-            String diagnosis = cursor.getString(0);
+        try {
+            if (questionnaireId != -1) {
+                String query = "SELECT diagnosis FROM ankets WHERE id = ?";
+                cursor = database.rawQuery(query, new String[]{String.valueOf(questionnaireId)});
 
-            list.add(new Characteristic("Diagnosis", diagnosis != null ? diagnosis : "Не установлен",
-                    android.text.InputType.TYPE_CLASS_TEXT));
-
-            cursor.close();
+                // ПРОВЕРКА на наличие данных
+                if (cursor != null && cursor.moveToFirst()) {
+                    String diagnosis = cursor.getString(cursor.getColumnIndexOrThrow("diagnosis"));
+                    list.add(new Characteristic("Diagnosis", "", diagnosis != null ? diagnosis : "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                } else {
+                    list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                }
+            } else {
+                list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+            }
+        } catch (Exception e) {
+            list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        } finally {
+            if (cursor != null) cursor.close();
             database.close();
-        } else {
-            list.add(new Characteristic("Diagnosis", "Не установлен", android.text.InputType.TYPE_CLASS_TEXT));
+            dbHelper.close();
         }
-
         return list;
     }
 }

@@ -31,6 +31,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void create_db(){
 
         File file = new File(DB_PATH);
+
+        if (!file.exists()){
+            return;
+        }
+
         try(InputStream myInput = myContext.getAssets().open(DB_NAME);
             OutputStream myOutput = new FileOutputStream(DB_PATH)) {
 

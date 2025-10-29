@@ -78,7 +78,7 @@ public class PatientInformationFragment extends Fragment {
 
                 DiagnosisPredictor predictor = new DiagnosisPredictor();
                 try {
-                    Map<Integer, Float> probs = predictor.predict(database, patientChars);
+                    Map<Integer, Float> probs = predictor.predict(getContext(), database, patientChars);
 
                     float p1 = probs.get(1);
                     float p5 = probs.get(5);

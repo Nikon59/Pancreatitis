@@ -1,8 +1,10 @@
 package com.pancreatitis;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import java.util.*;
+import java.io.*;
 
 public class DiagnosisPredictor {
 
@@ -29,8 +31,6 @@ public class DiagnosisPredictor {
     private static class TrainingRecord {
         public int diagnosisCode;
         public int[] values;
-        public int anketId; // ID анкеты
-        public int patientId;
     }
 
     private static class ClassStat {
@@ -38,15 +38,19 @@ public class DiagnosisPredictor {
         double totalSimilarity = 0.0;
     }
 
+    private Context context;
+
     // Основной публичный метод: принимает открытое SQLiteDatabase и карту характеристик пациента
-    public Map<Integer, Float> predict(SQLiteDatabase db, Map<String, ValueWithType> patientCharacteristics) {
-        // 1. Загрузить характеристики
+    public Map<Integer, Float> predict(Context context, SQLiteDatabase db, Map<String, ValueWithType> patientCharacteristics) {
+        this.context = context;
+
+        // 1. Загрузить характеристики из БД
         List<CharacteristicPredict> characteristicPredicts = loadCharacteristics(db);
         Map<String, CharacteristicPredict> charByName = new HashMap<>();
         for (CharacteristicPredict c : characteristicPredicts) charByName.put(c.name, c);
 
-        // 2. Загрузить обучающую выборку
-        List<TrainingRecord> trainingData = loadTrainingData(db, characteristicPredicts);
+        // 2. Загрузить обучающую выборку из файла
+        List<TrainingRecord> trainingData = loadTrainingDataFromFile(characteristicPredicts);
 
         // 3. Подготовить значения пациента по порядку характеристик
         int[] patientValues = new int[characteristicPredicts.size()];
@@ -114,21 +118,10 @@ public class DiagnosisPredictor {
         return result;
     }
 
-    // Вспомогательный класс для хранения информации об анкете
-    private static class AnketInfo {
-        int patientId;
-        int diagnosis;
-
-        AnketInfo(int patientId, int diagnosis) {
-            this.patientId = patientId;
-            this.diagnosis = diagnosis;
-        }
-    }
-
     // --- Загрузка характеристик из SQLiteDatabase ---
     private List<CharacteristicPredict> loadCharacteristics(SQLiteDatabase db) {
         List<CharacteristicPredict> list = new ArrayList<>();
-        String sql = "SELECT id, name, type, weight, min_value, max_value FROM characteristic";
+        String sql = "SELECT id, name, type, weight, min_value, max_value FROM characteristic ORDER BY id";
         Cursor c = null;
         try {
             c = db.rawQuery(sql, null);
@@ -150,93 +143,54 @@ public class DiagnosisPredictor {
         return list;
     }
 
-    // --- Загрузка обучающей выборки из SQLiteDatabase ---
-    private List<TrainingRecord> loadTrainingData(SQLiteDatabase db, List<CharacteristicPredict> characteristics) {
+    // --- Загрузка обучающей выборки из файла ---
+    private List<TrainingRecord> loadTrainingDataFromFile(List<CharacteristicPredict> characteristics) {
         List<TrainingRecord> records = new ArrayList<>();
-        if (characteristics.isEmpty()) return records;
-
-        // Сопоставление id характеристики -> индекс в массиве
-        Map<Integer, Integer> charIdToIndex = new HashMap<>();
-        for (int i = 0; i < characteristics.size(); i++) {
-            charIdToIndex.put(characteristics.get(i).id, i);
-        }
-
-        // Получаем список АНКЕТ с диагнозами 1,5,6 (каждая анкета - отдельная запись)
-        String sqlAnkets = "SELECT id, id_patient, diagnosis FROM ankets WHERE diagnosis IN (1, 5, 6)";
-        Map<Integer, AnketInfo> anketInfoMap = new LinkedHashMap<>(); // id_anket -> информация об анкете
-        Cursor c = null;
 
         try {
-            c = db.rawQuery(sqlAnkets, null);
-            if (c.moveToFirst()) {
-                do {
-                    int anketId = c.getInt(c.getColumnIndexOrThrow("id"));
-                    int patientId = c.getInt(c.getColumnIndexOrThrow("id_patient"));
-                    int diagnosis = c.getInt(c.getColumnIndexOrThrow("diagnosis"));
+            // Чтение файла из assets
+            InputStream inputStream = context.getAssets().open("algorithm.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
 
-                    anketInfoMap.put(anketId, new AnketInfo(patientId, diagnosis));
-                } while (c.moveToNext());
-            }
-        } finally {
-            if (c != null) {
-                c.close();
-                c = null;
-            }
-        }
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
 
-        if (anketInfoMap.isEmpty()) return records;
+                String[] parts = line.split(" ");
+                // Проверяем, что количество характеристик совпадает + 1 для диагноза
+                if (parts.length != characteristics.size() + 1) {
+                    continue; // Пропускаем строки с неправильным количеством данных
+                }
 
-        // Инициализируем для каждой АНКЕТЫ массив значений
-        Map<Integer, int[]> anketValuesMap = new HashMap<>();
-        for (int anketId : anketInfoMap.keySet()) {
-            anketValuesMap.put(anketId, new int[characteristics.size()]);
-        }
+                TrainingRecord record = new TrainingRecord();
+                record.values = new int[characteristics.size()];
 
-        // Получаем значения характеристик для этих АНКЕТ
-        String sqlValues = "SELECT id_anket, id_characteristic, value FROM characterization_anket_patient";
-
-        try {
-            c = db.rawQuery(sqlValues, null);
-            if (c.moveToFirst()) {
-                do {
-                    int anketId = c.getInt(c.getColumnIndexOrThrow("id_anket"));
-                    int charId = c.getInt(c.getColumnIndexOrThrow("id_characteristic"));
-                    int value = 0;
-
-                    // Обрабатываем значение (может быть int или string)
+                // Читаем значения характеристик в правильном порядке (по id характеристики)
+                for (int i = 0; i < characteristics.size(); i++) {
                     try {
-                        value = c.getInt(c.getColumnIndexOrThrow("value"));
-                    } catch (Exception e) {
-                        String stringValue = c.getString(c.getColumnIndexOrThrow("value"));
-                        try {
-                            value = Integer.parseInt(stringValue);
-                        } catch (Exception ex) {
-                            value = 0;
-                        }
+                        record.values[i] = Integer.parseInt(parts[i]);
+                    } catch (NumberFormatException e) {
+                        record.values[i] = 0; // значение по умолчанию при ошибке
                     }
+                }
 
-                    Integer pos = charIdToIndex.get(charId);
-                    if (pos != null && anketValuesMap.containsKey(anketId)) {
-                        anketValuesMap.get(anketId)[pos] = value;
-                    }
-                } while (c.moveToNext());
+                // Последнее число - код диагноза
+                try {
+                    record.diagnosisCode = Integer.parseInt(parts[parts.length - 1]);
+                } catch (NumberFormatException e) {
+                    continue; // пропускаем записи с некорректным диагнозом
+                }
+
+                // Добавляем только записи с допустимыми диагнозами (1,5,6)
+                if (record.diagnosisCode == 1 || record.diagnosisCode == 5 || record.diagnosisCode == 6) {
+                    records.add(record);
+                }
             }
-        } finally {
-            if (c != null) c.close();
-        }
 
-        // Сформируем TrainingRecord для каждой АНКЕТЫ
-        for (Map.Entry<Integer, AnketInfo> entry : anketInfoMap.entrySet()) {
-            int anketId = entry.getKey();
-            AnketInfo info = entry.getValue();
-
-            TrainingRecord rec = new TrainingRecord();
-            rec.diagnosisCode = info.diagnosis;
-            rec.values = anketValuesMap.get(anketId);
-            rec.anketId = anketId; // сохраняем ID анкеты для отслеживания
-            rec.patientId = info.patientId; // сохраняем ID пациента для информации
-
-            records.add(rec);
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return records;

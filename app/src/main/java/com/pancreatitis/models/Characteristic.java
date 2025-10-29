@@ -2,13 +2,15 @@ package com.pancreatitis.models;
 
 public class Characteristic {
     private String title;
+    private String hints;
     private String type;
     private String value;
     private int inputType;
     private long id;
 
-    public Characteristic(String title, String type, String value, int inputType, long id) {
+    public Characteristic(String title, String hints, String type, String value, int inputType, long id) {
         this.title = title;
+        this.hints = hints;
         this.type = type;
         this.value = value;
         this.inputType = inputType;
@@ -17,7 +19,16 @@ public class Characteristic {
 
     // Геттеры и сеттеры
 
+    public String getHints() {
+        return hints;
+    }
+
+    public void setHints(String hints) {
+        this.hints = hints;
+    }
+
     public long getId() { return this.id; }
+    public void setId(long id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 

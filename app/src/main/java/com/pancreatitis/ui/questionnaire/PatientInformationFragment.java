@@ -53,8 +53,6 @@ public class PatientInformationFragment extends Fragment {
         if (args != null) {
             questionnaireId = args.getInt("questionnaireId");
             questionnairePatientId = args.getInt("questionnairePatientId");
-        } else {
-            Toast.makeText(getContext(), "Данные не переданы", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -249,9 +247,9 @@ public class PatientInformationFragment extends Fragment {
                     String completionDate = cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion"));
                     String admittedFrom = cursor.getString(cursor.getColumnIndexOrThrow("admitted_from"));
 
-                    list.add(new Characteristic("Full Name", "", fullName != null ? fullName : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
-                    list.add(new Characteristic("Date of completion", "", completionDate != null ? completionDate : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
-                    list.add(new Characteristic("Admitted from", "", admittedFrom != null ? admittedFrom : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Full Name", "","", fullName != null ? fullName : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Date of completion","", "", completionDate != null ? completionDate : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Admitted from", "","", admittedFrom != null ? admittedFrom : "", android.text.InputType.TYPE_CLASS_TEXT, -1));
                 } else {
                     // Если данных нет - пустые поля
                     addDefaultPatientInfo(list);
@@ -270,9 +268,9 @@ public class PatientInformationFragment extends Fragment {
     }
 
     private void addDefaultPatientInfo(List<Characteristic> list) {
-        list.add(new Characteristic("Full Name", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
-        list.add(new Characteristic("Date of completion", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
-        list.add(new Characteristic("Admitted from", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Full Name", "","", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Date of completion","", "", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Admitted from", "","", "Не указано", android.text.InputType.TYPE_CLASS_TEXT, -1));
     }
 
     private List<Characteristic> loadClinicalInfoFromDB() {
@@ -283,7 +281,7 @@ public class PatientInformationFragment extends Fragment {
 
         try {
             if (questionnaireId != -1) {
-                String query = "SELECT characteristic.name, characteristic.type, characterization_anket_patient.value, characteristic.id " +
+                String query = "SELECT characteristic.opis, characteristic.hints, characteristic.type, characterization_anket_patient.value, characteristic.id " +
                         "FROM ankets JOIN characterization_anket_patient ON characterization_anket_patient.id_anket = ankets.id " +
                         "JOIN characteristic ON characterization_anket_patient.id_characteristic = characteristic.id " +
                         "WHERE ankets.id = ? ORDER BY characteristic.id";
@@ -292,11 +290,12 @@ public class PatientInformationFragment extends Fragment {
                 // ПРОВЕРКА на наличие данных
                 if (cursor != null && cursor.moveToFirst()) {
                     do {
-                        String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-                        String type = cursor.getString(cursor.getColumnIndexOrThrow("type"));
-                        String value = cursor.getString(cursor.getColumnIndexOrThrow("value"));
+                        String name = cursor.getString(0);
+                        String hint = cursor.getString(1);
+                        String type = cursor.getString(2);
+                        String value = cursor.getString(3);
                         long id = cursor.getLong(3);
-                        list.add(new Characteristic(name, type, value != null ? value : "...", android.text.InputType.TYPE_CLASS_TEXT, id));
+                        list.add(new Characteristic(name, hint, type, value != null ? value : "...", android.text.InputType.TYPE_CLASS_TEXT, id));
                     } while (cursor.moveToNext());
                 } else {
                     // Если нет данных для этого questionnaireId, загружаем базовый список
@@ -318,14 +317,15 @@ public class PatientInformationFragment extends Fragment {
     private void loadBaseCharacteristics(SQLiteDatabase database, List<Characteristic> list) {
         Cursor baseCursor = null;
         try {
-            String baseQuery = "SELECT id, name, type FROM characteristic ORDER BY id";
+            String baseQuery = "SELECT id, opis, hints, type FROM characteristic ORDER BY id";
             baseCursor = database.rawQuery(baseQuery, null);
             if (baseCursor != null && baseCursor.moveToFirst()) {
                 do {
                     long id = baseCursor.getLong(0);
-                    String name = baseCursor.getString(baseCursor.getColumnIndexOrThrow("name"));
-                    String type = baseCursor.getString(baseCursor.getColumnIndexOrThrow("type"));
-                    list.add(new Characteristic(name, type, "...", android.text.InputType.TYPE_CLASS_TEXT, id));
+                    String name = baseCursor.getString(1);
+                    String hint = baseCursor.getString(2);
+                    String type = baseCursor.getString(3);
+                    list.add(new Characteristic(name, hint, type, "...", android.text.InputType.TYPE_CLASS_TEXT, id));
                 } while (baseCursor.moveToNext());
             }
         } finally {
@@ -349,15 +349,15 @@ public class PatientInformationFragment extends Fragment {
                 if (cursor != null && cursor.moveToFirst()) {
                     String diagnosis = cursor.getString(cursor.getColumnIndexOrThrow("diagnosis"));
                     diagnosis = codeToDiagnosis(diagnosis);
-                    list.add(new Characteristic("Diagnosis", "", diagnosis, android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Diagnosis", "", "", diagnosis, android.text.InputType.TYPE_CLASS_TEXT, -1));
                 } else {
-                    list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Diagnosis","", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
                 }
             } else {
-                list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+                list.add(new Characteristic("Diagnosis", "","", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
             }
         } catch (Exception e) {
-            list.add(new Characteristic("Diagnosis", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
+            list.add(new Characteristic("Diagnosis","", "", "...", android.text.InputType.TYPE_CLASS_TEXT, -1));
         } finally {
             if (cursor != null) cursor.close();
             database.close();

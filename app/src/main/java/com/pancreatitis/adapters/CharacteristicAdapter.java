@@ -1,12 +1,17 @@
 // CharacteristicAdapter.java
 package com.pancreatitis.adapters;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
@@ -54,11 +59,13 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
     static class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
         private EditText editValue;
+        private ImageView btnHelp;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
             editValue = itemView.findViewById(R.id.value_characteristic);
+            btnHelp = itemView.findViewById(R.id.get_helps);
         }
 
         public void bind(Characteristic characteristic) {
@@ -76,6 +83,30 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                     characteristic.setValue(s.toString());
                 }
             });
+
+            // Обработка кнопки помощи
+            String hints = characteristic.getHints();
+            if (hints == null || hints.trim().isEmpty()) {
+                btnHelp.setVisibility(View.GONE);
+            } else {
+                btnHelp.setVisibility(View.VISIBLE);
+                btnHelp.setOnClickListener(v -> showHelpDialog(hints));
+            }
+        }
+
+        private void showHelpDialog(String hints) {
+            Context context = itemView.getContext();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle("Подсказка")
+                    .setMessage(hints)
+                    .setPositiveButton("Понятно", (dialog, which) -> {
+                        dialog.dismiss();
+                    })
+                    .setCancelable(true);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
     }
 

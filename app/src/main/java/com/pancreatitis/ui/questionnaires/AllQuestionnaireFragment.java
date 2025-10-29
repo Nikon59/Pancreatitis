@@ -3,10 +3,13 @@ package com.pancreatitis.ui.questionnaires;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -26,6 +29,7 @@ public class AllQuestionnaireFragment extends Fragment {
     private RecyclerView recyclerView;
     private QuestionnaireAdapter adapter;
     private Button btn_anket;
+    private EditText searchBar;
     private List<QuestionnaireItem> questionnaireList = new ArrayList<>();
 
     @Override
@@ -42,20 +46,10 @@ public class AllQuestionnaireFragment extends Fragment {
     private void initRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.recycler_view_questionnaires);
         btn_anket = view.findViewById(R.id.create_anket);
+        searchBar = view.findViewById(R.id.search_bar);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Создаем общий слушатель как в адаптере
-        View.OnClickListener commonClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Навигация на фрагмент анкеты без данных (для создания новой)
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_questionnaires_to_anket);
-            }
-        };
-
-        btn_anket.setOnClickListener(commonClickListener);
-
+        // Инициализируем адаптер ПЕРЕД установкой слушателей
         adapter = new QuestionnaireAdapter(questionnaireList, new QuestionnaireAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(QuestionnaireItem questionnaire) {
@@ -64,13 +58,29 @@ public class AllQuestionnaireFragment extends Fragment {
         });
 
         recyclerView.setAdapter(adapter);
+
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        btn_anket.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavController navController = Navigation.findNavController(v);
+                navController.navigate(R.id.action_questionnaires_to_anket);
+            }
+        });
     }
 
     private void loadQuestionnaires() {
         List<QuestionnaireItem> tempData = loadFromDatabase();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
-        adapter.notifyDataSetChanged();
+        adapter.updateData(questionnaireList); // Используем метод updateData адаптера
     }
 
     private List<QuestionnaireItem> loadFromDatabase() {

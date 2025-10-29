@@ -12,21 +12,48 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.QuestionnaireItem;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdapter.QuestionnaireViewHolder> {
 
     private List<QuestionnaireItem> questionnaireList;
+    private List<QuestionnaireItem> filtered_questionnaireList;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
         void onItemClick(QuestionnaireItem questionnaire);
     }
 
+    public void filter(String query) {
+        filtered_questionnaireList.clear();
+        if (query == null || query.trim().isEmpty()) {
+            filtered_questionnaireList.addAll(questionnaireList);
+        } else {
+            String q = query.toLowerCase();
+            for (QuestionnaireItem s : questionnaireList) {
+                if (s != null && s.getPatientName().toLowerCase().contains(q)) {
+                    filtered_questionnaireList.add(s);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
     public QuestionnaireAdapter(List<QuestionnaireItem> questionnaireList, OnItemClickListener listener) {
-        this.questionnaireList = questionnaireList;
+        this.questionnaireList = new ArrayList<>(questionnaireList); // Создаем копию
+        this.filtered_questionnaireList = new ArrayList<>(questionnaireList); // Инициализируем полный список
         this.listener = listener;
+    }
+
+    public void updateData(List<QuestionnaireItem> newQuestionnaires) {
+        this.questionnaireList.clear();
+        this.questionnaireList.addAll(newQuestionnaires);
+        this.filtered_questionnaireList.clear();
+        this.filtered_questionnaireList.addAll(newQuestionnaires); // Обновляем оба списка
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -39,19 +66,13 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
 
     @Override
     public void onBindViewHolder(@NonNull QuestionnaireViewHolder holder, int position) {
-        QuestionnaireItem questionnaire = questionnaireList.get(position);
+        QuestionnaireItem questionnaire = filtered_questionnaireList.get(position);
         holder.bind(questionnaire, listener);
     }
 
     @Override
     public int getItemCount() {
-        return questionnaireList.size();
-    }
-
-    public void updateData(List<QuestionnaireItem> newQuestionnaires) {
-        questionnaireList.clear();
-        questionnaireList.addAll(newQuestionnaires);
-        notifyDataSetChanged();
+        return filtered_questionnaireList.size();
     }
 
     static class QuestionnaireViewHolder extends RecyclerView.ViewHolder {

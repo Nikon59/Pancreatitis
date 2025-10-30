@@ -1,8 +1,8 @@
-// CharacteristicAdapter.java
 package com.pancreatitis.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +10,13 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.pancreatitis.R;
 import com.pancreatitis.models.Characteristic;
+
 import java.util.List;
 
 public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAdapter.CharacteristicViewHolder> {
@@ -51,7 +52,6 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         notifyDataSetChanged();
     }
 
-    // Метод для получения всех данных
     public List<Characteristic> getCharacteristics() {
         return characteristics;
     }
@@ -75,43 +75,57 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             editValue.setText(characteristic.getValue());
             editValue.setInputType(characteristic.getInputType());
 
-            // Очищаем предыдущие TextWatcher'ы
+            setupTextWatcher(characteristic);
+            setupHelpButton(characteristic);
+        }
+
+        private void setupTextWatcher(Characteristic characteristic) {
+            // Clear previous TextWatcher
             editValue.setTag(null);
 
-            // Добавляем TextWatcher для отслеживания изменений
-            editValue.addTextChangedListener(new SimpleTextWatcher() {
+            TextWatcher textWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    String newValue = s.toString();
-                    characteristic.setValue(newValue);
-
-                    // Валидация значения, если кнопка помощи активна
+                    characteristic.setValue(s.toString());
                     if (btnHelp.getVisibility() == View.VISIBLE) {
-                        validateInput(characteristic, newValue);
+                        validateInput(characteristic, s.toString());
                     }
                 }
-            });
 
-            // Обработка кнопки помощи
+                @Override
+                public void afterTextChanged(Editable s) {}
+            };
+
+            editValue.addTextChangedListener(textWatcher);
+            editValue.setTag(textWatcher);
+        }
+
+        private void setupHelpButton(Characteristic characteristic) {
             String hints = characteristic.getHints();
+            boolean hasHints = hints != null && !hints.trim().isEmpty();
 
-            if ((hints == null || hints.trim().isEmpty())) {
-                btnHelp.setVisibility(View.GONE);
-            } else {
-                btnHelp.setVisibility(View.VISIBLE);
+            btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
+
+            if (hasHints) {
                 String dialogMessage = buildDialogMessage(characteristic);
                 btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
 
-                // Проверяем начальное значение при наличии валидации
-                if (characteristic.getValue() != null &&
-                        !characteristic.getValue().isEmpty()) {
-                    validateInput(characteristic, characteristic.getValue());
+                // Validate initial value
+                String currentValue = characteristic.getValue();
+                if (currentValue != null && !currentValue.isEmpty()) {
+                    validateInput(characteristic, currentValue);
                 }
+            } else {
+                btnHelp.setOnClickListener(null);
             }
         }
 
         private void validateInput(Characteristic characteristic, String value) {
             if (value == null || value.trim().isEmpty()) {
+                editValue.setError(null);
                 return;
             }
 
@@ -120,43 +134,16 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                 int minValue = characteristic.getMin_value();
                 int maxValue = characteristic.getMax_value();
 
-                boolean isValid = true;
-                String errorMessage = null;
-
                 if (numericValue < minValue) {
-                    isValid = false;
-                    errorMessage = "Значение не может быть меньше " + minValue;
+                    editValue.setError("Value cannot be less than " + minValue);
                 } else if (numericValue > maxValue) {
-                    isValid = false;
-                    errorMessage = "Значение не может быть больше " + maxValue;
-                }
-
-                if (!isValid) {
-                    showValidationError(errorMessage);
-                    // Можно также сбросить значение на предыдущее валидное или граничное
-                    // characteristic.setValue(...);
+                    editValue.setError("Value cannot be greater than " + maxValue);
                 } else {
                     editValue.setError(null);
                 }
-
             } catch (NumberFormatException e) {
-                // Если значение не числовое, показываем ошибку
-                showValidationError("Введите числовое значение");
+                editValue.setError("Please enter a valid number");
             }
-        }
-
-        private void showValidationError(String message) {
-            // Альтернативный вариант: выделение поля красным
-            editValue.setError(message);
-
-            // Можно также использовать диалог для важных ошибок:
-            /*
-            new AlertDialog.Builder(context)
-                .setTitle("Ошибка ввода")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
-            */
         }
 
         private String buildDialogMessage(Characteristic characteristic) {
@@ -167,39 +154,20 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                 message.append(hints);
             }
 
-            // Добавляем информацию о допустимом диапазоне, если есть валидация
-            message.append("\nДопустимый диапазон: ");
-
-            int minValue = characteristic.getMin_value();
-            int maxValue = characteristic.getMax_value();
-
-            message.append("от ").append(minValue).append(" до ").append(maxValue);
+            message.append("\n\nAllowed range: ")
+                    .append(characteristic.getMin_value())
+                    .append(" to ")
+                    .append(characteristic.getMax_value());
 
             return message.toString();
         }
 
-        private void showHelpDialog(String hints) {
-            Context context = itemView.getContext();
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle("Подсказка")
-                    .setMessage(hints)
-                    .setPositiveButton("Понятно", (dialog, which) -> {
-                        dialog.dismiss();
-                    })
-                    .setCancelable(true);
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
+        private void showHelpDialog(String message) {
+            new AlertDialog.Builder(context)
+                    .setTitle("Help")
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
         }
-    }
-
-    // Простой TextWatcher для избежания дублирования кода
-    private abstract static class SimpleTextWatcher implements TextWatcher {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-        @Override
-        public void afterTextChanged(android.text.Editable s) {}
     }
 }

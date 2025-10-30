@@ -108,7 +108,7 @@ public class AllQuestionnaireFragment extends Fragment {
         diagnosisMap.put("1", "Отечный панкреатит");
         diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
         diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
-        return diagnosisMap.get(code);
+        return diagnosisMap.getOrDefault(code, "-");
     }
 
     @Override

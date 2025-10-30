@@ -6,18 +6,38 @@ public class Characteristic {
     private String type;
     private String value;
     private int inputType;
+    private int min_value;
+    private int max_value;
     private long id;
 
-    public Characteristic(String title, String hints, String type, String value, int inputType, long id) {
+    public Characteristic(String title, String hints, String type, String value, int min_value, int max_value, int inputType, long id) {
         this.title = title;
         this.hints = hints;
         this.type = type;
         this.value = value;
         this.inputType = inputType;
         this.id = id;
+        this.min_value = min_value;
+        this.max_value = max_value;
     }
 
     // Геттеры и сеттеры
+
+    public int getMin_value() {
+        return min_value;
+    }
+
+    public void setMin_value(int min_value) {
+        this.min_value = min_value;
+    }
+
+    public int getMax_value() {
+        return max_value;
+    }
+
+    public void setMax_value(int max_value) {
+        this.max_value = max_value;
+    }
 
     public String getHints() {
         return hints;

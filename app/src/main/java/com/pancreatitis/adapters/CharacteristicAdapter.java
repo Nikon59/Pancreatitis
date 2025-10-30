@@ -60,12 +60,14 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         private TextView textTitle;
         private EditText editValue;
         private ImageView btnHelp;
+        private Context context;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
             editValue = itemView.findViewById(R.id.value_characteristic);
             btnHelp = itemView.findViewById(R.id.get_helps);
+            context = itemView.getContext();
         }
 
         public void bind(Characteristic characteristic) {
@@ -80,18 +82,98 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             editValue.addTextChangedListener(new SimpleTextWatcher() {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    characteristic.setValue(s.toString());
+                    String newValue = s.toString();
+                    characteristic.setValue(newValue);
+
+                    // Валидация значения, если кнопка помощи активна
+                    if (btnHelp.getVisibility() == View.VISIBLE) {
+                        validateInput(characteristic, newValue);
+                    }
                 }
             });
 
             // Обработка кнопки помощи
             String hints = characteristic.getHints();
-            if (hints == null || hints.trim().isEmpty()) {
+
+            if ((hints == null || hints.trim().isEmpty())) {
                 btnHelp.setVisibility(View.GONE);
             } else {
                 btnHelp.setVisibility(View.VISIBLE);
-                btnHelp.setOnClickListener(v -> showHelpDialog(hints));
+                String dialogMessage = buildDialogMessage(characteristic);
+                btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
+
+                // Проверяем начальное значение при наличии валидации
+                if (characteristic.getValue() != null &&
+                        !characteristic.getValue().isEmpty()) {
+                    validateInput(characteristic, characteristic.getValue());
+                }
             }
+        }
+
+        private void validateInput(Characteristic characteristic, String value) {
+            if (value == null || value.trim().isEmpty()) {
+                return;
+            }
+
+            try {
+                int numericValue = Integer.parseInt(value);
+                int minValue = characteristic.getMin_value();
+                int maxValue = characteristic.getMax_value();
+
+                boolean isValid = true;
+                String errorMessage = null;
+
+                if (numericValue < minValue) {
+                    isValid = false;
+                    errorMessage = "Значение не может быть меньше " + minValue;
+                } else if (numericValue > maxValue) {
+                    isValid = false;
+                    errorMessage = "Значение не может быть больше " + maxValue;
+                }
+
+                if (!isValid) {
+                    showValidationError(errorMessage);
+                    // Можно также сбросить значение на предыдущее валидное или граничное
+                    // characteristic.setValue(...);
+                }
+
+            } catch (NumberFormatException e) {
+                // Если значение не числовое, показываем ошибку
+                showValidationError("Введите числовое значение");
+            }
+        }
+
+        private void showValidationError(String message) {
+            // Альтернативный вариант: выделение поля красным
+            editValue.setError(message);
+
+            // Можно также использовать диалог для важных ошибок:
+            /*
+            new AlertDialog.Builder(context)
+                .setTitle("Ошибка ввода")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+            */
+        }
+
+        private String buildDialogMessage(Characteristic characteristic) {
+            StringBuilder message = new StringBuilder();
+
+            String hints = characteristic.getHints();
+            if (hints != null && !hints.trim().isEmpty()) {
+                message.append(hints);
+            }
+
+            // Добавляем информацию о допустимом диапазоне, если есть валидация
+            message.append("\nДопустимый диапазон: ");
+
+            int minValue = characteristic.getMin_value();
+            int maxValue = characteristic.getMax_value();
+
+            message.append("от ").append(minValue).append(" до ").append(maxValue);
+
+            return message.toString();
         }
 
         private void showHelpDialog(String hints) {

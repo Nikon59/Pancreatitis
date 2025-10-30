@@ -329,7 +329,7 @@ public class PatientInformationFragment extends Fragment {
                     String type = baseCursor.getString(3);
                     int min_value = baseCursor.getInt(4);
                     int max_value = baseCursor.getInt(5);
-                    list.add(new Characteristic(name, hint, type, "...", min_value, max_value, android.text.InputType.TYPE_CLASS_TEXT, id));
+                    list.add(new Characteristic(name, hint, type, "", min_value, max_value, android.text.InputType.TYPE_CLASS_TEXT, id));
                 } while (baseCursor.moveToNext());
             }
         } finally {

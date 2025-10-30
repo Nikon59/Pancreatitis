@@ -123,8 +123,6 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                 boolean isValid = true;
                 String errorMessage = null;
 
-                //Toast.makeText(context, String.format("%d <= %d <= %d", minValue, value, maxValue), Toast.LENGTH_LONG).show();
-
                 if (numericValue < minValue) {
                     isValid = false;
                     errorMessage = "Значение не может быть меньше " + minValue;

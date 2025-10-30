@@ -243,9 +243,9 @@ public class PatientInformationFragment extends Fragment {
 
                 // ПРОВЕРЯЕМ есть ли данные в курсоре!
                 if (cursor != null && cursor.moveToFirst()) {
-                    String fullName = cursor.getString(cursor.getColumnIndexOrThrow("fio"));
-                    String completionDate = cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion"));
-                    String admittedFrom = cursor.getString(cursor.getColumnIndexOrThrow("admitted_from"));
+                    String fullName = cursor.getString(0);
+                    String completionDate = cursor.getString(1);
+                    String admittedFrom = cursor.getString(2);
 
                     list.add(new Characteristic("Full Name", "","", fullName, 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
                     list.add(new Characteristic("Date of completion","", "", completionDate, 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
@@ -268,9 +268,9 @@ public class PatientInformationFragment extends Fragment {
     }
 
     private void addDefaultPatientInfo(List<Characteristic> list) {
-        list.add(new Characteristic("Full Name", "","", "...", 0,0, android.text.InputType.TYPE_CLASS_TEXT, -1));
-        list.add(new Characteristic("Date of completion","", "", "...", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
-        list.add(new Characteristic("Admitted from", "","", "...", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Full Name", "","", "", 0,0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Date of completion","", "", "", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+        list.add(new Characteristic("Admitted from", "","", "", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
     }
 
     private List<Characteristic> loadClinicalInfoFromDB() {
@@ -355,13 +355,13 @@ public class PatientInformationFragment extends Fragment {
                     diagnosis = codeToDiagnosis(diagnosis);
                     list.add(new Characteristic("Diagnosis", "", "", diagnosis, 0,0, android.text.InputType.TYPE_CLASS_TEXT, -1));
                 } else {
-                    list.add(new Characteristic("Diagnosis","", "", "...", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+                    list.add(new Characteristic("Diagnosis","", "", "", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
                 }
             } else {
-                list.add(new Characteristic("Diagnosis", "","", "...", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+                list.add(new Characteristic("Diagnosis", "","", "", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
             }
         } catch (Exception e) {
-            list.add(new Characteristic("Diagnosis","", "", "...", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
+            list.add(new Characteristic("Diagnosis","", "", "", 0, 0, android.text.InputType.TYPE_CLASS_TEXT, -1));
         } finally {
             if (cursor != null) cursor.close();
             database.close();

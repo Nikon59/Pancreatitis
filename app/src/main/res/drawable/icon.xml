@@ -1,0 +1,13 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/rounded_icon_app"/>
+    <item
+        android:width="170dp"
+        android:height="170dp"
+        android:gravity="center">
+        <bitmap
+            android:src="@drawable/stethoscope128"
+            android:tint="@color/colorActive"
+            android:gravity="center" />
+    </item>
+
+</layer-list>

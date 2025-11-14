@@ -306,7 +306,6 @@ public class PatientInformationFragment extends Fragment {
 
         try (SQLiteDatabase database = dbHelper.getReadableDatabase()) {
             for (Characteristic characteristic : characteristics) {
-                //Toast.makeText(getContext(), String.format("%d", characteristic.getId()), Toast.LENGTH_SHORT).show();
                 List<String> options = getOptionsForCharacteristic(database, characteristic.getId());
                 optionsMap.put(characteristic.getId(), options);
             }
@@ -329,7 +328,6 @@ public class PatientInformationFragment extends Fragment {
                 do {
                     int id_value = cursor.getInt(0);
                     String value = cursor.getString(1);
-                    //Toast.makeText(getContext(), String.format("%s", value), Toast.LENGTH_SHORT).show();
                     options.add(value);
                 } while (cursor.moveToNext());
             }

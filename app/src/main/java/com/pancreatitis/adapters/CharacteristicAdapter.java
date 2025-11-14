@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -116,15 +117,11 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
 
         private void setSpinnerSelection(String value) {
             if (value != null) {
-                for (int i = 0; i < spinnerAdapter.getCount(); i++) {
-                    if (value.equals(spinnerAdapter.getItem(i))) {
-                        spinnerValue.setSelection(i);
-                        return;
-                    }
-                }
+                spinnerValue.setSelection(Integer.parseInt(value));
             }
-            // Если значение не найдено, выбираем первую (пустую) опцию
-            spinnerValue.setSelection(0);
+            else {
+                spinnerValue.setSelection(0);
+            }
         }
 
         private void setupSpinnerListener(Characteristic characteristic) {

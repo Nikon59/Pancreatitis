@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.DatabaseHelper;
 import com.pancreatitis.DiagnosisPredictor;
 import com.pancreatitis.adapters.CharacteristicAdapter;
+import com.pancreatitis.adapters.CharacteristicAnketAdapter;
 import com.pancreatitis.adapters.DiagnosisAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
 import com.pancreatitis.models.Characteristic;
@@ -32,7 +33,8 @@ public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
-    private CharacteristicAdapter patientInfoAdapter, clinicalInfoAdapter;
+    private CharacteristicAdapter clinicalInfoAdapter;
+    private CharacteristicAnketAdapter patientInfoAdapter;
     private DiagnosisAdapter diagnosisAdapter;
     private int questionnaireId = -1;
     private int questionnairePatientId = -1;
@@ -288,11 +290,51 @@ public class PatientInformationFragment extends Fragment {
         List<Characteristic> clinicalInfo = loadClinicalInfoFromDB();
         List<Characteristic> diagnosisInfo = loadDiagnosisInfoFromDB();
 
-        patientInfoAdapter = new CharacteristicAdapter(patientInfo);
+        patientInfoAdapter = new CharacteristicAnketAdapter(patientInfo);
         clinicalInfoAdapter = new CharacteristicAdapter(clinicalInfo);
         diagnosisAdapter = new DiagnosisAdapter(diagnosisInfo, getDiagnosisOptions());
 
+        // Загружаем опции для клинических характеристик
+        loadCharacteristicOptions(clinicalInfoAdapter, clinicalInfo);
+
         setupRecyclerView();
+    }
+
+    private void loadCharacteristicOptions(CharacteristicAdapter adapter, List<Characteristic> characteristics) {
+        Map<Long, List<String>> optionsMap = new HashMap<>();
+        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
+
+        try (SQLiteDatabase database = dbHelper.getReadableDatabase()) {
+            for (Characteristic characteristic : characteristics) {
+                //Toast.makeText(getContext(), String.format("%d", characteristic.getId()), Toast.LENGTH_SHORT).show();
+                List<String> options = getOptionsForCharacteristic(database, characteristic.getId());
+                optionsMap.put(characteristic.getId(), options);
+            }
+        } finally {
+            dbHelper.close();
+        }
+
+        adapter.setCharacteristicOptionsMap(optionsMap);
+    }
+
+    private List<String> getOptionsForCharacteristic(SQLiteDatabase database, long characteristicId) {
+        List<String> options = new ArrayList<>();
+        options.add("");
+
+        try (Cursor cursor = database.rawQuery(
+                "SELECT id_value, value from ankets_values where id_characteristic = ?",
+                new String[]{String.valueOf(characteristicId)})) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    int id_value = cursor.getInt(0);
+                    String value = cursor.getString(1);
+                    //Toast.makeText(getContext(), String.format("%s", value), Toast.LENGTH_SHORT).show();
+                    options.add(value);
+                } while (cursor.moveToNext());
+            }
+        }
+        return options;
     }
 
     private void setupRecyclerView() {
@@ -309,7 +351,7 @@ public class PatientInformationFragment extends Fragment {
 
     private List<String> getDiagnosisOptions() {
         List<String> options = new ArrayList<>();
-        options.add(""); // Пустая строка для возможности не выбирать диагноз
+        options.add("");
         options.add("Отечный панкреатит");
         options.add("Панкреонекроз среднетяжелое течение");
         options.add("Панкреонекроз тяжелое течение");
@@ -546,6 +588,13 @@ public class PatientInformationFragment extends Fragment {
         return formData;
     }
 
+    private Map<String, Characteristic> getFormData(CharacteristicAnketAdapter adapter) {
+        Map<String, Characteristic> formData = new HashMap<>();
+        for (Characteristic characteristic : adapter.getCharacteristics()) {
+            formData.put(characteristic.getTitle(), characteristic);
+        }
+        return formData;
+    }
     private Map<String, Characteristic> getFormData(CharacteristicAdapter adapter) {
         Map<String, Characteristic> formData = new HashMap<>();
         for (Characteristic characteristic : adapter.getCharacteristics()) {

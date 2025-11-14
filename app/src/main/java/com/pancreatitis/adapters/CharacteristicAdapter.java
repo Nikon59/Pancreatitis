@@ -2,13 +2,13 @@ package com.pancreatitis.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,14 +17,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.Characteristic;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAdapter.CharacteristicViewHolder> {
 
     private List<Characteristic> characteristics;
+    private Map<Long, List<String>> characteristicOptionsMap; // Карта опций для каждой характеристики
 
     public CharacteristicAdapter(List<Characteristic> characteristics) {
         this.characteristics = characteristics;
+        this.characteristicOptionsMap = new HashMap<>();
+    }
+
+    public CharacteristicAdapter(List<Characteristic> characteristics, Map<Long, List<String>> optionsMap) {
+        this.characteristics = characteristics;
+        this.characteristicOptionsMap = optionsMap != null ? optionsMap : new HashMap<>();
     }
 
     @NonNull
@@ -56,51 +66,80 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         return characteristics;
     }
 
-    static class CharacteristicViewHolder extends RecyclerView.ViewHolder {
+    public void setCharacteristicOptionsMap(Map<Long, List<String>> optionsMap) {
+        this.characteristicOptionsMap = optionsMap;
+        notifyDataSetChanged();
+    }
+
+    class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
-        private EditText editValue;
+        private Spinner spinnerValue;
         private ImageView btnHelp;
         private Context context;
+        private ArrayAdapter<String> spinnerAdapter;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
-            editValue = itemView.findViewById(R.id.value_characteristic);
+            spinnerValue = itemView.findViewById(R.id.value_characteristic);
             btnHelp = itemView.findViewById(R.id.get_helps);
             context = itemView.getContext();
+
+            // Настраиваем адаптер для Spinner
+            spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, new ArrayList<>());
+            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerValue.setAdapter(spinnerAdapter);
         }
 
         public void bind(Characteristic characteristic) {
             textTitle.setText(characteristic.getTitle());
-            editValue.setText(characteristic.getValue());
-            editValue.setInputType(characteristic.getInputType());
 
-            setupTextWatcher(characteristic);
+            // Получаем опции для этой характеристики
+            List<String> options = characteristicOptionsMap.get(characteristic.getId());
+            if (options == null) {
+                options = new ArrayList<>();
+                // Добавляем пустую опцию по умолчанию
+                options.add("");
+            }
+
+            // Обновляем адаптер Spinner
+            spinnerAdapter.clear();
+            spinnerAdapter.addAll(options);
+            spinnerAdapter.notifyDataSetChanged();
+
+            // Устанавливаем выбранное значение
+            setSpinnerSelection(characteristic.getValue());
+
+            setupSpinnerListener(characteristic);
             setupHelpButton(characteristic);
         }
 
-        private void setupTextWatcher(Characteristic characteristic) {
-            // Clear previous TextWatcher
-            editValue.setTag(null);
-
-            TextWatcher textWatcher = new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    characteristic.setValue(s.toString());
-                    if (btnHelp.getVisibility() == View.VISIBLE) {
-                        validateInput(characteristic, s.toString());
+        private void setSpinnerSelection(String value) {
+            if (value != null) {
+                for (int i = 0; i < spinnerAdapter.getCount(); i++) {
+                    if (value.equals(spinnerAdapter.getItem(i))) {
+                        spinnerValue.setSelection(i);
+                        return;
                     }
+                }
+            }
+            // Если значение не найдено, выбираем первую (пустую) опцию
+            spinnerValue.setSelection(0);
+        }
+
+        private void setupSpinnerListener(Characteristic characteristic) {
+            spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String selectedValue = (String) parent.getItemAtPosition(position);
+                    characteristic.setValue(selectedValue);
                 }
 
                 @Override
-                public void afterTextChanged(Editable s) {}
-            };
-
-            editValue.addTextChangedListener(textWatcher);
-            editValue.setTag(textWatcher);
+                public void onNothingSelected(AdapterView<?> parent) {
+                    characteristic.setValue("");
+                }
+            });
         }
 
         private void setupHelpButton(Characteristic characteristic) {
@@ -112,37 +151,8 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             if (hasHints) {
                 String dialogMessage = buildDialogMessage(characteristic);
                 btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
-
-                // Validate initial value
-                String currentValue = characteristic.getValue();
-                if (currentValue != null && !currentValue.isEmpty()) {
-                    validateInput(characteristic, currentValue);
-                }
             } else {
                 btnHelp.setOnClickListener(null);
-            }
-        }
-
-        private void validateInput(Characteristic characteristic, String value) {
-            if (value == null || value.trim().isEmpty()) {
-                editValue.setError(null);
-                return;
-            }
-
-            try {
-                int numericValue = Integer.parseInt(value);
-                int minValue = characteristic.getMin_value();
-                int maxValue = characteristic.getMax_value();
-
-                if (numericValue < minValue) {
-                    editValue.setError("Value cannot be less than " + minValue);
-                } else if (numericValue > maxValue) {
-                    editValue.setError("Value cannot be greater than " + maxValue);
-                } else {
-                    editValue.setError(null);
-                }
-            } catch (NumberFormatException e) {
-                editValue.setError("Please enter a valid number");
             }
         }
 
@@ -154,17 +164,23 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                 message.append(hints);
             }
 
-            message.append("\n\nAllowed range: ")
-                    .append(characteristic.getMin_value())
-                    .append(" to ")
-                    .append(characteristic.getMax_value());
+            // Показываем доступные опции
+            List<String> options = characteristicOptionsMap.get(characteristic.getId());
+            if (options != null && !options.isEmpty()) {
+                message.append("\n\nДоступные варианты:");
+                for (String option : options) {
+                    if (!option.isEmpty()) {
+                        message.append("\n• ").append(option);
+                    }
+                }
+            }
 
             return message.toString();
         }
 
         private void showHelpDialog(String message) {
             new AlertDialog.Builder(context)
-                    .setTitle("Help")
+                    .setTitle("Справка")
                     .setMessage(message)
                     .setPositiveButton("OK", null)
                     .show();

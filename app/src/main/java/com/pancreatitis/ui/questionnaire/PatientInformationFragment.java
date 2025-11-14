@@ -56,7 +56,6 @@ public class PatientInformationFragment extends Fragment {
         setupClickListeners();
         return view;
     }
-
     private void receiveArguments() {
         Bundle args = getArguments();
         if (args != null) {
@@ -64,7 +63,6 @@ public class PatientInformationFragment extends Fragment {
             questionnairePatientId = args.getInt("questionnairePatientId", -1);
         }
     }
-
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recycler_view_characteristics);
         btnSave = view.findViewById(R.id.btn_save);
@@ -72,7 +70,6 @@ public class PatientInformationFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         loadAndDisplayData();
     }
-
     private void setupClickListeners() {
         btnPredict.setOnClickListener(v -> handlePrediction());
         btnSave.setOnClickListener(v -> handleSave());
@@ -97,7 +94,6 @@ public class PatientInformationFragment extends Fragment {
             dbHelper.close();
         }
     }
-
     private boolean validateClinicalDataForPrediction() {
         List<Characteristic> clinicalCharacteristics = clinicalInfoAdapter.getCharacteristics();
 
@@ -124,7 +120,6 @@ public class PatientInformationFragment extends Fragment {
         }
         return true;
     }
-
     private void displayPredictionResults(Map<Integer, Float> probs) {
         float p1 = probs.getOrDefault(1, 0f);
         float p5 = probs.getOrDefault(5, 0f);
@@ -174,7 +169,6 @@ public class PatientInformationFragment extends Fragment {
             }
         }
     }
-
     private boolean validateSaveData() {
         // Validate required patient information
         List<Characteristic> patientInfo = patientInfoAdapter.getCharacteristics();
@@ -212,7 +206,6 @@ public class PatientInformationFragment extends Fragment {
 
         return true;
     }
-
     private long saveOrUpdatePatient(SQLiteDatabase database) {
         Map<String, Characteristic> patientInfo = getFormData(patientInfoAdapter);
         String patientName = patientInfo.get("Full Name").getValue();
@@ -235,7 +228,6 @@ public class PatientInformationFragment extends Fragment {
         // Create new patient
         return createNewPatient(database, patientName);
     }
-
     private long saveOrUpdateAnket(SQLiteDatabase database, long patientId) {
         Map<String, Characteristic> patientInfo = getFormData(patientInfoAdapter);
         Map<String, Characteristic> diagnosisInfo = getFormData(diagnosisAdapter);
@@ -259,7 +251,6 @@ public class PatientInformationFragment extends Fragment {
             return newAnketId;
         }
     }
-
     private void saveOrUpdateCharacteristics(SQLiteDatabase database, long anketId) {
         Map<String, Characteristic> clinicalInfo = getFormData(clinicalInfoAdapter);
 
@@ -299,7 +290,6 @@ public class PatientInformationFragment extends Fragment {
 
         setupRecyclerView();
     }
-
     private void loadCharacteristicOptions(CharacteristicAdapter adapter, List<Characteristic> characteristics) {
         Map<Long, List<String>> optionsMap = new HashMap<>();
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
@@ -315,7 +305,6 @@ public class PatientInformationFragment extends Fragment {
 
         adapter.setCharacteristicOptionsMap(optionsMap);
     }
-
     private List<String> getOptionsForCharacteristic(SQLiteDatabase database, long characteristicId) {
         List<String> options = new ArrayList<>();
         options.add("");
@@ -334,7 +323,6 @@ public class PatientInformationFragment extends Fragment {
         }
         return options;
     }
-
     private void setupRecyclerView() {
         TitleAdapter title1 = new TitleAdapter("Информация о пациенте");
         TitleAdapter title2 = new TitleAdapter("Клинические характеристики");
@@ -346,7 +334,6 @@ public class PatientInformationFragment extends Fragment {
 
         recyclerView.setAdapter(concatAdapter);
     }
-
     private List<String> getDiagnosisOptions() {
         List<String> options = new ArrayList<>();
         options.add("");
@@ -365,7 +352,6 @@ public class PatientInformationFragment extends Fragment {
                     cursor.getLong(cursor.getColumnIndexOrThrow("id")) : -1;
         }
     }
-
     private long createNewPatient(SQLiteDatabase database, String patientName) {
         ContentValues patientValues = new ContentValues();
         patientValues.put("fio", patientName);
@@ -376,7 +362,6 @@ public class PatientInformationFragment extends Fragment {
         }
         return patientId;
     }
-
     private ContentValues createAnketValues(Map<String, Characteristic> patientInfo,
                                             Map<String, Characteristic> diagnosisInfo,
                                             long patientId) {
@@ -398,7 +383,6 @@ public class PatientInformationFragment extends Fragment {
         values.put("admitted_from", patientInfo.get("Admitted from").getValue());
         return values;
     }
-
     private ContentValues createCharacteristicValues(Characteristic characteristic, long anketId) {
         ContentValues values = new ContentValues();
         values.put("id_characteristic", characteristic.getId());
@@ -438,13 +422,11 @@ public class PatientInformationFragment extends Fragment {
         createAllRequiredPatientFields(list);
         return list;
     }
-
     private void createAllRequiredPatientFields(List<Characteristic> list) {
         for (String fieldName : REQUIRED_PATIENT_FIELDS) {
             list.add(createCharacteristic(fieldName, ""));
         }
     }
-
     private Characteristic createCharacteristic(String title, String value) {
         return new Characteristic(title, "", "", value, 0, 0,
                 android.text.InputType.TYPE_CLASS_TEXT, -1);
@@ -474,7 +456,6 @@ public class PatientInformationFragment extends Fragment {
 
         return list;
     }
-
     private void loadAllBaseCharacteristics(SQLiteDatabase database, List<Characteristic> list) {
         try (Cursor baseCursor = database.rawQuery(
                 "SELECT id, opis, hints, type, min_value, max_value FROM characteristic ORDER BY id", null)) {
@@ -499,7 +480,6 @@ public class PatientInformationFragment extends Fragment {
             }
         }
     }
-
     private void fillExistingClinicalValues(SQLiteDatabase database, List<Characteristic> characteristics) {
         // Заполняем значениями из существующей анкеты
         try (Cursor cursor = database.rawQuery(
@@ -524,7 +504,6 @@ public class PatientInformationFragment extends Fragment {
             }
         }
     }
-
     private void createFallbackClinicalCharacteristics(List<Characteristic> list) {
         // Создаем полный набор характеристик (все отображаются, даже если БД недоступна)
         list.add(new Characteristic("Возраст", "Возраст пациента", "numeric", "", 0, 120,
@@ -585,7 +564,6 @@ public class PatientInformationFragment extends Fragment {
         }
         return formData;
     }
-
     private Map<String, Characteristic> getFormData(CharacteristicAnketAdapter adapter) {
         Map<String, Characteristic> formData = new HashMap<>();
         for (Characteristic characteristic : adapter.getCharacteristics()) {
@@ -600,7 +578,6 @@ public class PatientInformationFragment extends Fragment {
         }
         return formData;
     }
-
     private Map<String, Characteristic> getFormData(DiagnosisAdapter adapter) {
         Map<String, Characteristic> formData = new HashMap<>();
         for (Characteristic characteristic : adapter.getCharacteristics()) {
@@ -624,7 +601,6 @@ public class PatientInformationFragment extends Fragment {
         map.put("6", "Панкреонекроз тяжелое течение");
         return map;
     }
-
     private static Map<String, String> createDiagnosisCodeMap() {
         Map<String, String> map = new HashMap<>();
         map.put("Отечный панкреатит", "1");
@@ -632,11 +608,9 @@ public class PatientInformationFragment extends Fragment {
         map.put("Панкреонекроз тяжелое течение", "6");
         return map;
     }
-
     private String codeToDiagnosis(String code) {
         return DIAGNOSIS_MAP.getOrDefault(code, "");
     }
-
     private String diagnosisToCode(String diagnosis) {
         return DIAGNOSIS_CODE_MAP.getOrDefault(diagnosis, "");
     }
@@ -646,7 +620,6 @@ public class PatientInformationFragment extends Fragment {
     private void showMessage(String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
-
     private void showError(String error) {
         Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
     }

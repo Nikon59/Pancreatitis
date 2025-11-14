@@ -48,8 +48,12 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
 
     @Override
     public void onBindViewHolder(@NonNull CharacteristicViewHolder holder, int position) {
-        Characteristic characteristic = characteristics.get(position);
-        holder.bind(characteristic);
+        try {
+            Characteristic characteristic = characteristics.get(position);
+            holder.bind(characteristic);
+        } catch (Exception e) {
+            Toast.makeText(holder.context, e.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -93,51 +97,60 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         }
 
         public void bind(Characteristic characteristic) {
-            textTitle.setText(characteristic.getTitle());
+            try {
+                textTitle.setText(characteristic.getTitle());
 
-            // Получаем опции для этой характеристики
-            List<String> options = characteristicOptionsMap.get(characteristic.getId());
-            if (options == null) {
-                options = new ArrayList<>();
-                // Добавляем пустую опцию по умолчанию
-                options.add("");
+                // Получаем опции для этой характеристики
+                List<String> options = characteristicOptionsMap.get(characteristic.getId());
+                if (options == null) {
+                    options = new ArrayList<>();
+                    options.add("");
+                }
+
+                // Обновляем адаптер Spinner
+                spinnerAdapter.clear();
+                spinnerAdapter.addAll(options);
+                spinnerAdapter.notifyDataSetChanged();
+
+                // Устанавливаем выбранное значение
+                setSpinnerSelection(characteristic);
+
+                //setupSpinnerListener(characteristic);
+                setupHelpButton(characteristic);
+
+            } catch (Exception e) {
+                Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
             }
-
-            // Обновляем адаптер Spinner
-            spinnerAdapter.clear();
-            spinnerAdapter.addAll(options);
-            spinnerAdapter.notifyDataSetChanged();
-
-            // Устанавливаем выбранное значение
-            setSpinnerSelection(characteristic.getValue());
-
-            setupSpinnerListener(characteristic);
-            setupHelpButton(characteristic);
         }
 
-        private void setSpinnerSelection(String value) {
-            if (value != null && !value.equals("")) {
-                spinnerValue.setSelection(Integer.parseInt(value));
-            }
-            else {
+        private void setSpinnerSelection(Characteristic characteristic) {
+            try {
+                spinnerValue.setSelection(Integer.parseInt(characteristic.getValue()));
+            } catch (Exception e) {
+                Toast.makeText(context, characteristic.getValue(), Toast.LENGTH_SHORT).show();
                 spinnerValue.setSelection(0);
             }
         }
 
-        private void setupSpinnerListener(Characteristic characteristic) {
-            spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    String selectedValue = (String) parent.getItemAtPosition(position);
-                    characteristic.setValue(selectedValue);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    characteristic.setValue("");
-                }
-            });
-        }
+//        private void setupSpinnerListener(Characteristic characteristic) {
+//            spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                @Override
+//                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//                    try {
+//                        String selectedValue = (String) parent.getItemAtPosition(position);
+//                        // Обновляем значение в характеристике
+//                        //characteristic.setValue(selectedValue);
+//                    } catch (Exception e) {
+//                        Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show();
+//                    }
+//                }
+//
+//                @Override
+//                public void onNothingSelected(AdapterView<?> parent) {
+//                    characteristic.setValue("");
+//                }
+//            });
+//        }
 
         private void setupHelpButton(Characteristic characteristic) {
             String hints = characteristic.getHints();

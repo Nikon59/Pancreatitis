@@ -116,7 +116,7 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         }
 
         private void setSpinnerSelection(String value) {
-            if (value != null) {
+            if (value != null && !value.equals("")) {
                 spinnerValue.setSelection(Integer.parseInt(value));
             }
             else {

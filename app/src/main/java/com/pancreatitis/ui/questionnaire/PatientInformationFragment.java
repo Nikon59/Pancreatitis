@@ -285,7 +285,6 @@ public class PatientInformationFragment extends Fragment {
         clinicalInfoAdapter = new CharacteristicAdapter(clinicalInfo);
         diagnosisAdapter = new DiagnosisAdapter(diagnosisInfo, getDiagnosisOptions());
 
-        // Загружаем опции для клинических характеристик
         loadCharacteristicOptions(clinicalInfoAdapter, clinicalInfo);
 
         setupRecyclerView();
@@ -307,16 +306,15 @@ public class PatientInformationFragment extends Fragment {
     }
     private List<String> getOptionsForCharacteristic(SQLiteDatabase database, long characteristicId) {
         List<String> options = new ArrayList<>();
-        options.add("");
+        options.add("Нет данных");
 
         try (Cursor cursor = database.rawQuery(
-                "SELECT id_value, value from ankets_values where id_characteristic = ?",
+                "SELECT value from ankets_values where id_characteristic = ? order by id_value",
                 new String[]{String.valueOf(characteristicId)})) {
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
-                    int id_value = cursor.getInt(0);
-                    String value = cursor.getString(1);
+                    String value = cursor.getString(0);
                     options.add(value);
                 } while (cursor.moveToNext());
             }

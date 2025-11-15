@@ -18,6 +18,7 @@ import com.pancreatitis.R;
 import com.pancreatitis.models.Characteristic;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CharacteristicAnketAdapter extends RecyclerView.Adapter<CharacteristicAnketAdapter.CharacteristicViewHolder> {
 
@@ -56,24 +57,36 @@ public class CharacteristicAnketAdapter extends RecyclerView.Adapter<Characteris
         return characteristics;
     }
 
+    public void lockFieldByTitle(String fieldTitle) {
+        for (int i = 0; i < characteristics.size(); i++) {
+            Characteristic characteristic = characteristics.get(i);
+            if (Objects.equals(characteristic.getTitle(), fieldTitle)) {
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     static class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
         private EditText editValue;
         private ImageView btnHelp;
-        private Context context;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
             editValue = itemView.findViewById(R.id.value_characteristic);
             btnHelp = itemView.findViewById(R.id.get_helps);
-            context = itemView.getContext();
         }
 
         public void bind(Characteristic characteristic) {
             textTitle.setText(characteristic.getTitle());
             editValue.setText(characteristic.getValue());
             editValue.setInputType(characteristic.getInputType());
+
+            if (Objects.equals(characteristic.getTitle(), "Full Name") && characteristic.getValue() != null && !Objects.equals(characteristic.getValue(), "")) {
+                editValue.setEnabled(false);
+            }
 
             setupTextWatcher(characteristic);
             setupHelpButton(characteristic);
@@ -90,9 +103,6 @@ public class CharacteristicAnketAdapter extends RecyclerView.Adapter<Characteris
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     characteristic.setValue(s.toString());
-                    if (btnHelp.getVisibility() == View.VISIBLE) {
-                        validateInput(characteristic, s.toString());
-                    }
                 }
 
                 @Override
@@ -106,68 +116,7 @@ public class CharacteristicAnketAdapter extends RecyclerView.Adapter<Characteris
         private void setupHelpButton(Characteristic characteristic) {
             String hints = characteristic.getHints();
             boolean hasHints = hints != null && !hints.trim().isEmpty();
-
             btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
-
-            if (hasHints) {
-                String dialogMessage = buildDialogMessage(characteristic);
-                btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
-
-                // Validate initial value
-                String currentValue = characteristic.getValue();
-                if (currentValue != null && !currentValue.isEmpty()) {
-                    validateInput(characteristic, currentValue);
-                }
-            } else {
-                btnHelp.setOnClickListener(null);
-            }
-        }
-
-        private void validateInput(Characteristic characteristic, String value) {
-            if (value == null || value.trim().isEmpty()) {
-                editValue.setError(null);
-                return;
-            }
-
-            try {
-                int numericValue = Integer.parseInt(value);
-                int minValue = characteristic.getMin_value();
-                int maxValue = characteristic.getMax_value();
-
-                if (numericValue < minValue) {
-                    editValue.setError("Value cannot be less than " + minValue);
-                } else if (numericValue > maxValue) {
-                    editValue.setError("Value cannot be greater than " + maxValue);
-                } else {
-                    editValue.setError(null);
-                }
-            } catch (NumberFormatException e) {
-                editValue.setError("Please enter a valid number");
-            }
-        }
-
-        private String buildDialogMessage(Characteristic characteristic) {
-            StringBuilder message = new StringBuilder();
-
-            String hints = characteristic.getHints();
-            if (hints != null && !hints.trim().isEmpty()) {
-                message.append(hints);
-            }
-
-            message.append("\n\nAllowed range: ")
-                    .append(characteristic.getMin_value())
-                    .append(" to ")
-                    .append(characteristic.getMax_value());
-
-            return message.toString();
-        }
-
-        private void showHelpDialog(String message) {
-            new AlertDialog.Builder(context)
-                    .setTitle("Help")
-                    .setMessage(message)
-                    .setPositiveButton("OK", null)
-                    .show();
         }
     }
 }

@@ -121,7 +121,7 @@ public class DiagnosisPredictor {
     // --- Загрузка характеристик из SQLiteDatabase ---
     private List<CharacteristicPredict> loadCharacteristics(SQLiteDatabase db) {
         List<CharacteristicPredict> list = new ArrayList<>();
-        String sql = "SELECT id, name, type, weight, min_value, max_value FROM characteristic ORDER BY id";
+        String sql = "SELECT id, opis, type, weight, min_value, max_value FROM characteristic ORDER BY id";
         Cursor c = null;
         try {
             c = db.rawQuery(sql, null);
@@ -129,7 +129,7 @@ public class DiagnosisPredictor {
                 do {
                     CharacteristicPredict ch = new CharacteristicPredict();
                     ch.id = c.getInt(c.getColumnIndexOrThrow("id"));
-                    ch.name = c.getString(c.getColumnIndexOrThrow("name"));
+                    ch.name = c.getString(c.getColumnIndexOrThrow("opis"));
                     ch.type = c.getString(c.getColumnIndexOrThrow("type"));
                     ch.weight = c.getInt(c.getColumnIndexOrThrow("weight"));
                     ch.minValue = c.getInt(c.getColumnIndexOrThrow("min_value"));

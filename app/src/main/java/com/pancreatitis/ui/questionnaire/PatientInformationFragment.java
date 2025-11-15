@@ -1,5 +1,6 @@
 package com.pancreatitis.ui.questionnaire;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -105,18 +106,6 @@ public class PatientInformationFragment extends Fragment {
                 showError("Для предсказания необходимо заполнить ВСЕ клинические характеристики");
                 return false;
             }
-
-            try {
-                int numericValue = Integer.parseInt(value);
-                if (!isValueInRange(numericValue, characteristic.getMin_value(), characteristic.getMax_value())) {
-                    showError(String.format("Значение для '%s' должно быть от %d до %d",
-                            characteristic.getTitle(), characteristic.getMin_value(), characteristic.getMax_value()));
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                showError("Пожалуйста, введите корректные числовые значения для всех клинических характеристик");
-                return false;
-            }
         }
         return true;
     }
@@ -125,8 +114,8 @@ public class PatientInformationFragment extends Fragment {
         float p5 = probs.getOrDefault(5, 0f);
         float p6 = probs.getOrDefault(6, 0f);
 
-        String result = String.format("Результаты предсказания:\nОтечный панкреатит: %.5f\nСреднетяжелый панкреонекроз: %.5f\nТяжелый панкреонекроз: %.5f", p1, p5, p6);
-        showMessage(result);
+        String result = String.format("Отечный панкреатит: %.5f\nСреднетяжелый панкреонекроз: %.5f\nТяжелый панкреонекроз: %.5f", p1, p5, p6);
+        showHelpDialog("Предсказание", result);
     }
 
     // ========== SAVE HANDLING ==========
@@ -155,6 +144,7 @@ public class PatientInformationFragment extends Fragment {
             if (questionnaireId == -1) {
                 questionnaireId = (int) anketId;
                 questionnairePatientId = (int) patientId;
+                patientInfoAdapter.lockFieldByTitle("Full Name");
             }
 
         } catch (Exception e) {
@@ -179,31 +169,6 @@ public class PatientInformationFragment extends Fragment {
                 return false;
             }
         }
-
-        // Diagnosis is now optional - можно сохранять без диагноза
-        // Нет проверки на заполненность диагноза
-
-        // Clinical characteristics are optional for saving, but if filled - validate them
-        List<Characteristic> clinicalInfo = clinicalInfoAdapter.getCharacteristics();
-        for (Characteristic characteristic : clinicalInfo) {
-            String value = characteristic.getValue();
-            // Проверяем только заполненные характеристики
-            if (value != null && !value.trim().isEmpty()) {
-                try {
-                    int numericValue = Integer.parseInt(value);
-                    if (!isValueInRange(numericValue, characteristic.getMin_value(), characteristic.getMax_value())) {
-                        showError(String.format("Значение для '%s' должно быть от %d до %d",
-                                characteristic.getTitle(), characteristic.getMin_value(), characteristic.getMax_value()));
-                        return false;
-                    }
-                } catch (NumberFormatException e) {
-                    showError("Пожалуйста, введите корректные числовые значения для клинических характеристик");
-                    return false;
-                }
-            }
-            // Пустые характеристики пропускаем - они не обязательны
-        }
-
         return true;
     }
     private long saveOrUpdatePatient(SQLiteDatabase database) {
@@ -553,7 +518,7 @@ public class PatientInformationFragment extends Fragment {
     private Map<String, DiagnosisPredictor.ValueWithType> getFormDataForPrediction(CharacteristicAdapter adapter) {
         Map<String, DiagnosisPredictor.ValueWithType> formData = new HashMap<>();
         for (Characteristic characteristic : adapter.getCharacteristics()) {
-            // Для предсказания используем только заполненные характеристики
+
             if (characteristic.getValue() != null && !characteristic.getValue().trim().isEmpty()) {
                 formData.put(characteristic.getTitle(),
                         new DiagnosisPredictor.ValueWithType(characteristic.getType(),
@@ -620,5 +585,12 @@ public class PatientInformationFragment extends Fragment {
     }
     private void showError(String error) {
         Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+    }
+    private void showHelpDialog(String title, String message) {
+        new AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 }

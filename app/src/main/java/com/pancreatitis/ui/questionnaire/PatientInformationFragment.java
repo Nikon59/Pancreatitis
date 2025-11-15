@@ -299,7 +299,7 @@ public class PatientInformationFragment extends Fragment {
     }
     private List<String> getDiagnosisOptions() {
         List<String> options = new ArrayList<>();
-        options.add("");
+        options.add("Нет данных");
         options.add("Отечный панкреатит");
         options.add("Панкреонекроз среднетяжелое течение");
         options.add("Панкреонекроз тяжелое течение");

@@ -402,8 +402,7 @@ public class PatientInformationFragment extends Fragment {
             }
 
         } catch (Exception e) {
-            // В случае ошибки создаем fallback характеристики
-            createFallbackClinicalCharacteristics(list);
+            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
         } finally {
             dbHelper.close();
         }

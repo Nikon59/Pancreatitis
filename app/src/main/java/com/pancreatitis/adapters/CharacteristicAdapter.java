@@ -111,7 +111,6 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
 
                 // Устанавливаем выбранное значение
                 setSpinnerSelection(characteristic);
-
                 setupHelpButton(characteristic);
 
             } catch (Exception e) {

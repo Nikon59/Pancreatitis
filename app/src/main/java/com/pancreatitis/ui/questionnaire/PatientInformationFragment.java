@@ -321,8 +321,8 @@ public class PatientInformationFragment extends Fragment {
                                             long patientId) {
         ContentValues values = new ContentValues();
         values.put("id_patient", patientId);
-        values.put("id_doctor", 2); // Default doctor ID
-        values.put("id_expert", 1); // Default expert ID
+        values.put("id_doctor", 3); // Default doctor ID
+        values.put("id_expert", -1); // Default expert ID
 
         // Получаем выбранный диагноз (может быть пустой строкой)
         String selectedDiagnosis = diagnosisInfo.get("Diagnosis").getValue();

@@ -87,8 +87,8 @@ public class AllQuestionnaireFragment extends Fragment {
         List<QuestionnaireItem> questionnaireItems = new ArrayList<>();
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         SQLiteDatabase database = dbHelper.getReadableDatabase();
-        String query = "select ankets.id,patients.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id order by patients.fio";
-        Cursor cursor = database.rawQuery(query, null);
+        String query = "select ankets.id,patients.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id where ankets.id_doctor = ? order by patients.fio";
+        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(3)});
         if (cursor.moveToFirst()) {
             do {
                 int id = cursor.getInt(0);

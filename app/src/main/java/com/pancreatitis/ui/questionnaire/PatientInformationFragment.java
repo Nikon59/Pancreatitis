@@ -175,15 +175,6 @@ public class PatientInformationFragment extends Fragment {
         Map<String, Characteristic> patientInfo = getFormData(patientInfoAdapter);
         String patientName = patientInfo.get("Full Name").getValue();
 
-        if (questionnairePatientId != -1) {
-            // Update existing patient
-            ContentValues patientValues = new ContentValues();
-            patientValues.put("fio", patientName);
-            database.update("patients", patientValues, "id = ?",
-                    new String[]{String.valueOf(questionnairePatientId)});
-            return questionnairePatientId;
-        }
-
         // Check if patient exists
         long patientId = getPatientIdByName(database, patientName);
         if (patientId != -1) {
@@ -437,9 +428,6 @@ public class PatientInformationFragment extends Fragment {
                             baseCursor.getLong(0) // id
                     ));
                 } while (baseCursor.moveToNext());
-            } else {
-                // Если нет характеристик в БД, создаем минимальный набор
-                createFallbackClinicalCharacteristics(list);
             }
         }
     }
@@ -466,20 +454,6 @@ public class PatientInformationFragment extends Fragment {
                 } while (cursor.moveToNext());
             }
         }
-    }
-    private void createFallbackClinicalCharacteristics(List<Characteristic> list) {
-        // Создаем полный набор характеристик (все отображаются, даже если БД недоступна)
-        list.add(new Characteristic("Возраст", "Возраст пациента", "numeric", "", 0, 120,
-                android.text.InputType.TYPE_CLASS_NUMBER, 1));
-        list.add(new Characteristic("Температура", "Температура тела", "numeric", "", 30, 45,
-                android.text.InputType.TYPE_CLASS_NUMBER, 2));
-        list.add(new Characteristic("Лейкоциты", "Уровень лейкоцитов", "numeric", "", 0, 50,
-                android.text.InputType.TYPE_CLASS_NUMBER, 3));
-        list.add(new Characteristic("Амилаза", "Уровень амилазы", "numeric", "", 0, 1000,
-                android.text.InputType.TYPE_CLASS_NUMBER, 4));
-        list.add(new Characteristic("Липаза", "Уровень липазы", "numeric", "", 0, 500,
-                android.text.InputType.TYPE_CLASS_NUMBER, 5));
-        // Добавьте все остальные необходимые характеристики
     }
 
     // ========== DIAGNOSIS INFO LOADING ==========

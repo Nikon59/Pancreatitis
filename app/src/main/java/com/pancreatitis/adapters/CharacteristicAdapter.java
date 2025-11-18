@@ -109,13 +109,29 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
                 spinnerAdapter.addAll(options);
                 spinnerAdapter.notifyDataSetChanged();
 
-                // Устанавливаем выбранное значение
                 setSpinnerSelection(characteristic);
+                setupSpinnerListener(characteristic);
                 setupHelpButton(characteristic);
 
             } catch (Exception e) {
                 Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
             }
+        }
+
+        private void setupSpinnerListener(Characteristic characteristic) {
+            spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    // Сохраняем индекс выбранного элемента в characteristic.value
+                    characteristic.setValue(String.valueOf(position));
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    // Если ничего не выбрано, устанавливаем значение по умолчанию (0)
+                    characteristic.setValue("0");
+                }
+            });
         }
 
         private void setSpinnerSelection(Characteristic characteristic) {

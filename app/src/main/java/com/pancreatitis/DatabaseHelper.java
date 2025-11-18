@@ -32,9 +32,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         File file = new File(DB_PATH);
 
-        if (file.exists()){
-            return;
-        }
+//        if (file.exists()){
+//            return;
+//        }
 
         try(InputStream myInput = myContext.getAssets().open(DB_NAME);
             OutputStream myOutput = new FileOutputStream(DB_PATH)) {

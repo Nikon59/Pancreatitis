@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.Modules;
 import com.pancreatitis.models.*;
-import com.pancreatitis.modules.*;
 import com.pancreatitis.adapters.QuestionnaireAdapter;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.database.DatabaseModule;

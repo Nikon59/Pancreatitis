@@ -29,10 +29,6 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         this.characteristics = characteristics;
     }
 
-    public CharacteristicAdapter(List<CharacterizationAnketPatient> characteristics) {
-        this.characteristics = characteristics;
-    }
-
     @NonNull
     @Override
     public CharacteristicViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

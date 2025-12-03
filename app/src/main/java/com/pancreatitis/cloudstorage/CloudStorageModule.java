@@ -1,6 +1,7 @@
-package cloudstorage;
+package com.pancreatitis.cloudstorage;
 
-import registration.RegistrationModule;
+import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.registration.RegistrationModule;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -102,7 +103,7 @@ public class CloudStorageModule {
         }
     }
 
-    public boolean uploadRegistrationRequest(Main.RegistrationForm requestForm) {
+    public boolean uploadRegistrationRequest(RegistrationForm requestForm) {
         try {
             String fileName = requestForm.getLogin() + ".json";
             String filePath = "/registration_requests/" + fileName;

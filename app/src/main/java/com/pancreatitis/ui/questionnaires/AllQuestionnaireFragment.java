@@ -17,10 +17,12 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pancreatitis.Modules;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.*;
 import com.pancreatitis.adapters.QuestionnaireAdapter;
 import com.pancreatitis.R;
+import com.pancreatitis.modules.database.DatabaseModule;
 
 import java.util.*;
 
@@ -49,7 +51,6 @@ public class AllQuestionnaireFragment extends Fragment {
         searchBar = view.findViewById(R.id.search_bar);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Инициализируем адаптер ПЕРЕД установкой слушателей
         adapter = new QuestionnaireAdapter(questionnaireList, new QuestionnaireAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Questionnaire questionnaire) {
@@ -76,38 +77,12 @@ public class AllQuestionnaireFragment extends Fragment {
     }
 
     private void loadQuestionnaires() {
-        List<QuestionnaireItem> tempData = loadFromDatabase();
+        Modules modules = (Modules) requireActivity().getApplication();
+        DatabaseModule databaseModule = modules.getDatabaseModule();
+        List<Questionnaire> tempData = databaseModule.getAllQuestionnaires();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.updateData(questionnaireList); // Используем метод updateData адаптера
-    }
-
-    private List<QuestionnaireItem> loadFromDatabase() {
-        List<QuestionnaireItem> questionnaireItems = new ArrayList<>();
-        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
-        SQLiteDatabase database = dbHelper.getReadableDatabase();
-        String query = "select ankets.id,patients.id,patients.fio,ankets.diagnosis from ankets join patients on ankets.id_patient = patients.id where ankets.id_doctor = ? order by patients.fio";
-        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(3)});
-        if (cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(0);
-                int patientId = cursor.getInt(1);
-                String fio = cursor.getString(2);
-                String diagnosis = cursor.getString(3);
-                questionnaireItems.add(new QuestionnaireItem(id, patientId, fio, codeToDiagnosis(diagnosis)));
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        database.close();
-        return questionnaireItems;
-    }
-
-    private String codeToDiagnosis(String code){
-        Map<String, String> diagnosisMap = new HashMap<>();
-        diagnosisMap.put("1", "Отечный панкреатит");
-        diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
-        diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
-        return diagnosisMap.getOrDefault(code, "-");
     }
 
     @Override

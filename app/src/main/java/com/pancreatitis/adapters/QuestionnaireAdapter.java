@@ -34,7 +34,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
         } else {
             String q = query.toLowerCase();
             for (Questionnaire s : questionnaireList) {
-                if (s != null && s.getPatientName().toLowerCase().contains(q)) {
+                if (s != null && s.getPatient().getFio().toLowerCase().contains(q)) {
                     filtered_questionnaireList.add(s);
                 }
             }
@@ -88,7 +88,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
         }
 
         public void bind(final Questionnaire questionnaire, final OnItemClickListener listener) {
-            textPatientName.setText(questionnaire.getPatientName());
+            textPatientName.setText(questionnaire.getPatient().getFio());
             textDiagnosis.setText(
                    questionnaire.getDiagnosis().length() > 30
                             ? questionnaire.getDiagnosis().substring(0, 30)
@@ -112,8 +112,8 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
 
             // Создаем Bundle для передачи данных
             Bundle args = new Bundle();
-            args.putInt("questionnaireId", questionnaire.getId());
-            args.putInt("questionnairePatientId", questionnaire.getPatientId());
+            args.putInt("questionnaireId", (int)questionnaire.getId());
+            args.putInt("questionnairePatientId", (int)questionnaire.getPatient().getId());
             //args.putString("diagnosis", questionnaire.getDiagnosis());
 
             // Выполняем переход с аргументами

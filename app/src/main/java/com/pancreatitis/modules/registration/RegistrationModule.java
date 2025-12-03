@@ -1,8 +1,8 @@
-package com.pancreatitis.registration;
+package com.pancreatitis.modules.registration;
 
 import com.pancreatitis.models.RegistrationForm;
 
-import com.pancreatitis.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 
 public class RegistrationModule {
     public boolean submitRegistrationRequest(RegistrationForm registrationForm){

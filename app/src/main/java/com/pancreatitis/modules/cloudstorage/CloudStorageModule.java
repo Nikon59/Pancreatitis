@@ -1,16 +1,12 @@
-package com.pancreatitis.cloudstorage;
+package com.pancreatitis.modules.cloudstorage;
 
 import com.pancreatitis.models.RegistrationForm;
-import com.pancreatitis.registration.RegistrationModule;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";

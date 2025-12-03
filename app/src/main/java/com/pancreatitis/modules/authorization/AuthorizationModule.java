@@ -1,7 +1,7 @@
-package com.pancreatitis.authorization;
+package com.pancreatitis.modules.authorization;
 
-import com.pancreatitis.cloudstorage.CloudStorageModule;
-import com.pancreatitis.safety.SafetyModule;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.safety.SafetyModule;
 
 import javax.crypto.SecretKey;
 

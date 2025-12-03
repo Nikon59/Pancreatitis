@@ -12,7 +12,7 @@ public class Questionnaire {
     private LocalDateTime dateOfCompletion;
     private String admittedFrom;
     private LocalDateTime lastModified;
-    List<CharacterizationAnketPatient> characterizationAnketPatients;
+    private List<CharacterizationAnketPatient> characterizationAnketPatients;
 
     // Конструкторы
     public Questionnaire() {}
@@ -65,6 +65,14 @@ public class Questionnaire {
 
     public String getDiagnosis() { return codeToDiagnosis(diagnosis); }
     public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
+
+    private String codeToDiagnosis(String code){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("1", "Отечный панкреатит");
+        diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
+        return diagnosisMap.getOrDefault(code, "-");
+    }
 
     public LocalDateTime getDateOfCompletion() { return dateOfCompletion; }
     public void setDateOfCompletion(LocalDateTime dateOfCompletion) { this.dateOfCompletion = dateOfCompletion; }

@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.modules.database.DatabaseHelper;
-import com.pancreatitis.DiagnosisPredictor;
+import com.pancreatitis.modules.prediction.DiagnosisPredictor;
 import com.pancreatitis.adapters.CharacteristicAdapter;
 import com.pancreatitis.adapters.CharacteristicAnketAdapter;
 import com.pancreatitis.adapters.DiagnosisAdapter;
@@ -79,10 +79,6 @@ public class PatientInformationFragment extends Fragment {
     // ========== PREDICTION HANDLING ==========
 
     private void handlePrediction() {
-        if (!validateClinicalDataForPrediction()) {
-            return;
-        }
-
         DatabaseHelper dbHelper = new DatabaseHelper(getContext());
         try (SQLiteDatabase database = dbHelper.getReadableDatabase()) {
             Map<String, DiagnosisPredictor.ValueWithType> patientChars = getFormDataForPrediction(clinicalInfoAdapter);
@@ -94,20 +90,6 @@ public class PatientInformationFragment extends Fragment {
         } finally {
             dbHelper.close();
         }
-    }
-    private boolean validateClinicalDataForPrediction() {
-        List<Characteristic> clinicalCharacteristics = clinicalInfoAdapter.getCharacteristics();
-
-        // Для предсказания нужны ВСЕ клинические характеристики
-        for (Characteristic characteristic : clinicalCharacteristics) {
-            String value = characteristic.getValue();
-
-            if (value == null || value.trim().isEmpty()) {
-                showError("Для предсказания необходимо заполнить ВСЕ клинические характеристики");
-                return false;
-            }
-        }
-        return true;
     }
     private void displayPredictionResults(Map<Integer, Float> probs) {
         float p1 = probs.getOrDefault(1, 0f);

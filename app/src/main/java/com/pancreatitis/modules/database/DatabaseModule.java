@@ -20,6 +20,11 @@ public class DatabaseModule {
     public DatabaseModule(Context context){
         dbHelper = new DatabaseHelper(context);
         database = dbHelper.getReadableDatabase();
+        dbHelper.create_db();
+    }
+
+    public void initWork(){
+
     }
 
     // ========== Characteristic ==========

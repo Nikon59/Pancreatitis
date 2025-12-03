@@ -17,7 +17,8 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pancreatitis.modules.database.DatabaseHelper;
+import com.pancreatitis.models.*;
+import com.pancreatitis.modules.*;
 import com.pancreatitis.adapters.QuestionnaireAdapter;
 import com.pancreatitis.R;
 
@@ -29,7 +30,7 @@ public class AllQuestionnaireFragment extends Fragment {
     private QuestionnaireAdapter adapter;
     private Button btn_anket;
     private EditText searchBar;
-    private List<QuestionnaireItem> questionnaireList = new ArrayList<>();
+    private List<Questionnaire> questionnaireList = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,8 +52,7 @@ public class AllQuestionnaireFragment extends Fragment {
         // Инициализируем адаптер ПЕРЕД установкой слушателей
         adapter = new QuestionnaireAdapter(questionnaireList, new QuestionnaireAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(QuestionnaireItem questionnaire) {
-                // Вызываем navigateToAnketFragment при клике на анкету
+            public void onItemClick(Questionnaire questionnaire) {
             }
         });
 

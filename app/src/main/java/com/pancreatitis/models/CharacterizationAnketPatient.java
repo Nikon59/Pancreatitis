@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public class CharacterizationAnketPatient {
     private long idAnket;
-    private Integer value;
+    private int value;
     private LocalDateTime lastModified;
     private Characteristic characteristic;
 
@@ -15,7 +15,7 @@ public class CharacterizationAnketPatient {
     public CharacterizationAnketPatient() {}
 
     public CharacterizationAnketPatient(long idAnket,
-                                        Integer value, LocalDateTime lastModified) {
+                                        int value, LocalDateTime lastModified) {
         this.idAnket = idAnket;
         this.value = value;
         this.lastModified = lastModified;
@@ -25,8 +25,8 @@ public class CharacterizationAnketPatient {
     public long getIdAnket() { return idAnket; }
     public void setIdAnket(long idAnket) { this.idAnket = idAnket; }
 
-    public Integer getValue() { return value; }
-    public void setValue(Integer value) { this.value = value; }
+    public int getValue() { return value; }
+    public void setValue(int value) { this.value = value; }
 
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }

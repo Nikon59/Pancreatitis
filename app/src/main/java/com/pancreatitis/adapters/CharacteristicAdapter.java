@@ -16,27 +16,21 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
-import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.models.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAdapter.CharacteristicViewHolder> {
 
-    private List<Characteristic> characteristics;
-    private Map<Long, List<String>> characteristicOptionsMap; // Карта опций для каждой характеристики
+    private List<CharacterizationAnketPatient> characteristics;
 
-    public CharacteristicAdapter(List<Characteristic> characteristics) {
+    public CharacteristicAdapter(List<CharacterizationAnketPatient> characteristics) {
         this.characteristics = characteristics;
-        this.characteristicOptionsMap = new HashMap<>();
     }
 
-    public CharacteristicAdapter(List<Characteristic> characteristics, Map<Long, List<String>> optionsMap) {
+    public CharacteristicAdapter(List<CharacterizationAnketPatient> characteristics) {
         this.characteristics = characteristics;
-        this.characteristicOptionsMap = optionsMap != null ? optionsMap : new HashMap<>();
     }
 
     @NonNull
@@ -50,7 +44,7 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
     @Override
     public void onBindViewHolder(@NonNull CharacteristicViewHolder holder, int position) {
         try {
-            Characteristic characteristic = characteristics.get(position);
+            CharacterizationAnketPatient characteristic = characteristics.get(position);
             holder.bind(characteristic);
         } catch (Exception e) {
             Toast.makeText(holder.context, e.toString(), Toast.LENGTH_LONG).show();
@@ -62,19 +56,14 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
         return characteristics.size();
     }
 
-    public void updateData(List<Characteristic> newCharacteristics) {
+    public void updateData(List<CharacterizationAnketPatient> newCharacteristics) {
         characteristics.clear();
         characteristics.addAll(newCharacteristics);
         notifyDataSetChanged();
     }
 
-    public List<Characteristic> getCharacteristics() {
+    public List<CharacterizationAnketPatient> getCharacteristics() {
         return characteristics;
-    }
-
-    public void setCharacteristicOptionsMap(Map<Long, List<String>> optionsMap) {
-        this.characteristicOptionsMap = optionsMap;
-        notifyDataSetChanged();
     }
 
     class CharacteristicViewHolder extends RecyclerView.ViewHolder {
@@ -97,12 +86,15 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             spinnerValue.setAdapter(spinnerAdapter);
         }
 
-        public void bind(Characteristic characteristic) {
+        public void bind(CharacterizationAnketPatient characteristic) {
             try {
-                textTitle.setText(characteristic.getTitle());
+                textTitle.setText(characteristic.getCharacteristic().getOpis());
 
                 // Получаем опции для этой характеристики
-                List<String> options = characteristicOptionsMap.get(characteristic.getId());
+                List<String> options = characteristic.getCharacteristic().getCharacterizationValue()
+                        .stream()
+                        .map(CharacterizationValue::getValue)
+                        .collect(Collectors.toList());
 
                 // Обновляем адаптер Spinner
                 spinnerAdapter.clear();
@@ -118,32 +110,27 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             }
         }
 
-        private void setupSpinnerListener(Characteristic characteristic) {
+        private void setupSpinnerListener(CharacterizationAnketPatient characteristic) {
             spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     // Сохраняем индекс выбранного элемента в characteristic.value
-                    characteristic.setValue(String.valueOf(position));
+                    characteristic.setValue(position);
                 }
 
                 @Override
                 public void onNothingSelected(AdapterView<?> parent) {
-                    // Если ничего не выбрано, устанавливаем значение по умолчанию (0)
-                    characteristic.setValue("0");
+                    characteristic.setValue(0);
                 }
             });
         }
 
-        private void setSpinnerSelection(Characteristic characteristic) {
-            if (characteristic.getValue() != null && !Objects.equals(characteristic.getValue(), "")) {
-                spinnerValue.setSelection(Integer.parseInt(characteristic.getValue()));
-            } else {
-                spinnerValue.setSelection(0);
-            }
+        private void setSpinnerSelection(CharacterizationAnketPatient characteristic) {
+            spinnerValue.setSelection(characteristic.getValue());
         }
 
-        private void setupHelpButton(Characteristic characteristic) {
-            String hints = characteristic.getHints();
+        private void setupHelpButton(CharacterizationAnketPatient characteristic) {
+            String hints = characteristic.getCharacteristic().getHints();
             boolean hasHints = hints != null && !hints.trim().isEmpty();
 
             btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
@@ -156,16 +143,19 @@ public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAd
             }
         }
 
-        private String buildDialogMessage(Characteristic characteristic) {
+        private String buildDialogMessage(CharacterizationAnketPatient characteristic) {
             StringBuilder message = new StringBuilder();
 
-            String hints = characteristic.getHints();
+            String hints = characteristic.getCharacteristic().getHints();
             if (hints != null && !hints.trim().isEmpty()) {
                 message.append(hints);
             }
 
             // Показываем доступные опции
-            List<String> options = characteristicOptionsMap.get(characteristic.getId());
+            List<String> options = characteristic.getCharacteristic().getCharacterizationValue()
+                    .stream()
+                    .map(CharacterizationValue::getValue)
+                    .collect(Collectors.toList());
             if (options != null && !options.isEmpty()) {
                 message.append("\n\nДоступные варианты:");
                 for (String option : options) {

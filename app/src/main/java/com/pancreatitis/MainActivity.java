@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.pancreatitis.modules.database.DatabaseModule;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,8 +15,6 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
-import com.pancreatitis.modules.database.DatabaseHelper;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
-        databaseHelper.create_db();
+        Modules modules = (Modules) getApplicationContext();
+        DatabaseModule databaseModule = modules.getDatabaseModule();
+        databaseModule.initWork();
 
         // Убираем ActionBar
         if (getSupportActionBar() != null) {

@@ -1,4 +1,4 @@
-package com.pancreatitis;
+package com.pancreatitis.modules.prediction;
 
 import android.content.Context;
 import android.database.Cursor;

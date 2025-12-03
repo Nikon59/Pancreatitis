@@ -1,5 +1,8 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -64,5 +67,15 @@ public class Characteristic {
     }
     public void setCharacterizationValue(List<CharacterizationValue> characterizationValues) {
         this.characterizationValues = characterizationValues;
+    }
+
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
+    }
+
+    public static Characteristic fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, Characteristic.class);
     }
 }

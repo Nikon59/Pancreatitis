@@ -1,4 +1,6 @@
 package com.pancreatitis.models;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RegistrationForm {
     private String login;
@@ -16,22 +18,13 @@ public class RegistrationForm {
         return login;
     }
 
-    public String toJson() {
-        // Простая реализация JSON сериализации
-        return String.format(
-                "{\"login\":\"%s\",\"fullName\":\"%s\",\"email\":\"%s\"}",
-                escapeJson(login),
-                escapeJson(fullName),
-                escapeJson(email)
-        );
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
     }
 
-    private String escapeJson(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+    public static RegistrationForm fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, RegistrationForm.class);
     }
 }

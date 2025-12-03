@@ -1,5 +1,8 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -27,6 +30,15 @@ public class Questionnaire {
         this.dateOfCompletion = dateOfCompletion;
         this.admittedFrom = admittedFrom;
         this.lastModified = lastModified;
+    }
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
+    }
+
+    public static Questionnaire fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, Questionnaire.class);
     }
 
     private String codeToDiagnosis(String code){

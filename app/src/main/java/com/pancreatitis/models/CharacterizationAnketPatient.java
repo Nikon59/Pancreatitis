@@ -1,5 +1,8 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 
 public class CharacterizationAnketPatient {
@@ -34,5 +37,15 @@ public class CharacterizationAnketPatient {
 
     public void setCharacteristic(Characteristic characteristic) {
         this.characteristic = characteristic;
+    }
+
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
+    }
+
+    public static CharacterizationAnketPatient fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, CharacterizationAnketPatient.class);
     }
 }

@@ -16,7 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pancreatitis.DatabaseHelper;
+import com.pancreatitis.modules.database.DatabaseHelper;
 import com.pancreatitis.DiagnosisPredictor;
 import com.pancreatitis.adapters.CharacteristicAdapter;
 import com.pancreatitis.adapters.CharacteristicAnketAdapter;

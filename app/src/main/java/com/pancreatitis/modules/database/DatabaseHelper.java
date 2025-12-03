@@ -1,4 +1,4 @@
-package com.pancreatitis;
+package com.pancreatitis.modules.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

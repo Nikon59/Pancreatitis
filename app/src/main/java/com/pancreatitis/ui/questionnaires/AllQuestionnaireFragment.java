@@ -17,9 +17,8 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pancreatitis.DatabaseHelper;
+import com.pancreatitis.modules.database.DatabaseHelper;
 import com.pancreatitis.adapters.QuestionnaireAdapter;
-import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.R;
 
 import java.util.*;

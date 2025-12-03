@@ -11,7 +11,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
-import com.pancreatitis.models.QuestionnaireItem;
+import com.pancreatitis.models.Questionnaire;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,12 @@ import java.util.Objects;
 
 public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdapter.QuestionnaireViewHolder> {
 
-    private List<QuestionnaireItem> questionnaireList;
-    private List<QuestionnaireItem> filtered_questionnaireList;
+    private List<Questionnaire> questionnaireList;
+    private List<Questionnaire> filtered_questionnaireList;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(QuestionnaireItem questionnaire);
+        void onItemClick(Questionnaire questionnaire);
     }
 
     public void filter(String query) {
@@ -33,7 +33,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
             filtered_questionnaireList.addAll(questionnaireList);
         } else {
             String q = query.toLowerCase();
-            for (QuestionnaireItem s : questionnaireList) {
+            for (Questionnaire s : questionnaireList) {
                 if (s != null && s.getPatientName().toLowerCase().contains(q)) {
                     filtered_questionnaireList.add(s);
                 }
@@ -42,13 +42,13 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
         notifyDataSetChanged();
     }
 
-    public QuestionnaireAdapter(List<QuestionnaireItem> questionnaireList, OnItemClickListener listener) {
+    public QuestionnaireAdapter(List<Questionnaire> questionnaireList, OnItemClickListener listener) {
         this.questionnaireList = new ArrayList<>(questionnaireList); // Создаем копию
         this.filtered_questionnaireList = new ArrayList<>(questionnaireList); // Инициализируем полный список
         this.listener = listener;
     }
 
-    public void updateData(List<QuestionnaireItem> newQuestionnaires) {
+    public void updateData(List<Questionnaire> newQuestionnaires) {
         this.questionnaireList.clear();
         this.questionnaireList.addAll(newQuestionnaires);
         this.filtered_questionnaireList.clear();
@@ -66,7 +66,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
 
     @Override
     public void onBindViewHolder(@NonNull QuestionnaireViewHolder holder, int position) {
-        QuestionnaireItem questionnaire = filtered_questionnaireList.get(position);
+        Questionnaire questionnaire = filtered_questionnaireList.get(position);
         holder.bind(questionnaire, listener);
     }
 
@@ -87,7 +87,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
             textStatus = itemView.findViewById(R.id.text_status);
         }
 
-        public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
+        public void bind(final Questionnaire questionnaire, final OnItemClickListener listener) {
             textPatientName.setText(questionnaire.getPatientName());
             textDiagnosis.setText(
                    questionnaire.getDiagnosis().length() > 30
@@ -107,7 +107,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
             });
         }
 
-        private void navigateToAnketFragment(View view, QuestionnaireItem questionnaire) {
+        private void navigateToAnketFragment(View view, Questionnaire questionnaire) {
             NavController navController = Navigation.findNavController(view);
 
             // Создаем Bundle для передачи данных

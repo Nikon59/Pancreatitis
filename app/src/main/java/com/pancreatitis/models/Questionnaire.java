@@ -90,7 +90,6 @@ public class Questionnaire {
     public List<CharacterizationAnketPatient> getCharacterizationAnketPatients() {
         return characterizationAnketPatients;
     }
-
     public void setCharacterizationAnketPatients(List<CharacterizationAnketPatient> characterizationAnketPatients) {
         this.characterizationAnketPatients = characterizationAnketPatients;
     }

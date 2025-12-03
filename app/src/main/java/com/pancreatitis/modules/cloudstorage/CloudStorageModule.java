@@ -1,5 +1,6 @@
 package com.pancreatitis.modules.cloudstorage;
 
+import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
 
 import java.io.*;
@@ -73,6 +74,51 @@ public class CloudStorageModule {
         return downloadFileAsBytes(downloadUrl);
     }
 
+    public boolean uploadQuestionnaire(Questionnaire questionnaire, String login) throws Exception {
+        String jsonData = questionnaire.toJson();
+
+        String fileName = login + "_update" + questionnaire.getId() + ".json";
+        String filePath = "/update/" + fileName;
+
+        String uploadUrl = getUploadUrl(filePath, true);
+        if (uploadUrl == null) {
+            System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
+            return false;
+        }
+
+        boolean success = uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+
+        return success;
+    }
+
+    public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {
+        String jsonData = registrationForm.toJson();
+
+        String fileName = registrationForm.getLogin() + ".json";
+        String filePath = "/registration_requests/" + fileName;
+
+        String uploadUrl = getUploadUrl(filePath, true);
+        if (uploadUrl == null) {
+            System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
+            return false;
+        }
+
+        boolean success = uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+
+        return success;
+    }
+
+    public byte[] downloadTrainingData() throws Exception {
+        String filePath = "/algorithm.txt";
+        String downloadUrl = getDownloadUrl(filePath);
+
+        if (downloadUrl == null) {
+            throw new FileNotFoundException("File not found: " + filePath);
+        }
+
+        return downloadFileAsBytes(downloadUrl);
+    }
+
     private byte[] downloadFileAsBytes(String downloadUrl) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(downloadUrl).openConnection();
         connection.setRequestMethod("GET");
@@ -96,25 +142,6 @@ public class CloudStorageModule {
             }
         } finally {
             connection.disconnect();
-        }
-    }
-
-    public boolean uploadRegistrationRequest(RegistrationForm requestForm) {
-        try {
-            String fileName = requestForm.getLogin() + ".json";
-            String filePath = "/registration_requests/" + fileName;
-
-            // Получаем URL для загрузки
-            String uploadUrl = getUploadUrl(filePath, true);
-            if (uploadUrl == null) {
-                return false;
-            }
-
-            // Конвертируем в JSON и загружаем
-            String jsonData = requestForm.toJson();
-            return uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            return false;
         }
     }
 

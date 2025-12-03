@@ -1,6 +1,7 @@
 package com.pancreatitis.models;
 
 import java.time.LocalDateTime;
+import java.util.*;
 
 public class Characteristic {
     private Integer id;
@@ -12,6 +13,7 @@ public class Characteristic {
     private Integer minValue;
     private Integer maxValue;
     private LocalDateTime lastModified;
+    private List<CharacterizationValue> characterizationValues;
 
     // Конструкторы
     public Characteristic() {}
@@ -56,4 +58,11 @@ public class Characteristic {
 
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
+
+    public List<CharacterizationValue> getCharacterizationValue() {
+        return characterizationValues;
+    }
+    public void setCharacterizationValue(List<CharacterizationValue> characterizationValues) {
+        this.characterizationValues = characterizationValues;
+    }
 }

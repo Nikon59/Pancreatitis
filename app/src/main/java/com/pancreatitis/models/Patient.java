@@ -3,7 +3,7 @@ package com.pancreatitis.models;
 import java.time.LocalDateTime;
 
 public class Patient {
-    private Integer id;
+    private long id;
     private String fio;
     private LocalDateTime lastModified;
 
@@ -17,8 +17,8 @@ public class Patient {
     }
 
     // Геттеры и сеттеры
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
 
     public String getFio() { return fio; }
     public void setFio(String fio) { this.fio = fio; }

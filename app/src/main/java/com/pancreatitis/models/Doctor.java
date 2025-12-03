@@ -3,7 +3,7 @@ package com.pancreatitis.models;
 import java.time.LocalDateTime;
 
 public class Doctor {
-    private Integer id;
+    private long id;
     private String fio;
     private Boolean status; // Используем Boolean вместо byte[] для BLOB
     private LocalDateTime lastModified;
@@ -19,8 +19,8 @@ public class Doctor {
     }
 
     // Геттеры и сеттеры
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
 
     public String getFio() { return fio; }
     public void setFio(String fio) { this.fio = fio; }

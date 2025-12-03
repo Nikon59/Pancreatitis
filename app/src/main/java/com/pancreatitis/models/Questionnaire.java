@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Questionnaire {
-    private Integer id;
+    private long id;
     private Patient patient;
     private Doctor doctor;
     private Integer idExpert;
@@ -12,9 +12,7 @@ public class Questionnaire {
     private LocalDateTime dateOfCompletion;
     private String admittedFrom;
     private LocalDateTime lastModified;
-
-    private List<CharacterizationValue> characterizationValue;
-    private CharacterizationAnketPatient characterizationAnketPatient;
+    List<CharacterizationAnketPatient> characterizationAnketPatients;
 
     // Конструкторы
     public Questionnaire() {}
@@ -40,9 +38,14 @@ public class Questionnaire {
     }
 
     // Геттеры и сеттеры
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
 
+    public void setIdCharacterizationAnketPatient(){
+        for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
+            cap.setIdAnket(id);
+        }
+    }
     public Patient getPatient() {
         return patient;
     }
@@ -72,17 +75,11 @@ public class Questionnaire {
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
 
-    public List<CharacterizationValue> getCharacterizationValue() {
-        return characterizationValue;
-    }
-    public void setCharacterizationValue(List<CharacterizationValue> characterizationValue) {
-        this.characterizationValue = characterizationValue;
+    public List<CharacterizationAnketPatient> getCharacterizationAnketPatients() {
+        return characterizationAnketPatients;
     }
 
-    public CharacterizationAnketPatient getCharacterizationAnketPatient() {
-        return characterizationAnketPatient;
-    }
-    public void setCharacterizationAnketPatient(CharacterizationAnketPatient characterizationAnketPatient) {
-        this.characterizationAnketPatient = characterizationAnketPatient;
+    public void setCharacterizationAnketPatients(List<CharacterizationAnketPatient> characterizationAnketPatients) {
+        this.characterizationAnketPatients = characterizationAnketPatients;
     }
 }

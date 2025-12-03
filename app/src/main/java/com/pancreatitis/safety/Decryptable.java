@@ -1,4 +1,4 @@
-package safety;
+package com.pancreatitis.safety;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;

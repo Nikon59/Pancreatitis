@@ -129,6 +129,8 @@ public class MainActivity extends AppCompatActivity {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {
             return "Questionnaire Management";
+        } else if (destinationId == R.id.navigation_anket) {
+            return "Questionnaire";
         } else {
             return "Another";
         }

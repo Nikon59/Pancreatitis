@@ -6,4 +6,10 @@
     <string name="title_predict">Predict Diagnosis</string>
     <string name="title_profile">Profile</string>
     <string name="title_helps">Helps</string>
+    <string-array name="spinner_items">
+        <item>Нет данных</item>
+        <item>Отечный панкреатит</item>
+        <item>Панкреонекроз среднетяжелое течение</item>
+        <item>Панкреонекроз тяжелое течение</item>
+    </string-array>
 </resources>

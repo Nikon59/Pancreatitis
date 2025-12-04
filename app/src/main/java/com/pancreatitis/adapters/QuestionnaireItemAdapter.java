@@ -1,11 +1,14 @@
 package com.pancreatitis.adapters;
 
 
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.Questionnaire;
@@ -91,7 +94,26 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
                             ? questionnaire.getDiagnosis().substring(0, 30)
                             : questionnaire.getDiagnosis()
             );
-            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "In Progress" : "Completed");
+            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "In Progress" : "Completed");itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (listener != null) {
+                        listener.onItemClick(questionnaire);
+                    }
+                    navigateToAnketFragment(v, questionnaire);
+                }
+            });
+        }
+
+        private void navigateToAnketFragment(View view, Questionnaire questionnaire) {
+            NavController navController = Navigation.findNavController(view);
+
+            Bundle args = new Bundle();
+            args.putInt("questionnaireId", (int)questionnaire.getId());
+            args.putInt("questionnairePatientId", (int)questionnaire.getPatient().getId());
+            //args.putString("diagnosis", questionnaire.getDiagnosis());
+
+            navController.navigate(R.id.action_questionnaires_to_anket, args);
         }
     }
 }

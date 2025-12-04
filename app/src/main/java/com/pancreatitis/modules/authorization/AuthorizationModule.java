@@ -6,11 +6,18 @@ import com.pancreatitis.modules.safety.SafetyModule;
 import javax.crypto.SecretKey;
 
 public class AuthorizationModule {
-    CloudStorageModule cloudStorageModule;
-    SafetyModule safetyModule;
-    public AuthorizationModule(CloudStorageModule cloudStorageModule, SafetyModule safetyModule){
-        this.cloudStorageModule = cloudStorageModule;
-        this.safetyModule = safetyModule;
+    private static CloudStorageModule cloudStorageModule;
+    private static SafetyModule safetyModule;
+    private static AuthorizationModule instance;
+    private AuthorizationModule(){
+        cloudStorageModule = CloudStorageModule.getInstance();
+        safetyModule = SafetyModule.getInstance();
+    }
+    public static AuthorizationModule getInstance(){
+        if (instance == null) {
+            instance = new AuthorizationModule();
+        }
+        return instance;
     }
     public SecretKey authenticateUser(String login, String password) throws Exception {
         if (!cloudStorageModule.isUserFolderExists(login)){

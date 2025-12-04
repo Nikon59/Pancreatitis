@@ -2,6 +2,7 @@ package com.pancreatitis.modules.cloudstorage;
 
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.modules.database.DatabaseModule;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -12,9 +13,17 @@ import java.nio.charset.StandardCharsets;
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
+    private static CloudStorageModule instance;
 
-    public CloudStorageModule() {
+    private CloudStorageModule() {
         createFolders();
+    }
+
+    public static CloudStorageModule getInstance(){
+        if (instance == null) {
+            instance = new CloudStorageModule();
+        }
+        return instance;
     }
 
     private void createFolders() {

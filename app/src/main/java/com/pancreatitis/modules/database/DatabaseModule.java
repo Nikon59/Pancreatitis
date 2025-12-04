@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.pancreatitis.models.*;
 
@@ -15,9 +16,11 @@ import java.util.*;
 public class DatabaseModule {
     private DatabaseHelper dbHelper;
     private SQLiteDatabase database;
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private Context context;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public DatabaseModule(Context context){
+        this.context = context;
         dbHelper = new DatabaseHelper(context);
         database = dbHelper.getReadableDatabase();
         dbHelper.create_db();
@@ -263,12 +266,22 @@ public class DatabaseModule {
                 } while (cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.e("DatabaseModule", "Error getting ankets", e);
+            Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
         } finally {
             if (cursor != null) {
                 cursor.close();
             }
         }
+
+        // Сортировка списка опираясь на fio пациента
+        Collections.sort(questionnaires, new Comparator<Questionnaire>() {
+            @Override
+            public int compare(Questionnaire q1, Questionnaire q2) {
+                String fio1 = q1.getPatient() != null ? q1.getPatient().getFio() : "";
+                String fio2 = q2.getPatient() != null ? q2.getPatient().getFio() : "";
+                return fio1.compareTo(fio2);
+            }
+        });
 
         return questionnaires;
     }

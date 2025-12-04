@@ -95,29 +95,6 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
                             : questionnaire.getDiagnosis()
             );
             textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "In Progress" : "Completed");
-
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (listener != null) {
-                        listener.onItemClick(questionnaire);
-                    }
-                    navigateToAnketFragment(v, questionnaire);
-                }
-            });
-        }
-
-        private void navigateToAnketFragment(View view, Questionnaire questionnaire) {
-            NavController navController = Navigation.findNavController(view);
-
-            // Создаем Bundle для передачи данных
-            Bundle args = new Bundle();
-            args.putInt("questionnaireId", (int)questionnaire.getId());
-            args.putInt("questionnairePatientId", (int)questionnaire.getPatient().getId());
-            //args.putString("diagnosis", questionnaire.getDiagnosis());
-
-            // Выполняем переход с аргументами
-            navController.navigate(R.id.action_questionnaires_to_anket, args);
         }
     }
 }

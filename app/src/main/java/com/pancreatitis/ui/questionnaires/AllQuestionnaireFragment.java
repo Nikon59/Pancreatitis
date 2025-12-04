@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -34,12 +35,16 @@ public class AllQuestionnaireFragment extends Fragment {
     private List<Questionnaire> questionnaireList = new ArrayList<>();
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_questionnaires, container, false);
 
         initRecyclerView(view);
-        loadQuestionnaires();
+
+        try {
+            loadQuestionnaires();
+        } catch (Exception e){
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_LONG).show();
+        }
 
         return view;
     }
@@ -66,22 +71,21 @@ public class AllQuestionnaireFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        btn_anket.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_questionnaires_to_anket);
-            }
-        });
+//        btn_anket.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                NavController navController = Navigation.findNavController(v);
+//                navController.navigate(R.id.action_questionnaires_to_anket);
+//            }
+//        });
     }
 
     private void loadQuestionnaires() {
-        Modules modules = (Modules) requireActivity().getApplication();
-        DatabaseModule databaseModule = modules.getDatabaseModule();
+        DatabaseModule databaseModule = new DatabaseModule(getContext());
         List<Questionnaire> tempData = databaseModule.getAllQuestionnaires();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
-        adapter.updateData(questionnaireList); // Используем метод updateData адаптера
+        adapter.updateData(questionnaireList);
     }
 
     @Override

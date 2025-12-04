@@ -32,8 +32,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Modules modules = (Modules) getApplicationContext();
-        DatabaseModule databaseModule = modules.getDatabaseModule();
+        DatabaseModule databaseModule = new DatabaseModule(getApplicationContext());
         databaseModule.initWork();
 
         // Убираем ActionBar
@@ -130,8 +129,6 @@ public class MainActivity extends AppCompatActivity {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {
             return "Questionnaire Management";
-        } else if (destinationId == R.id.navigation_anket) {
-            return "Predict Diagnosis";
         } else {
             return "Another";
         }

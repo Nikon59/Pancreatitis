@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Questionnaire {
-    private long id;
-    private Patient patient;
-    private Doctor doctor;
-    private Integer idExpert;
+    private long id = -1;
+    private Patient patient = new Patient();
+    private Doctor doctor = new Doctor();
+    private Integer idExpert = 2;
     private String diagnosis;
     private LocalDateTime dateOfCompletion;
     private String admittedFrom;

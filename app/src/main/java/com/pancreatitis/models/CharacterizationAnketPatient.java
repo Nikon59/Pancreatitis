@@ -6,16 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 
 public class CharacterizationAnketPatient {
-    private long idAnket;
-    private int value;
+    private long idAnket = -1;
+    private int value = -1;
     private LocalDateTime lastModified;
-    private Characteristic characteristic;
+    private Characteristic characteristic = new Characteristic();
 
     // Конструкторы
     public CharacterizationAnketPatient() {}
 
-    public CharacterizationAnketPatient(long idAnket,
-                                        int value, LocalDateTime lastModified) {
+    public CharacterizationAnketPatient(long idAnket, int value, LocalDateTime lastModified) {
         this.idAnket = idAnket;
         this.value = value;
         this.lastModified = lastModified;

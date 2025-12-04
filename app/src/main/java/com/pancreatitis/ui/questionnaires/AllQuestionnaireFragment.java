@@ -11,6 +11,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -66,13 +68,13 @@ public class AllQuestionnaireFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-//        btn_anket.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                NavController navController = Navigation.findNavController(v);
-//                navController.navigate(R.id.action_questionnaires_to_anket);
-//            }
-//        });
+        btn_anket.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavController navController = Navigation.findNavController(v);
+                navController.navigate(R.id.action_questionnaires_to_anket);
+            }
+        });
     }
 
     private void loadQuestionnaires() {

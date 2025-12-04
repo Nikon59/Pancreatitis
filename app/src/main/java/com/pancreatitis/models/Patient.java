@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 
 public class Patient {
-    private long id;
+    private long id = -1;
     private String fio;
     private LocalDateTime lastModified;
 

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 
 public class Doctor {
-    private long id;
+    private long id = -1;
     private String fio;
     private Boolean status; // Используем Boolean вместо byte[] для BLOB
     private LocalDateTime lastModified;

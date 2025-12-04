@@ -6,15 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 
 public class CharacterizationValue {
-    private Integer id;
-    private Integer idCharacteristic;
-    private Integer idValue;
+    private long id = -1;
+    private int idCharacteristic = -1;
+    private int idValue = -1;
     private String value;
     private LocalDateTime lastModified;
 
     // Конструкторы
     public CharacterizationValue() {}
-    public CharacterizationValue(Integer id, Integer idCharacteristic, Integer idValue,
+    public CharacterizationValue(long id, int idCharacteristic, int idValue,
                       String value, LocalDateTime lastModified) {
         this.id = id;
         this.idCharacteristic = idCharacteristic;
@@ -24,14 +24,14 @@ public class CharacterizationValue {
     }
 
     // Геттеры и сеттеры
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
 
-    public Integer getIdCharacteristic() { return idCharacteristic; }
-    public void setIdCharacteristic(Integer idCharacteristic) { this.idCharacteristic = idCharacteristic; }
+    public int getIdCharacteristic() { return idCharacteristic; }
+    public void setIdCharacteristic(int idCharacteristic) { this.idCharacteristic = idCharacteristic; }
 
-    public Integer getIdValue() { return idValue; }
-    public void setIdValue(Integer idValue) { this.idValue = idValue; }
+    public int getIdValue() { return idValue; }
+    public void setIdValue(int idValue) { this.idValue = idValue; }
 
     public String getValue() { return value; }
     public void setValue(String value) { this.value = value; }

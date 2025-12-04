@@ -7,22 +7,22 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Characteristic {
-    private Integer id;
+    private int id = -1;
     private String name;
     private String opis;
     private String type;
     private String hints;
-    private Integer weight;
-    private Integer minValue;
-    private Integer maxValue;
+    private float weight;
+    private float minValue;
+    private float maxValue;
     private LocalDateTime lastModified;
     private List<CharacterizationValue> characterizationValues;
 
     // Конструкторы
     public Characteristic() {}
-    public Characteristic(Integer id, String name, String opis, String type,
-                          String hints, Integer weight, Integer minValue,
-                          Integer maxValue, LocalDateTime lastModified) {
+    public Characteristic(int id, String name, String opis, String type,
+                          String hints, float weight, float minValue,
+                          float maxValue, LocalDateTime lastModified) {
         this.id = id;
         this.name = name;
         this.opis = opis;
@@ -35,8 +35,12 @@ public class Characteristic {
     }
 
     // Геттеры и сеттеры
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -50,14 +54,14 @@ public class Characteristic {
     public String getHints() { return hints; }
     public void setHints(String hints) { this.hints = hints; }
 
-    public Integer getWeight() { return weight; }
-    public void setWeight(Integer weight) { this.weight = weight; }
+    public float getWeight() { return weight; }
+    public void setWeight(float weight) { this.weight = weight; }
 
-    public Integer getMinValue() { return minValue; }
-    public void setMinValue(Integer minValue) { this.minValue = minValue; }
+    public float getMinValue() { return minValue; }
+    public void setMinValue(float minValue) { this.minValue = minValue; }
 
-    public Integer getMaxValue() { return maxValue; }
-    public void setMaxValue(Integer maxValue) { this.maxValue = maxValue; }
+    public float getMaxValue() { return maxValue; }
+    public void setMaxValue(float maxValue) { this.maxValue = maxValue; }
 
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }

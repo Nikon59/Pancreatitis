@@ -19,18 +19,6 @@ public class Questionnaire {
 
     // Конструкторы
     public Questionnaire() {}
-    public Questionnaire(Integer id, Patient patient, Doctor doctor, Integer idExpert,
-                 String diagnosis, LocalDateTime dateOfCompletion, String admittedFrom,
-                 LocalDateTime lastModified) {
-        this.id = id;
-        this.patient = patient;
-        this.doctor = doctor;
-        this.idExpert = idExpert;
-        this.diagnosis = diagnosis;
-        this.dateOfCompletion = dateOfCompletion;
-        this.admittedFrom = admittedFrom;
-        this.lastModified = lastModified;
-    }
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(this);

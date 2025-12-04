@@ -33,5 +33,14 @@
         android:name="com.pancreatitis.ui.questionnaires.AllQuestionnaireFragment"
         android:label="@string/title_questionnaires"
         tools:layout="@layout/fragment_questionnaires">
+
+        <action
+            android:id="@+id/action_questionnaires_to_anket"
+            app:destination="@id/navigation_anket" />
     </fragment>
+
+    <fragment
+        android:id="@+id/navigation_anket"
+        android:name="com.pancreatitis.ui.questionnaire.PatientInformationFragment"
+        android:label="@string/title_predict"/>
 </navigation>

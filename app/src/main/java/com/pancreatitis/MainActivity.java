@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         databaseModule.setContext(getApplicationContext());
+        databaseModule.initWork();
 
         // Убираем ActionBar
         if (getSupportActionBar() != null) {

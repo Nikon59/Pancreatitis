@@ -21,9 +21,6 @@ public class DatabaseModule {
     private static DatabaseModule instance;
 
     private DatabaseModule(){
-        dbHelper = new DatabaseHelper(context);
-        database = dbHelper.getReadableDatabase();
-        dbHelper.create_db();
     }
 
     public static DatabaseModule getInstance(){
@@ -31,6 +28,12 @@ public class DatabaseModule {
             instance = new DatabaseModule();
         }
         return instance;
+    }
+
+    public void initWork(){
+        dbHelper = new DatabaseHelper(context);
+        database = dbHelper.getReadableDatabase();
+        dbHelper.create_db();
     }
 
     public void setContext(Context context) {

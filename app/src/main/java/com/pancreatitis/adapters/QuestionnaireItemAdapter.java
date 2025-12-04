@@ -1,14 +1,11 @@
 package com.pancreatitis.adapters;
 
 
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.Questionnaire;
@@ -17,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdapter.QuestionnaireViewHolder> {
+public class QuestionnaireItemAdapter extends RecyclerView.Adapter<QuestionnaireItemAdapter.QuestionnaireViewHolder> {
 
     private List<Questionnaire> questionnaireList;
     private List<Questionnaire> filtered_questionnaireList;
@@ -42,7 +39,7 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
         notifyDataSetChanged();
     }
 
-    public QuestionnaireAdapter(List<Questionnaire> questionnaireList, OnItemClickListener listener) {
+    public QuestionnaireItemAdapter(List<Questionnaire> questionnaireList, OnItemClickListener listener) {
         this.questionnaireList = new ArrayList<>(questionnaireList); // Создаем копию
         this.filtered_questionnaireList = new ArrayList<>(questionnaireList); // Инициализируем полный список
         this.listener = listener;

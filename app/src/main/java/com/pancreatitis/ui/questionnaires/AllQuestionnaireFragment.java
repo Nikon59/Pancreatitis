@@ -1,7 +1,5 @@
 package com.pancreatitis.ui.questionnaires;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,14 +11,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pancreatitis.Modules;
 import com.pancreatitis.models.*;
-import com.pancreatitis.adapters.QuestionnaireAdapter;
+import com.pancreatitis.adapters.QuestionnaireItemAdapter;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.database.DatabaseModule;
 
@@ -29,7 +24,7 @@ import java.util.*;
 public class AllQuestionnaireFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private QuestionnaireAdapter adapter;
+    private QuestionnaireItemAdapter adapter;
     private Button btn_anket;
     private EditText searchBar;
     private List<Questionnaire> questionnaireList = new ArrayList<>();
@@ -55,7 +50,7 @@ public class AllQuestionnaireFragment extends Fragment {
         searchBar = view.findViewById(R.id.search_bar);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new QuestionnaireAdapter(questionnaireList, new QuestionnaireAdapter.OnItemClickListener() {
+        adapter = new QuestionnaireItemAdapter(questionnaireList, new QuestionnaireItemAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Questionnaire questionnaire) {
             }

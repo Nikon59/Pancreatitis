@@ -1,40 +1,25 @@
 package com.pancreatitis.ui.questionnaire;
 
-import android.app.AlertDialog;
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.modules.database.DatabaseHelper;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.pancreatitis.modules.prediction.DiagnosisPredictor;
-import com.pancreatitis.adapters.CharacteristicAdapter;
-import com.pancreatitis.adapters.TitleAdapter;
-import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
-    private CharacteristicAdapter clinicalInfoAdapter;
+    private CharacteristicItemAdapter clinicalInfoAdapter;
     private Questionnaire questionnaire = null;
     private int questionnaireId = -1;
     private int questionnairePatientId = -1;
@@ -57,7 +42,7 @@ public class PatientInformationFragment extends Fragment {
         if (args != null) {
             questionnaireId = args.getInt("questionnaireId", -1);
             questionnairePatientId = args.getInt("questionnairePatientId", -1);
-            DatabaseModule databaseModule = new DatabaseModule(getContext());
+            DatabaseModule databaseModule = DatabaseModule.getInstance();
             questionnaire = databaseModule.getQuestionnaireById(questionnaireId);
         }
     }

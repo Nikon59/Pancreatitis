@@ -18,15 +18,27 @@ public class DatabaseModule {
     private SQLiteDatabase database;
     private Context context;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static DatabaseModule instance;
 
-    public DatabaseModule(Context context){
-        this.context = context;
-        dbHelper = new DatabaseHelper(context);
-        database = dbHelper.getReadableDatabase();
+    private DatabaseModule(){
+
+    }
+
+    public static DatabaseModule getInstance(){
+        if (instance == null) {
+            instance = new DatabaseModule();
+        }
+        return instance;
     }
 
     public void initWork(){
+        dbHelper = new DatabaseHelper(context);
+        database = dbHelper.getReadableDatabase();
         dbHelper.create_db();
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     // ========== Characteristic ==========

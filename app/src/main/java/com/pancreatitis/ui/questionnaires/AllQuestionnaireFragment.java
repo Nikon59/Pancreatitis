@@ -78,7 +78,7 @@ public class AllQuestionnaireFragment extends Fragment {
     }
 
     private void loadQuestionnaires() {
-        DatabaseModule databaseModule = new DatabaseModule(getContext());
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
         List<Questionnaire> tempData = databaseModule.getAllQuestionnaires();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);

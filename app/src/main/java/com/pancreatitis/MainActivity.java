@@ -32,7 +32,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        DatabaseModule databaseModule = new DatabaseModule(getApplicationContext());
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        databaseModule.setContext(getApplicationContext());
         databaseModule.initWork();
 
         // Убираем ActionBar

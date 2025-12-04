@@ -21,11 +21,11 @@ import com.pancreatitis.models.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CharacteristicAdapter extends RecyclerView.Adapter<CharacteristicAdapter.CharacteristicViewHolder> {
+public class CharacteristicItemAdapter extends RecyclerView.Adapter<CharacteristicItemAdapter.CharacteristicViewHolder> {
 
     private List<CharacterizationAnketPatient> characteristics;
 
-    public CharacteristicAdapter(List<CharacterizationAnketPatient> characteristics) {
+    public CharacteristicItemAdapter(List<CharacterizationAnketPatient> characteristics) {
         this.characteristics = characteristics;
     }
 

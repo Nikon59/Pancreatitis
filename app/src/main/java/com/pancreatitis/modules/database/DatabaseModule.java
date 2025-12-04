@@ -87,25 +87,28 @@ public class DatabaseModule {
             cursor = database.query("characteristic", null, null,null, null, null, null);
 
             if (cursor != null && cursor.moveToFirst()) {
-                Characteristic characteristic = new Characteristic();
-                characteristic.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
-                characteristic.setName(cursor.getString(cursor.getColumnIndexOrThrow("name")));
-                characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
-                characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
-                characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
-                characteristic.setWeight(cursor.getInt(cursor.getColumnIndexOrThrow("weight")));
-                characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
-                characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
+                do {
+                    Characteristic characteristic = new Characteristic();
+                    characteristic.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                    characteristic.setName(cursor.getString(cursor.getColumnIndexOrThrow("name")));
+                    characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
+                    characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
+                    characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
+                    characteristic.setWeight(cursor.getInt(cursor.getColumnIndexOrThrow("weight")));
+                    characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
+                    characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
 
-                String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                if (lastModifiedStr != null) {
-                    characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                }
+                    String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
+                    if (lastModifiedStr != null) {
+                        characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
+                    }
 
-                List<CharacterizationValue> characterizationValues = getCharacterizationValuesForCharacteristic(characteristic.getId());
-                characteristic.setCharacterizationValue(characterizationValues);
+                    List<CharacterizationValue> characterizationValues = getCharacterizationValuesForCharacteristic(characteristic.getId());
+                    characteristic.setCharacterizationValue(characterizationValues);
 
-                characteristics.add(characteristic);
+                    characteristics.add(characteristic);
+
+                } while (cursor.moveToNext());
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting all characteristics", e);

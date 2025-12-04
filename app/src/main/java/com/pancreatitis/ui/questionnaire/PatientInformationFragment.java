@@ -10,11 +10,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
+
+import java.util.*;
 
 public class PatientInformationFragment extends Fragment {
 
@@ -53,11 +57,26 @@ public class PatientInformationFragment extends Fragment {
         btnSave = view.findViewById(R.id.btn_save);
         btnPredict = view.findViewById(R.id.btn_predict);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        //loadAndDisplayData();
+        loadAndDisplayData();
     }
     private void setupClickListeners() {
 //        btnPredict.setOnClickListener(v -> handlePrediction());
 //        btnSave.setOnClickListener(v -> handleSave());
+    }
+
+    private void loadAndDisplayData(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<Characteristic> characteristics = databaseModule.getAllCharacteristics();
+        List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
+        for (Characteristic characteristic: characteristics) {
+            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
+            characterizationAnketPatient.setCharacteristic(characteristic);
+            characterizationAnketPatients.add(characterizationAnketPatient);
+        }
+
+        clinicalInfoAdapter = new CharacteristicItemAdapter(characterizationAnketPatients);
+
+        recyclerView.setAdapter(clinicalInfoAdapter);
     }
 
     // ========== PREDICTION HANDLING ==========

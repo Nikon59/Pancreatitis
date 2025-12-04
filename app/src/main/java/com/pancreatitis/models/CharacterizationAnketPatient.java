@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public class CharacterizationAnketPatient {
     private long idAnket = -1;
-    private int value = -1;
+    private int value = 0;
     private LocalDateTime lastModified;
     private Characteristic characteristic;
 

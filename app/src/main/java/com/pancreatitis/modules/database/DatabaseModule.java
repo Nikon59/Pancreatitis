@@ -23,11 +23,10 @@ public class DatabaseModule {
         this.context = context;
         dbHelper = new DatabaseHelper(context);
         database = dbHelper.getReadableDatabase();
-        dbHelper.create_db();
     }
 
     public void initWork(){
-
+        dbHelper.create_db();
     }
 
     // ========== Characteristic ==========

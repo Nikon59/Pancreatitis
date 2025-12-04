@@ -33,6 +33,6 @@ public class SafetyModule {
         Patient patient = questionnaire.getPatient();
         String ecnrypt_fio = patient.getFio();
         String fio = decryptString(ecnrypt_fio, key);
-        patient.setFio(ecnrypt_fio);
+        patient.setFio(fio);
     }
 }

@@ -9,8 +9,8 @@ public class AuthorizationModule {
     CloudStorageModule cloudStorageModule;
     SafetyModule safetyModule;
     public AuthorizationModule(CloudStorageModule cloudStorageModule, SafetyModule safetyModule){
-        cloudStorageModule = cloudStorageModule;
-        safetyModule = safetyModule;
+        this.cloudStorageModule = cloudStorageModule;
+        this.safetyModule = safetyModule;
     }
     public SecretKey authenticateUser(String login, String password) throws Exception {
         if (!cloudStorageModule.isUserFolderExists(login)){

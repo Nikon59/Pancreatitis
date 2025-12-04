@@ -9,7 +9,7 @@ import java.util.*;
 public class Questionnaire {
     private long id = -1;
     private Patient patient = new Patient();
-    private Doctor doctor = new Doctor();
+    private Doctor doctor = Doctor.getInstance();
     private Integer idExpert = 2;
     private String diagnosis;
     private LocalDateTime dateOfCompletion;

@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
@@ -20,9 +21,8 @@ public class PatientInformationFragment extends Fragment {
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
     private CharacteristicItemAdapter clinicalInfoAdapter;
-    private Questionnaire questionnaire = null;
+    private Questionnaire questionnaire;
     private int questionnaireId = -1;
-    private int questionnairePatientId = -1;
 
     // Обязательные поля Patient Information
     private static final String[] REQUIRED_PATIENT_FIELDS = {
@@ -41,9 +41,11 @@ public class PatientInformationFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             questionnaireId = args.getInt("questionnaireId", -1);
-            questionnairePatientId = args.getInt("questionnairePatientId", -1);
             DatabaseModule databaseModule = DatabaseModule.getInstance();
             questionnaire = databaseModule.getQuestionnaireById(questionnaireId);
+        } else {
+            questionnaire = new Questionnaire();
+            questionnaire.setDoctor(Doctor.getInstance());
         }
     }
     private void initViews(View view) {

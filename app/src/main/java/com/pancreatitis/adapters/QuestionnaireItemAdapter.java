@@ -110,7 +110,6 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
 
             Bundle args = new Bundle();
             args.putInt("questionnaireId", (int)questionnaire.getId());
-            args.putInt("questionnairePatientId", (int)questionnaire.getPatient().getId());
             //args.putString("diagnosis", questionnaire.getDiagnosis());
 
             navController.navigate(R.id.action_questionnaires_to_anket, args);

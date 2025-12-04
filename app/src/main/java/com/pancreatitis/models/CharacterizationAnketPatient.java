@@ -9,7 +9,7 @@ public class CharacterizationAnketPatient {
     private long idAnket = -1;
     private int value = -1;
     private LocalDateTime lastModified;
-    private Characteristic characteristic = new Characteristic();
+    private Characteristic characteristic;
 
     // Конструкторы
     public CharacterizationAnketPatient() {}

@@ -2,6 +2,7 @@ package com.pancreatitis.models;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pancreatitis.modules.database.DatabaseModule;
 
 import java.time.LocalDateTime;
 
@@ -10,15 +11,16 @@ public class Doctor {
     private String fio;
     private Boolean status; // Используем Boolean вместо byte[] для BLOB
     private LocalDateTime lastModified;
+    private static Doctor instance;
 
     // Конструкторы
     public Doctor() {}
 
-    public Doctor(Integer id, String fio, Boolean status, LocalDateTime lastModified) {
-        this.id = id;
-        this.fio = fio;
-        this.status = status;
-        this.lastModified = lastModified;
+    public static Doctor getInstance() {
+        if (instance == null) {
+            instance = new Doctor();
+        }
+        return instance;
     }
 
     // Геттеры и сеттеры

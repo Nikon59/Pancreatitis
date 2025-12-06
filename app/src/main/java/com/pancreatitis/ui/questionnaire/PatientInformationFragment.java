@@ -25,10 +25,9 @@ public class PatientInformationFragment extends Fragment {
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
     private CharacteristicItemAdapter clinicalInfoAdapter;
-    private Questionnaire questionnaire;
-    private int questionnaireId = -1;
+    private int idQuestionnaire, idPatient;
+    private String diagnosis;
 
-    // Обязательные поля Patient Information
     private static final String[] REQUIRED_PATIENT_FIELDS = {
             "Full Name", "Date of completion", "Admitted from"
     };
@@ -44,12 +43,8 @@ public class PatientInformationFragment extends Fragment {
     private void receiveArguments() {
         Bundle args = getArguments();
         if (args != null) {
-            questionnaireId = args.getInt("questionnaireId", -1);
-            DatabaseModule databaseModule = DatabaseModule.getInstance();
-            questionnaire = databaseModule.getQuestionnaireById(questionnaireId);
-        } else {
-            questionnaire = new Questionnaire();
-            questionnaire.setDoctor(Doctor.getInstance());
+            idQuestionnaire = args.getInt("idQuestionnaire", -1);
+            idPatient = args.getInt("idPatient", -1);
         }
     }
     private void initViews(View view) {

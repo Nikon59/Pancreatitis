@@ -2,6 +2,8 @@ package com.pancreatitis.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
+import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
 import com.pancreatitis.models.QuestionnaireInformationItem;
 
@@ -66,23 +69,41 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
 
     class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
-        private EditText editText;
+        private EditText editValue;
         private Context context;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
-            editText = itemView.findViewById(R.id.value_characteristic);
+            editValue = itemView.findViewById(R.id.value_characteristic);
             context = itemView.getContext();
         }
 
         public void bind(QuestionnaireInformationItem questionnaireInformationItem) {
-            try {
-                textTitle.setText(questionnaireInformationItem.getName());
+            textTitle.setText(questionnaireInformationItem.getName());
+            editValue.setText(questionnaireInformationItem.getValue());
 
-            } catch (Exception e) {
-                Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
-            }
+            setupTextWatcher(questionnaireInformationItem);
+        }
+
+        private void setupTextWatcher(QuestionnaireInformationItem questionnaireInformationItem) {
+            editValue.setTag(null);
+
+            TextWatcher textWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    questionnaireInformationItem.setValue(s.toString());
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            };
+
+            editValue.addTextChangedListener(textWatcher);
+            editValue.setTag(textWatcher);
         }
 
         private void showHelpDialog(String message) {

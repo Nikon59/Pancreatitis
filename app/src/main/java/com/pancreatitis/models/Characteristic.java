@@ -13,15 +13,15 @@ public class Characteristic {
     private String type;
     private String hints;
     private float weight;
-    private float minValue;
-    private float maxValue;
+    private int minValue;
+    private int maxValue;
     private LocalDateTime lastModified;
 
     // Конструкторы
     public Characteristic() {}
     public Characteristic(int id, String name, String opis, String type,
-                          String hints, float weight, float minValue,
-                          float maxValue, LocalDateTime lastModified) {
+                          String hints, float weight, int minValue,
+                          int maxValue, LocalDateTime lastModified) {
         this.id = id;
         this.name = name;
         this.opis = opis;
@@ -56,11 +56,11 @@ public class Characteristic {
     public float getWeight() { return weight; }
     public void setWeight(float weight) { this.weight = weight; }
 
-    public float getMinValue() { return minValue; }
-    public void setMinValue(float minValue) { this.minValue = minValue; }
+    public int getMinValue() { return minValue; }
+    public void setMinValue(int minValue) { this.minValue = minValue; }
 
-    public float getMaxValue() { return maxValue; }
-    public void setMaxValue(float maxValue) { this.maxValue = maxValue; }
+    public int getMaxValue() { return maxValue; }
+    public void setMaxValue(int maxValue) { this.maxValue = maxValue; }
 
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }

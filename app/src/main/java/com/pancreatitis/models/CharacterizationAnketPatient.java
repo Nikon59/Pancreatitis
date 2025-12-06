@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 
 public class CharacterizationAnketPatient {
     private long idAnket = -1;
+    private int idCharacteristic = -1;
     private int value = 0;
     private LocalDateTime lastModified;
-    private Characteristic characteristic;
 
     // Конструкторы
     public CharacterizationAnketPatient() {}
@@ -30,12 +30,12 @@ public class CharacterizationAnketPatient {
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
 
-    public Characteristic getCharacteristic() {
-        return characteristic;
+    public int getIdCharacteristic() {
+        return idCharacteristic;
     }
 
-    public void setCharacteristic(Characteristic characteristic) {
-        this.characteristic = characteristic;
+    public void setIdCharacteristic(int idCharacteristic) {
+        this.idCharacteristic = idCharacteristic;
     }
 
     public String toJson() throws JsonProcessingException {

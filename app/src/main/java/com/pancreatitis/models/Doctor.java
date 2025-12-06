@@ -9,19 +9,11 @@ import java.time.LocalDateTime;
 public class Doctor {
     private long id = -1;
     private String fio;
-    private Boolean status; // Используем Boolean вместо byte[] для BLOB
+    private Boolean status;
     private LocalDateTime lastModified;
-    private static Doctor instance;
 
     // Конструкторы
     public Doctor() {}
-
-    public static Doctor getInstance() {
-        if (instance == null) {
-            instance = new Doctor();
-        }
-        return instance;
-    }
 
     // Геттеры и сеттеры
     public long getId() { return id; }

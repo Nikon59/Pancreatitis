@@ -8,14 +8,13 @@ import java.util.*;
 
 public class Questionnaire {
     private long id = -1;
-    private Patient patient = new Patient();
-    private Doctor doctor = Doctor.getInstance();
-    private Integer idExpert = 2;
+    private int idPatient = -1;
+    private int idDoctor = -1;
+    private int idExpert = -1;
     private String diagnosis;
     private LocalDateTime dateOfCompletion;
     private String admittedFrom;
     private LocalDateTime lastModified;
-    private List<CharacterizationAnketPatient> characterizationAnketPatients;
 
     // Конструкторы
     public Questionnaire() {}
@@ -41,23 +40,24 @@ public class Questionnaire {
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-    public void setIdCharacterizationAnketPatient(){
-        for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
-            cap.setIdAnket(id);
-        }
-    }
-    public Patient getPatient() {
-        return patient;
-    }
-    public void setPatient(Patient patient) {
-        this.patient = patient;
+    public int getIdPatient() {
+        return idPatient;
     }
 
-    public Doctor getDoctor() {
-        return doctor;
+    public void setIdPatient(int idPatient) {
+        this.idPatient = idPatient;
     }
-    public void setDoctor(Doctor doctor) {
-        this.doctor = doctor;
+
+    public int getIdDoctor() {
+        return idDoctor;
+    }
+
+    public void setIdDoctor(int idDoctor) {
+        this.idDoctor = idDoctor;
+    }
+
+    public void setIdExpert(int idExpert) {
+        this.idExpert = idExpert;
     }
 
     public Integer getIdExpert() { return idExpert; }
@@ -75,10 +75,4 @@ public class Questionnaire {
     public LocalDateTime getLastModified() { return lastModified; }
     public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
 
-    public List<CharacterizationAnketPatient> getCharacterizationAnketPatients() {
-        return characterizationAnketPatients;
-    }
-    public void setCharacterizationAnketPatients(List<CharacterizationAnketPatient> characterizationAnketPatients) {
-        this.characterizationAnketPatients = characterizationAnketPatients;
-    }
 }

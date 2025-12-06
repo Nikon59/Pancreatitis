@@ -1,0 +1,30 @@
+package com.pancreatitis.models;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class DiagnosisItem {
+    private final String name = "Diagnosis";
+    private final List<String> options = new ArrayList<>(Arrays.asList("Отечный панкреатит", "Панкреонекроз среднетяжелое течение", "Панкреонекроз тяжелое течение"));
+
+    private int value = 0;
+    public DiagnosisItem() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<String> getOptions() {
+        return options;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+}

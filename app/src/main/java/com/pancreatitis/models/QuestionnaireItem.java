@@ -1,5 +1,8 @@
 package com.pancreatitis.models;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class QuestionnaireItem {
     private long idQuestionnaire;
     private int idPatient;
@@ -12,6 +15,14 @@ public class QuestionnaireItem {
         this.idPatient = idPatient;
         this.fioPatient = fioPatient;
         this.diagnosis = diagnosis;
+    }
+
+    private String codeToDiagnosis(String code){
+        Map<String, String> diagnosisMap = new HashMap<>();
+        diagnosisMap.put("1", "Отечный панкреатит");
+        diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
+        diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
+        return diagnosisMap.getOrDefault(code, "-");
     }
 
     public long getIdQuestionnaire() {
@@ -39,7 +50,7 @@ public class QuestionnaireItem {
     }
 
     public String getDiagnosis() {
-        return diagnosis;
+        return codeToDiagnosis(diagnosis);
     }
 
     public void setDiagnosis(String diagnosis) {

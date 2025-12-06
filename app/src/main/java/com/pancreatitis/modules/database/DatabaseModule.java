@@ -56,7 +56,7 @@ public class DatabaseModule {
                 characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
                 characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
                 characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
-                characteristic.setWeight(cursor.getInt(cursor.getColumnIndexOrThrow("weight")));
+                characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                 characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
                 characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
 
@@ -64,9 +64,6 @@ public class DatabaseModule {
                 if (lastModifiedStr != null) {
                     characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
                 }
-
-                List<CharacterizationValue> characterizationValues = getCharacterizationValuesForCharacteristic(id);
-                characteristic.setCharacterizationValue(characterizationValues);
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting characteristic by id: " + id, e);
@@ -94,7 +91,7 @@ public class DatabaseModule {
                     characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
                     characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
                     characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
-                    characteristic.setWeight(cursor.getInt(cursor.getColumnIndexOrThrow("weight")));
+                    characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                     characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
                     characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
 
@@ -102,9 +99,6 @@ public class DatabaseModule {
                     if (lastModifiedStr != null) {
                         characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
                     }
-
-                    List<CharacterizationValue> characterizationValues = getCharacterizationValuesForCharacteristic(characteristic.getId());
-                    characteristic.setCharacterizationValue(characterizationValues);
 
                     characteristics.add(characteristic);
 
@@ -122,7 +116,7 @@ public class DatabaseModule {
     }
 
     // ========== Doctor ==========
-    public Doctor getDoctorById(Integer id_doctor) {
+    public Doctor getDoctorById(int id_doctor) {
         Cursor cursor = null;
         Doctor doctor = null;
 
@@ -156,15 +150,14 @@ public class DatabaseModule {
     private long insertDoctor(Doctor doctor) {
         ContentValues values = new ContentValues();
         values.put("fio", doctor.getFio());
-        values.put("status", doctor.getStatus() != null ? (doctor.getStatus() ? 1 : 0) : null);
-        values.put("last_modified", doctor.getLastModified() != null ?
-                doctor.getLastModified().format(formatter) : null);
+        values.put("status", doctor.getStatus() != null ? (doctor.getStatus() ? 1 : 0) : 0);
+        values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("doctors", null, values);
     }
 
     // ========== Patient ==========
-    public Patient getPatientById(Integer id_patient) {
+    public Patient getPatientById(int id_patient) {
         Cursor cursor = null;
         Patient patient = null;
 
@@ -195,14 +188,13 @@ public class DatabaseModule {
     private long insertPatient(Patient patient) {
         ContentValues values = new ContentValues();
         values.put("fio", patient.getFio());
-        values.put("last_modified", patient.getLastModified() != null ?
-                patient.getLastModified().format(formatter) : null);
+        values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("patients", null, values);
     }
 
     // ========== Questionnaire ==========
-    public Questionnaire getQuestionnaireById(Integer id_questionnaire) {
+    public Questionnaire getQuestionnaireById(int id_questionnaire) {
         Cursor cursor = null;
         Questionnaire questionnaire = null;
 
@@ -213,10 +205,8 @@ public class DatabaseModule {
             if (cursor != null && cursor.moveToFirst()) {
                 questionnaire = new Questionnaire();
                 questionnaire.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
-                Integer id_patient = cursor.getInt(cursor.getColumnIndexOrThrow("id_patient"));
-                questionnaire.setPatient(getPatientById(id_patient));
-                Integer id_doctor = cursor.getInt(cursor.getColumnIndexOrThrow("id_doctor"));
-                questionnaire.setDoctor(getDoctorById(id_doctor));
+                questionnaire.setIdPatient(cursor.getInt(cursor.getColumnIndexOrThrow("id_patient")));
+                questionnaire.setIdDoctor(cursor.getInt(cursor.getColumnIndexOrThrow("id_doctor")));
                 questionnaire.setIdExpert(cursor.getInt(cursor.getColumnIndexOrThrow("id_expert")));
                 questionnaire.setDiagnosis(cursor.getString(cursor.getColumnIndexOrThrow("diagnosis")));
                 questionnaire.setAdmittedFrom(cursor.getString(cursor.getColumnIndexOrThrow("admitted_from")));
@@ -230,9 +220,6 @@ public class DatabaseModule {
                 if (lastModifiedStr != null) {
                     questionnaire.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
                 }
-
-                List<CharacterizationAnketPatient> characterizationAnketPatients = getCharacterizationsForAnket(id_questionnaire);
-                questionnaire.setCharacterizationAnketPatients(characterizationAnketPatients);
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting anket by id: " + id_questionnaire, e);
@@ -243,44 +230,6 @@ public class DatabaseModule {
         }
 
         return questionnaire;
-    }
-    public long insertQuestionnaire(Questionnaire questionnaire) {
-        try {
-            database.beginTransaction();
-
-            Patient patient = questionnaire.getPatient();
-            long id_patient = insertPatient(patient);
-            patient.setId(id_patient);
-
-            Doctor doctor = questionnaire.getDoctor();
-            long id_doctor = insertDoctor(doctor);
-            doctor.setId(id_doctor);
-
-            ContentValues values = new ContentValues();
-            values.put("id_patient", id_patient);
-            values.put("id_doctor", id_doctor);
-            values.put("id_expert", questionnaire.getIdExpert());
-            values.put("diagnosis", questionnaire.getDiagnosis());
-            values.put("date_of_completion", questionnaire.getDateOfCompletion() != null ?
-                    questionnaire.getDateOfCompletion().format(formatter) : null);
-            values.put("admitted_from", questionnaire.getAdmittedFrom());
-            values.put("last_modified", questionnaire.getLastModified() != null ?
-                    questionnaire.getLastModified().format(formatter) : null);
-
-            long id_questionnaire = database.insert("ankets", null, values);
-            questionnaire.setId(id_questionnaire);
-
-            questionnaire.setIdCharacterizationAnketPatient();
-            insertAllCharacterization(questionnaire.getCharacterizationAnketPatients());
-
-            database.setTransactionSuccessful();
-            return id_questionnaire;
-        } catch (Exception e) {
-            Log.e("DatabaseModule", "Error inserting anket", e);
-            return -1;
-        } finally {
-            database.endTransaction();
-        }
     }
     public List<Questionnaire> getAllQuestionnaires() {
         List<Questionnaire> questionnaires = new ArrayList<>();
@@ -293,10 +242,8 @@ public class DatabaseModule {
                 do {
                     Questionnaire questionnaire = new Questionnaire();
                     questionnaire.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
-                    Integer id_patient = cursor.getInt(cursor.getColumnIndexOrThrow("id_patient"));
-                    questionnaire.setPatient(getPatientById(id_patient));
-                    Integer id_doctor = cursor.getInt(cursor.getColumnIndexOrThrow("id_doctor"));
-                    questionnaire.setDoctor(getDoctorById(id_doctor));
+                    questionnaire.setIdPatient(cursor.getInt(cursor.getColumnIndexOrThrow("id_patient")));
+                    questionnaire.setIdDoctor(cursor.getInt(cursor.getColumnIndexOrThrow("id_doctor")));
                     questionnaire.setIdExpert(cursor.getInt(cursor.getColumnIndexOrThrow("id_expert")));
                     questionnaire.setDiagnosis(cursor.getString(cursor.getColumnIndexOrThrow("diagnosis")));
                     questionnaire.setAdmittedFrom(cursor.getString(cursor.getColumnIndexOrThrow("admitted_from")));
@@ -311,9 +258,6 @@ public class DatabaseModule {
                         questionnaire.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
                     }
 
-//                    List<CharacterizationAnketPatient> characterizationAnketPatients = getCharacterizationsForAnket(questionnaire.getId());
-//                    questionnaire.setCharacterizationAnketPatients(characterizationAnketPatients);
-
                     questionnaires.add(questionnaire);
                 } while (cursor.moveToNext());
             }
@@ -324,16 +268,6 @@ public class DatabaseModule {
                 cursor.close();
             }
         }
-
-        // Сортировка списка опираясь на fio пациента
-        Collections.sort(questionnaires, new Comparator<Questionnaire>() {
-            @Override
-            public int compare(Questionnaire q1, Questionnaire q2) {
-                String fio1 = q1.getPatient() != null ? q1.getPatient().getFio() : "";
-                String fio2 = q2.getPatient() != null ? q2.getPatient().getFio() : "";
-                return fio1.compareTo(fio2);
-            }
-        });
 
         return questionnaires;
     }
@@ -346,11 +280,10 @@ public class DatabaseModule {
     }
     private long insertCharacterization(CharacterizationAnketPatient characterization) {
         ContentValues values = new ContentValues();
-        values.put("id_characteristic", characterization.getCharacteristic().getId());
+        values.put("id_characteristic", characterization.getIdCharacteristic());
         values.put("id_anket", characterization.getIdAnket());
         values.put("value", characterization.getValue());
-        values.put("last_modified", characterization.getLastModified() != null ?
-                characterization.getLastModified().format(formatter) : null);
+        values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("characterization_anket_patient", null, values);
     }
@@ -366,16 +299,13 @@ public class DatabaseModule {
                 do {
                     CharacterizationAnketPatient characterization = new CharacterizationAnketPatient();
                     characterization.setIdAnket(cursor.getInt(cursor.getColumnIndexOrThrow("id_anket")));
+                    characterization.setIdCharacteristic(cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic")));
                     characterization.setValue(cursor.getInt(cursor.getColumnIndexOrThrow("value")));
 
                     String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
                     if (lastModifiedStr != null) {
                         characterization.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
                     }
-
-                    Integer id_characteristic = cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic"));
-                    Characteristic characteristic = getCharacteristicById(id_characteristic);
-                    characterization.setCharacteristic(characteristic);
 
                     characterizations.add(characterization);
                 } while (cursor.moveToNext());
@@ -392,7 +322,7 @@ public class DatabaseModule {
     }
 
     // ========== QuestionnaireValue ==========
-    public List<CharacterizationValue> getCharacterizationValuesForCharacteristic(int characteristicId) {
+    public List<CharacterizationValue> getValuesForCharacteristic(int characteristicId) {
         List<CharacterizationValue> values = new ArrayList<>();
         Cursor cursor = null;
 
@@ -429,7 +359,6 @@ public class DatabaseModule {
     }
 
     // ========== Вспомогательные методы ==========
-
     public void close() {
         if (database != null && database.isOpen()) {
             database.close();

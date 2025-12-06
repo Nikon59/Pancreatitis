@@ -55,7 +55,6 @@ public class AllQuestionnaireFragment extends Fragment {
         adapter = new QuestionnaireItemAdapter(questionnaireList, new QuestionnaireItemAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(QuestionnaireItem questionnaire) {
-
             }
         });
 

@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -107,14 +109,17 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         }
 
         private void navigateToAnketFragment(View view, QuestionnaireItem questionnaire) {
-            NavController navController = Navigation.findNavController(view);
+            try {
+                NavController navController = Navigation.findNavController(view);
 
-            Bundle args = new Bundle();
-            args.putInt("idQuestionnaire", (int)questionnaire.getIdQuestionnaire());
-            args.putInt("idPatient", questionnaire.getIdPatient());
-            args.putString("diagnosis", questionnaire.getDiagnosis());
+                Bundle args = new Bundle();
+                args.putInt("idQuestionnaire", (int)questionnaire.getIdQuestionnaire());
+                args.putInt("idPatient", questionnaire.getIdPatient());
 
-            navController.navigate(R.id.action_questionnaires_to_anket, args);
+                navController.navigate(R.id.action_questionnaires_to_anket, args);
+            } catch (Exception e) {
+                Toast.makeText(itemView.getContext(), e.toString(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 }

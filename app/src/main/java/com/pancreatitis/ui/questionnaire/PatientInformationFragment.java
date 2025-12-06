@@ -5,32 +5,31 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.pancreatitis.models.Characteristic;
-import com.pancreatitis.models.CharacterizationAnketPatient;
-import com.pancreatitis.models.Doctor;
-import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.adapters.DiagnosisItemAdapter;
+import com.pancreatitis.adapters.QuestionnaireInformationItemAdapter;
+import com.pancreatitis.adapters.TitleAdapter;
+import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
-    private CharacteristicItemAdapter clinicalInfoAdapter;
+    private CharacteristicItemAdapter characteristicItemAdapter;
+    private QuestionnaireInformationItemAdapter questionnaireInformationItemAdapter;
+    private DiagnosisItemAdapter diagnosisItemAdapter;
     private int idQuestionnaire, idPatient;
-    private String diagnosis;
-
-    private static final String[] REQUIRED_PATIENT_FIELDS = {
-            "Full Name", "Date of completion", "Admitted from"
-    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -48,30 +47,19 @@ public class PatientInformationFragment extends Fragment {
         }
     }
     private void initViews(View view) {
-        recyclerView = view.findViewById(R.id.recycler_view_characteristics);
-        btnSave = view.findViewById(R.id.btn_save);
-        btnPredict = view.findViewById(R.id.btn_predict);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadAndDisplayData();
+        try {
+            recyclerView = view.findViewById(R.id.recycler_view_characteristics);
+            btnSave = view.findViewById(R.id.btn_save);
+            btnPredict = view.findViewById(R.id.btn_predict);
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            loadAndDisplayData();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_LONG).show();
+        }
     }
     private void setupClickListeners() {
 //        btnPredict.setOnClickListener(v -> handlePrediction());
 //        btnSave.setOnClickListener(v -> handleSave());
-    }
-
-    private void loadAndDisplayData(){
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<Characteristic> characteristics = databaseModule.getAllCharacteristics();
-        List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
-        for (Characteristic characteristic: characteristics) {
-            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
-            characterizationAnketPatient.setCharacteristic(characteristic);
-            characterizationAnketPatients.add(characterizationAnketPatient);
-        }
-
-        clinicalInfoAdapter = new CharacteristicItemAdapter(characterizationAnketPatients);
-
-        recyclerView.setAdapter(clinicalInfoAdapter);
     }
 
     // ========== PREDICTION HANDLING ==========
@@ -182,73 +170,74 @@ public class PatientInformationFragment extends Fragment {
 //        }
 //    }
 
-//    // ========== DATA LOADING ==========
-//
-//    private void loadAndDisplayData() {
-//        List<Characteristic> patientInfo = loadPatientInfoFromDB();
-//        List<Characteristic> clinicalInfo = loadClinicalInfoFromDB();
-//        List<Characteristic> diagnosisInfo = loadDiagnosisInfoFromDB();
-//
-//        patientInfoAdapter = new CharacteristicAnketAdapter(patientInfo);
-//        clinicalInfoAdapter = new CharacteristicAdapter(clinicalInfo);
-//        diagnosisAdapter = new DiagnosisAdapter(diagnosisInfo, getDiagnosisOptions());
-//
-//        loadCharacteristicOptions(clinicalInfoAdapter, clinicalInfo);
-//
-//        setupRecyclerView();
-//    }
-//    private void loadCharacteristicOptions(CharacteristicAdapter adapter, List<Characteristic> characteristics) {
-//        Map<Long, List<String>> optionsMap = new HashMap<>();
-//        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
-//
-//        try (SQLiteDatabase database = dbHelper.getReadableDatabase()) {
-//            for (Characteristic characteristic : characteristics) {
-//                List<String> options = getOptionsForCharacteristic(database, characteristic.getId());
-//                optionsMap.put(characteristic.getId(), options);
-//            }
-//        } finally {
-//            dbHelper.close();
-//        }
-//
-//        adapter.setCharacteristicOptionsMap(optionsMap);
-//    }
-//    private List<String> getOptionsForCharacteristic(SQLiteDatabase database, long characteristicId) {
-//        List<String> options = new ArrayList<>();
-//        options.add("Нет данных");
-//
-//        try (Cursor cursor = database.rawQuery(
-//                "SELECT value from ankets_values where id_characteristic = ? order by id_value",
-//                new String[]{String.valueOf(characteristicId)})) {
-//
-//            if (cursor != null && cursor.moveToFirst()) {
-//                do {
-//                    String value = cursor.getString(0);
-//                    options.add(value);
-//                } while (cursor.moveToNext());
-//            }
-//        }
-//        return options;
-//    }
-//    private void setupRecyclerView() {
-//        TitleAdapter title1 = new TitleAdapter("Информация о пациенте");
-//        TitleAdapter title2 = new TitleAdapter("Клинические характеристики");
-//        TitleAdapter title3 = new TitleAdapter("Диагноз");
-//
-//        androidx.recyclerview.widget.ConcatAdapter concatAdapter =
-//                new androidx.recyclerview.widget.ConcatAdapter(title1, patientInfoAdapter,
-//                        title2, clinicalInfoAdapter, title3, diagnosisAdapter);
-//
-//        recyclerView.setAdapter(concatAdapter);
-//    }
-//    private List<String> getDiagnosisOptions() {
-//        List<String> options = new ArrayList<>();
-//        options.add("Нет данных");
-//        options.add("Отечный панкреатит");
-//        options.add("Панкреонекроз среднетяжелое течение");
-//        options.add("Панкреонекроз тяжелое течение");
-//        return options;
-//    }
-//
+    // ========== DATA LOADING ==========
+
+    private void loadAndDisplayData() {
+        List<QuestionnaireInformationItem> questionnaireInformationItems = loadQuestuonnaireInformations();
+        List<CharacteristicItem> characteristicItems = loadCharacteristicItems();
+        List<DiagnosisItem> diagnosisItem = loadDiagnosis();
+
+        characteristicItemAdapter = new CharacteristicItemAdapter(characteristicItems);
+        questionnaireInformationItemAdapter = new QuestionnaireInformationItemAdapter(questionnaireInformationItems);
+        diagnosisItemAdapter = new DiagnosisItemAdapter(diagnosisItem);
+
+        setupRecyclerView();
+    }
+    private List<QuestionnaireInformationItem> loadQuestuonnaireInformations(){
+        List<QuestionnaireInformationItem> questionnaireInformationItems = new ArrayList<>();
+
+        // 1)
+        QuestionnaireInformationItem fioPatient = new QuestionnaireInformationItem();
+        fioPatient.setName("Имя пациента");
+
+        // 2)
+        QuestionnaireInformationItem admittedFrom = new QuestionnaireInformationItem();
+        admittedFrom.setName("Откуда поступил");
+
+        // 3)
+        QuestionnaireInformationItem lastModify = new QuestionnaireInformationItem();
+        lastModify.setName("Дата создания");
+
+        return questionnaireInformationItems;
+    }
+    private List<CharacteristicItem> loadCharacteristicItems(){
+        List<CharacteristicItem> characteristicItems = new ArrayList<>();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+
+        List<Characteristic> characteristics = databaseModule.getAllCharacteristics();
+        for(int i = 0; i < characteristics.size(); i++){
+            Characteristic characteristic = characteristics.get(i);
+            List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+            List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
+            options.addAll(characterizationValues.stream()
+                    .map(CharacterizationValue::getValue)
+                    .collect(Collectors.toList()));
+
+            CharacteristicItem characteristicItem = new CharacteristicItem();
+            characteristicItem.setName(characteristic.getOpis());
+            characteristicItem.setHint(characteristic.getHints());
+            characteristicItem.setOptions(options);
+        }
+
+        return characteristicItems;
+    }
+    private List<DiagnosisItem> loadDiagnosis(){
+        List<DiagnosisItem> diagnosisItems = new ArrayList<>();
+        diagnosisItems.add(new DiagnosisItem());
+        return diagnosisItems;
+    }
+    private void setupRecyclerView() {
+        TitleAdapter title1 = new TitleAdapter("Информация о пациенте");
+        TitleAdapter title2 = new TitleAdapter("Клинические характеристики");
+        TitleAdapter title3 = new TitleAdapter("Диагноз");
+
+        androidx.recyclerview.widget.ConcatAdapter concatAdapter =
+                new androidx.recyclerview.widget.ConcatAdapter(title1, questionnaireInformationItemAdapter,
+                        title2, characteristicItemAdapter, title3, diagnosisItemAdapter);
+
+        recyclerView.setAdapter(concatAdapter);
+    }
+
 //    // ========== DATABASE OPERATIONS ==========
 //
 //    private long getPatientIdByName(SQLiteDatabase database, String patientName) {

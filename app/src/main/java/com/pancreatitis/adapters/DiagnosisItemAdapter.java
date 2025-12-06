@@ -57,7 +57,7 @@ public class DiagnosisItemAdapter extends RecyclerView.Adapter<DiagnosisItemAdap
         public DiagnosisViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
-            spinnerValue = itemView.findViewById(R.id.value_characteristic);
+            spinnerValue = itemView.findViewById(R.id.spinner_diagnosis);
             context = itemView.getContext();
 
             spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, new ArrayList<>());

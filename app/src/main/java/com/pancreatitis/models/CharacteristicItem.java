@@ -7,7 +7,7 @@ public class CharacteristicItem {
     private String name;
     private String hint;
     private List<String> options;
-    private int value;
+    private int value = 0;
 
     public CharacteristicItem() {
     }

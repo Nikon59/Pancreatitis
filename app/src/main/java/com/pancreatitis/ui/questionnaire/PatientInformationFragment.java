@@ -189,15 +189,21 @@ public class PatientInformationFragment extends Fragment {
         // 1)
         QuestionnaireInformationItem fioPatient = new QuestionnaireInformationItem();
         fioPatient.setName("Имя пациента");
+        fioPatient.setValue("");
 
         // 2)
         QuestionnaireInformationItem admittedFrom = new QuestionnaireInformationItem();
         admittedFrom.setName("Откуда поступил");
+        admittedFrom.setValue("");
 
         // 3)
         QuestionnaireInformationItem lastModify = new QuestionnaireInformationItem();
         lastModify.setName("Дата создания");
+        lastModify.setValue("");
 
+        questionnaireInformationItems.add(fioPatient);
+        questionnaireInformationItems.add(admittedFrom);
+        questionnaireInformationItems.add(lastModify);
         return questionnaireInformationItems;
     }
     private List<CharacteristicItem> loadCharacteristicItems(){
@@ -217,6 +223,8 @@ public class PatientInformationFragment extends Fragment {
             characteristicItem.setName(characteristic.getOpis());
             characteristicItem.setHint(characteristic.getHints());
             characteristicItem.setOptions(options);
+
+            characteristicItems.add(characteristicItem);
         }
 
         return characteristicItems;

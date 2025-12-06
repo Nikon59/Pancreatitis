@@ -82,6 +82,7 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
         public void bind(QuestionnaireInformationItem questionnaireInformationItem) {
             textTitle.setText(questionnaireInformationItem.getName());
             editValue.setText(questionnaireInformationItem.getValue());
+            editValue.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
 
             setupTextWatcher(questionnaireInformationItem);
         }
@@ -104,14 +105,6 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
 
             editValue.addTextChangedListener(textWatcher);
             editValue.setTag(textWatcher);
-        }
-
-        private void showHelpDialog(String message) {
-            new AlertDialog.Builder(context)
-                    .setTitle("Справка")
-                    .setMessage(message)
-                    .setPositiveButton("OK", null)
-                    .show();
         }
     }
 }

@@ -231,42 +231,28 @@ public class DatabaseModule {
 
         return questionnaire;
     }
-    public List<Questionnaire> getAllQuestionnaires() {
-        List<Questionnaire> questionnaires = new ArrayList<>();
+    public List<QuestionnaireItem> getAllQuestionnaireItems() {
+        List<QuestionnaireItem> questionnaires = new ArrayList<>();
         Cursor cursor = null;
 
         try {
-            cursor = database.query("ankets", null, null, null, null, null, null);
+            String query = "select ankets.id as idQuestionnaire,patients.id as idPatient,patients.fio as fioPatient,ankets.diagnosis as diagnosis from ankets join patients on ankets.id_patient = patients.id where ankets.id_doctor = ? order by patients.fio";
+            cursor = database.rawQuery(query, new String[]{String.valueOf(3)}); //здесь будет первая сущность Доктора для неавторизованных - проблема с несколькими, но это очень странно
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
-                    Questionnaire questionnaire = new Questionnaire();
-                    questionnaire.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
-                    questionnaire.setIdPatient(cursor.getInt(cursor.getColumnIndexOrThrow("id_patient")));
-                    questionnaire.setIdDoctor(cursor.getInt(cursor.getColumnIndexOrThrow("id_doctor")));
-                    questionnaire.setIdExpert(cursor.getInt(cursor.getColumnIndexOrThrow("id_expert")));
+                    QuestionnaireItem questionnaire = new QuestionnaireItem();
+                    questionnaire.setIdQuestionnaire(cursor.getInt(cursor.getColumnIndexOrThrow("idQuestionnaire")));
+                    questionnaire.setIdPatient(cursor.getInt(cursor.getColumnIndexOrThrow("idPatient")));
+                    questionnaire.setFioPatient(cursor.getString(cursor.getColumnIndexOrThrow("fioPatient")));
                     questionnaire.setDiagnosis(cursor.getString(cursor.getColumnIndexOrThrow("diagnosis")));
-                    questionnaire.setAdmittedFrom(cursor.getString(cursor.getColumnIndexOrThrow("admitted_from")));
-
-                    String dateOfCompletionStr = cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion"));
-                    if (dateOfCompletionStr != null) {
-                        questionnaire.setDateOfCompletion(LocalDateTime.parse(dateOfCompletionStr, formatter));
-                    }
-
-                    String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                    if (lastModifiedStr != null) {
-                        questionnaire.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                    }
-
                     questionnaires.add(questionnaire);
                 } while (cursor.moveToNext());
             }
         } catch (Exception e) {
             Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+            cursor.close();
         }
 
         return questionnaires;

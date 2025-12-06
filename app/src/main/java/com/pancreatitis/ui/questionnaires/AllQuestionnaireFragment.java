@@ -29,7 +29,7 @@ public class AllQuestionnaireFragment extends Fragment {
     private QuestionnaireItemAdapter adapter;
     private Button btn_anket;
     private EditText searchBar;
-    private List<Questionnaire> questionnaireList = new ArrayList<>();
+    private List<QuestionnaireItem> questionnaireList = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -54,7 +54,8 @@ public class AllQuestionnaireFragment extends Fragment {
 
         adapter = new QuestionnaireItemAdapter(questionnaireList, new QuestionnaireItemAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(Questionnaire questionnaire) {
+            public void onItemClick(QuestionnaireItem questionnaire) {
+
             }
         });
 
@@ -79,7 +80,7 @@ public class AllQuestionnaireFragment extends Fragment {
 
     private void loadQuestionnaires() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<Questionnaire> tempData = databaseModule.getAllQuestionnaires();
+        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.updateData(questionnaireList);

@@ -48,6 +48,9 @@ public class DiagnosisItemAdapter extends RecyclerView.Adapter<DiagnosisItemAdap
         return diagnosisItems.size();
     }
 
+    public List<DiagnosisItem> getDiagnosisItems(){
+        return diagnosisItems;
+    }
     static class DiagnosisViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
         private Spinner spinnerValue;

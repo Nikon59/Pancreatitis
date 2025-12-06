@@ -1,5 +1,6 @@
 package com.pancreatitis.ui.questionnaire;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,8 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -246,52 +249,89 @@ public class PatientInformationFragment extends Fragment {
     private void loadDataQuestionnaire(){
         if (idQuestionnaire != -1){
             loadCharacteristicValues();
-            loadDiagnosisQuestionnaire();
+            loadQuestionnaireInformation();
+            loadQuestionnaireDiagnosis();
         }
         if (idPatient != -1){
             loadPatient();
         }
     }
     private void loadCharacteristicValues(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<CharacteristicItem> characteristicItems = characteristicItemAdapter.getCharacteristics();
 
+        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        for(int i = 0; i < characterizationAnketPatients.size(); i++){
+            CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
+            CharacteristicItem characteristicItem = characteristicItems.get(i);
+
+            characteristicItem.setValue(characterizationAnketPatient.getValue());
+        }
     }
-    private void loadDiagnosisQuestionnaire(){
+    private void loadQuestionnaireDiagnosis(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<DiagnosisItem> diagnosisItems = diagnosisItemAdapter.getDiagnosisItems();
 
+        DiagnosisItem diagnosisItem = diagnosisItems.get(0);
+        Questionnaire questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
+        diagnosisItem.setValue(getIndexCodeDiagnosis(questionnaire.getDiagnosis()));
+    }
+    private void loadQuestionnaireInformation(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
+
+        QuestionnaireInformationItem admittedFrom = questionnaireInformationItems.get(1);
+        QuestionnaireInformationItem lastModify = questionnaireInformationItems.get(2);
+        Questionnaire questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
+        admittedFrom.setValue(questionnaire.getAdmittedFrom());
+        lastModify.setValue(questionnaire.getDateOfCompletion().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
     private void loadPatient(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
 
+        QuestionnaireInformationItem infoPatient = questionnaireInformationItems.get(0);
+        Patient patient = databaseModule.getPatientById(idPatient);
+        infoPatient.setValue(patient.getFio());
     }
 
-//    // ========== DIAGNOSIS MAPPING ==========
-//
-//    private static Map<String, String> createDiagnosisMap() {
-//        Map<String, String> map = new HashMap<>();
-//        map.put("1", "Отечный панкреатит");
-//        map.put("5", "Панкреонекроз среднетяжелое течение");
-//        map.put("6", "Панкреонекроз тяжелое течение");
-//        return map;
-//    }
-//    private static Map<String, String> createDiagnosisCodeMap() {
-//        Map<String, String> map = new HashMap<>();
-//        map.put("Отечный панкреатит", "1");
-//        map.put("Панкреонекроз среднетяжелое течение", "5");
-//        map.put("Панкреонекроз тяжелое течение", "6");
-//        return map;
-//    }
-//
-//    // ========== UTILITY METHODS ==========
-//
-//    private void showMessage(String message) {
-//        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-//    }
-//    private void showError(String error) {
-//        Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
-//    }
-//    private void showHelpDialog(String title, String message) {
-//        new AlertDialog.Builder(getContext())
-//                .setTitle(title)
-//                .setMessage(message)
-//                .setPositiveButton("OK", null)
-//                .show();
-//    }
+    // ========== DIAGNOSIS MAPPING ==========
+
+    private static Map<String, String> createDiagnosisMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put("1", "Отечный панкреатит");
+        map.put("5", "Панкреонекроз среднетяжелое течение");
+        map.put("6", "Панкреонекроз тяжелое течение");
+        return map;
+    }
+    private static Map<String, String> createDiagnosisCodeMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put("Отечный панкреатит", "1");
+        map.put("Панкреонекроз среднетяжелое течение", "5");
+        map.put("Панкреонекроз тяжелое течение", "6");
+        return map;
+    }
+
+    // ========== UTILITY METHODS ==========
+
+    public int getIndexCodeDiagnosis(String diagnosis){
+        Map<String, Integer> map = new HashMap<>();
+        map.put("Отечный панкреатит", 1);
+        map.put("Панкреонекроз среднетяжелое течение", 2);
+        map.put("Панкреонекроз тяжелое течение", 3);
+        return map.get(diagnosis);
+    }
+    private void showMessage(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+    }
+    private void showError(String error) {
+        Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+    }
+    private void showHelpDialog(String title, String message) {
+        new AlertDialog.Builder(getContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+    }
 }

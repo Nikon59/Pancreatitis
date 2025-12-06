@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Characteristic {
-    private int id = -1;
+    private int id;
     private String name;
     private String opis;
     private String type;

@@ -23,10 +23,10 @@ import java.util.stream.Collectors;
 
 public class CharacteristicItemAdapter extends RecyclerView.Adapter<CharacteristicItemAdapter.CharacteristicViewHolder> {
 
-    private List<CharacterizationAnketPatient> characteristics;
+    private List<CharacteristicItem> characteristicItems;
 
-    public CharacteristicItemAdapter(List<CharacterizationAnketPatient> characteristics) {
-        this.characteristics = characteristics;
+    public CharacteristicItemAdapter(List<CharacteristicItem> characteristicItems) {
+        this.characteristicItems = characteristicItems;
     }
 
     @NonNull
@@ -40,8 +40,8 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
     @Override
     public void onBindViewHolder(@NonNull CharacteristicViewHolder holder, int position) {
         try {
-            CharacterizationAnketPatient characteristic = characteristics.get(position);
-            holder.bind(characteristic);
+            CharacteristicItem characteristicItem = characteristicItems.get(position);
+            holder.bind(characteristicItem);
         } catch (Exception e) {
             Toast.makeText(holder.context, e.toString(), Toast.LENGTH_LONG).show();
         }
@@ -49,17 +49,17 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
 
     @Override
     public int getItemCount() {
-        return characteristics.size();
+        return characteristicItems.size();
     }
 
-    public void updateData(List<CharacterizationAnketPatient> newCharacteristics) {
-        characteristics.clear();
-        characteristics.addAll(newCharacteristics);
+    public void updateData(List<CharacteristicItem> newCharacteristics) {
+        characteristicItems.clear();
+        characteristicItems.addAll(newCharacteristics);
         notifyDataSetChanged();
     }
 
-    public List<CharacterizationAnketPatient> getCharacteristics() {
-        return characteristics;
+    public List<CharacteristicItem> getCharacteristics() {
+        return characteristicItems;
     }
 
     class CharacteristicViewHolder extends RecyclerView.ViewHolder {
@@ -76,23 +76,17 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
             btnHelp = itemView.findViewById(R.id.get_helps);
             context = itemView.getContext();
 
-            // Настраиваем адаптер для Spinner
             spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, new ArrayList<>());
             spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerValue.setAdapter(spinnerAdapter);
         }
 
-        public void bind(CharacterizationAnketPatient characteristic) {
+        public void bind(CharacteristicItem characteristic) {
             try {
-                textTitle.setText(characteristic.getCharacteristic().getOpis());
+                textTitle.setText(characteristic.getName());
 
-                // Получаем опции для этой характеристики
-                List<String> options = characteristic.getCharacteristic().getCharacterizationValue()
-                        .stream()
-                        .map(CharacterizationValue::getValue)
-                        .collect(Collectors.toList());
+                List<String> options = characteristic.getOptions();
 
-                // Обновляем адаптер Spinner
                 spinnerAdapter.clear();
                 spinnerAdapter.addAll(options);
                 spinnerAdapter.notifyDataSetChanged();
@@ -106,11 +100,10 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
             }
         }
 
-        private void setupSpinnerListener(CharacterizationAnketPatient characteristic) {
+        private void setupSpinnerListener(CharacteristicItem characteristic) {
             spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    // Сохраняем индекс выбранного элемента в characteristic.value
                     characteristic.setValue(position);
                 }
 
@@ -121,37 +114,29 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
             });
         }
 
-        private void setSpinnerSelection(CharacterizationAnketPatient characteristic) {
+        private void setSpinnerSelection(CharacteristicItem characteristic) {
             spinnerValue.setSelection(characteristic.getValue());
         }
 
-        private void setupHelpButton(CharacterizationAnketPatient characteristic) {
-            String hints = characteristic.getCharacteristic().getHints();
+        private void setupHelpButton(CharacteristicItem characteristic) {
+            String hints = characteristic.getHint();
             boolean hasHints = hints != null && !hints.trim().isEmpty();
 
             btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
-
-            if (hasHints) {
-                String dialogMessage = buildDialogMessage(characteristic);
-                btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
-            } else {
-                btnHelp.setOnClickListener(null);
-            }
+            String dialogMessage = buildDialogMessage(characteristic);
+            btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
         }
 
-        private String buildDialogMessage(CharacterizationAnketPatient characteristic) {
+        private String buildDialogMessage(CharacteristicItem characteristic) {
             StringBuilder message = new StringBuilder();
 
-            String hints = characteristic.getCharacteristic().getHints();
+            String hints = characteristic.getHint();
             if (hints != null && !hints.trim().isEmpty()) {
                 message.append(hints);
             }
 
             // Показываем доступные опции
-            List<String> options = characteristic.getCharacteristic().getCharacterizationValue()
-                    .stream()
-                    .map(CharacterizationValue::getValue)
-                    .collect(Collectors.toList());
+            List<String> options = characteristic.getOptions();
             if (options != null && !options.isEmpty()) {
                 message.append("\n\nДоступные варианты:");
                 for (String option : options) {

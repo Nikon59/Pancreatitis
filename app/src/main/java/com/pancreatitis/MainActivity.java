@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 if (navController.getCurrentDestination() != null &&
                         navController.getCurrentDestination().getId() != R.id.navigation_home &&
-                        navController.getCurrentDestination().getId() != R.id.navigation_profile &&
+                        navController.getCurrentDestination().getId() != R.id.navigation_auth &&
                         navController.getCurrentDestination().getId() != R.id.navigation_helps) {
                     navController.navigateUp();
                 } else {
@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         if (backButton != null) {
             Set<Integer> hiddenBackButtonFragments = new HashSet<>(Arrays.asList(
                     R.id.navigation_home,
-                    R.id.navigation_profile,
+                    R.id.navigation_auth,
                     R.id.navigation_helps
             ));
 
@@ -126,6 +126,8 @@ public class MainActivity extends AppCompatActivity {
             return "Welcome";
         } else if (destinationId == R.id.navigation_profile) {
             return "Profile";
+        } else if (destinationId == R.id.navigation_auth) {
+            return "Login";
         } else if (destinationId == R.id.navigation_helps) {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {

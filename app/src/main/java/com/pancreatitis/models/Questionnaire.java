@@ -8,7 +8,7 @@ import java.util.*;
 
 public class Questionnaire {
     private long id = -1;
-    private int idPatient = -1;
+    private long idPatient = -1;
     private int idDoctor = -1;
     private int idExpert = -1;
     private String diagnosis;
@@ -28,6 +28,15 @@ public class Questionnaire {
         return mapper.readValue(json, Questionnaire.class);
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "diagnosis='" + diagnosis + '\'' +
+                ", admittedFrom='" + admittedFrom + '\'' +
+                ", lastModified=" + lastModified +
+                '}';
+    }
+
     private String codeToDiagnosis(String code){
         Map<String, String> diagnosisMap = new HashMap<>();
         diagnosisMap.put("1", "Отечный панкреатит");
@@ -40,11 +49,11 @@ public class Questionnaire {
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-    public int getIdPatient() {
+    public long getIdPatient() {
         return idPatient;
     }
 
-    public void setIdPatient(int idPatient) {
+    public void setIdPatient(long idPatient) {
         this.idPatient = idPatient;
     }
 
@@ -64,6 +73,7 @@ public class Questionnaire {
     public void setIdExpert(Integer idExpert) { this.idExpert = idExpert; }
 
     public String getDiagnosis() { return codeToDiagnosis(diagnosis); }
+    public String getCodeDiagnosis() { return diagnosis; }
     public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
 
     public LocalDateTime getDateOfCompletion() { return dateOfCompletion; }

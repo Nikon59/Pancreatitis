@@ -185,7 +185,7 @@ public class DatabaseModule {
 
         return patient;
     }
-    private long insertPatient(Patient patient) {
+    public long insertPatient(Patient patient) {
         ContentValues values = new ContentValues();
         values.put("fio", patient.getFio());
         values.put("last_modified", LocalDateTime.now().format(formatter));
@@ -194,6 +194,30 @@ public class DatabaseModule {
     }
 
     // ========== Questionnaire ==========
+    public long insertQuestionnaire(Questionnaire questionnaire){
+        ContentValues values = new ContentValues();
+        values.put("id_patient", questionnaire.getIdPatient());
+        values.put("id_doctor", questionnaire.getIdDoctor());
+        values.put("id_expert", questionnaire.getIdExpert());
+        values.put("diagnosis", questionnaire.getCodeDiagnosis());
+        values.put("admitted_from", questionnaire.getAdmittedFrom());
+        values.put("date_of_completion", LocalDateTime.now().format(formatter));
+        values.put("last_modified", LocalDateTime.now().format(formatter));
+
+        return database.insert("ankets", null, values);
+    }
+    public long updateQuestionnaire(Questionnaire questionnaire) {
+        ContentValues values = new ContentValues();
+        values.put("diagnosis", questionnaire.getCodeDiagnosis());
+        values.put("admitted_from", questionnaire.getAdmittedFrom());
+        values.put("last_modified", LocalDateTime.now().format(formatter));
+
+        // Указание условия для обновления
+        String where = "id = ?";
+        String[] whereArgs = new String[] { String.valueOf(questionnaire.getId()) };
+
+        return database.update("ankets", values, where, whereArgs);
+    }
     public Questionnaire getQuestionnaireById(int id_questionnaire) {
         Cursor cursor = null;
         Questionnaire questionnaire = null;
@@ -259,12 +283,12 @@ public class DatabaseModule {
     }
 
     // ========== CharacterizationAnketPatient ==========
-    private void insertAllCharacterization(List<CharacterizationAnketPatient> characterizationAnketPatients){
+    public void insertAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){
         for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
-            insertCharacterization(cap);
+            insertCharacterizationAnketPatient(cap);
         }
     }
-    private long insertCharacterization(CharacterizationAnketPatient characterization) {
+    public long insertCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
         ContentValues values = new ContentValues();
         values.put("id_characteristic", characterization.getIdCharacteristic());
         values.put("id_anket", characterization.getIdAnket());
@@ -272,6 +296,25 @@ public class DatabaseModule {
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("characterization_anket_patient", null, values);
+    }
+    public void updateAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){
+        for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
+            updateCharacterizationAnketPatient(cap);
+        }
+    }
+    public int updateCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
+        ContentValues values = new ContentValues();
+        values.put("value", characterization.getValue());
+        values.put("last_modified", LocalDateTime.now().format(formatter));
+
+        // Указание условия для обновления
+        String where = "id_anket = ? AND id_characteristic = ?";
+        String[] whereArgs = new String[]{
+                String.valueOf(characterization.getIdAnket()),
+                String.valueOf(characterization.getIdCharacteristic())
+        };
+
+        return database.update("characterization_anket_patient", values, where, whereArgs);
     }
     public List<CharacterizationAnketPatient> getCharacterizationsForAnket(long anketId) {
         List<CharacterizationAnketPatient> characterizations = new ArrayList<>();

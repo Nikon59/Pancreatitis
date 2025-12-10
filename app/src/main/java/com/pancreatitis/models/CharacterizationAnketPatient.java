@@ -38,6 +38,16 @@ public class CharacterizationAnketPatient {
         this.idCharacteristic = idCharacteristic;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "idAnket=" + idAnket +
+                ", idCharacteristic=" + idCharacteristic +
+                ", value=" + value +
+                ", lastModified=" + lastModified +
+                '}';
+    }
+
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(this);

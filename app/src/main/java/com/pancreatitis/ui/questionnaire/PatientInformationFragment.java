@@ -19,6 +19,7 @@ import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,127 +49,97 @@ public class PatientInformationFragment extends Fragment {
             idQuestionnaire = args.getInt("idQuestionnaire", -1);
             idPatient = args.getInt("idPatient", -1);
         }
+        showMessage(String.format("%d %d", idPatient, idQuestionnaire));
     }
     private void initViews(View view) {
-        recyclerView = view.findViewById(R.id.recycler_view_characteristics);
-        btnSave = view.findViewById(R.id.btn_save);
-        btnPredict = view.findViewById(R.id.btn_predict);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadDisplayData();
-        loadDataQuestionnaire();
+        try {
+            recyclerView = view.findViewById(R.id.recycler_view_characteristics);
+            btnSave = view.findViewById(R.id.btn_save);
+            btnPredict = view.findViewById(R.id.btn_predict);
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            loadDisplayData();
+            loadDataQuestionnaire();
+        } catch (Exception e) {
+            showMessage(e.toString());
+        }
     }
     private void setupClickListeners() {
-//        btnPredict.setOnClickListener(v -> handlePrediction());
-//        btnSave.setOnClickListener(v -> handleSave());
+        btnPredict.setOnClickListener(v -> handlePrediction());
+        btnSave.setOnClickListener(v -> handleSave());
     }
 
     // ========== PREDICTION HANDLING ==========
 
-//    private void handlePrediction() {
-//        DatabaseHelper dbHelper = new DatabaseHelper(getContext());
-//        try (SQLiteDatabase database = dbHelper.getReadableDatabase()) {
-//            Map<String, DiagnosisPredictor.ValueWithType> patientChars = getFormDataForPrediction(clinicalInfoAdapter);
-//            DiagnosisPredictor predictor = new DiagnosisPredictor();
-//            Map<Integer, Float> probs = predictor.predict(getContext(), database, patientChars);
-//            displayPredictionResults(probs);
-//        } catch (Exception e) {
-//            showError("Ошибка предсказания: " + e.getMessage());
-//        } finally {
-//            dbHelper.close();
-//        }
-//    }
-//    private void displayPredictionResults(Map<Integer, Float> probs) {
-//        float p1 = probs.getOrDefault(1, 0f);
-//        float p5 = probs.getOrDefault(5, 0f);
-//        float p6 = probs.getOrDefault(6, 0f);
-//
-//        String result = String.format("Отечный панкреатит: %.5f\nСреднетяжелый панкреонекроз: %.5f\nТяжелый панкреонекроз: %.5f", p1, p5, p6);
-//        showHelpDialog("Предсказание", result);
-//    }
+    private void handlePrediction() {
+
+    }
+    private void displayPredictionResults(Map<Integer, Float> probs) {
+        float p1 = probs.getOrDefault(1, 0f);
+        float p5 = probs.getOrDefault(5, 0f);
+        float p6 = probs.getOrDefault(6, 0f);
+
+        String result = String.format("Отечный панкреатит: %.5f\nСреднетяжелый панкреонекроз: %.5f\nТяжелый панкреонекроз: %.5f", p1, p5, p6);
+        showHelpDialog("Предсказание", result);
+    }
 
     // ========== SAVE HANDLING ==========
 
-//    private void handleSave() {
-//        Modules modules = (Modules) requireActivity().getApplication();
-//        DatabaseModule databaseModule = modules.getDatabaseModule();
-//        databaseModule.insertQuestionnaire(questionnaire);
-//
-//        if (questionnaireId == -1) {
-//            questionnaireId = (int) anketId;
-//            questionnairePatientId = (int) patientId;
-//            patientInfoAdapter.lockFieldByTitle("Full Name");
-//        }
-//    }
-//    private boolean validateSaveData() {
-//        // Validate required patient information
-//        List<Characteristic> patientInfo = patientInfoAdapter.getCharacteristics();
-//        for (Characteristic characteristic : patientInfo) {
-//            String value = characteristic.getValue();
-//            if (value == null || value.trim().isEmpty()) {
-//                showError("Пожалуйста, заполните всю информацию о пациенте");
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-//    private long saveOrUpdatePatient(SQLiteDatabase database) {
-//        Map<String, Characteristic> patientInfo = getFormData(patientInfoAdapter);
-//        String patientName = patientInfo.get("Full Name").getValue();
-//
-//        // Check if patient exists
-//        long patientId = getPatientIdByName(database, patientName);
-//        if (patientId != -1) {
-//            return patientId;
-//        }
-//
-//        // Create new patient
-//        return createNewPatient(database, patientName);
-//    }
-//    private long saveOrUpdateAnket(SQLiteDatabase database, long patientId) {
-//        Map<String, Characteristic> patientInfo = getFormData(patientInfoAdapter);
-//        Map<String, Characteristic> diagnosisInfo = getFormData(diagnosisAdapter);
-//
-//        ContentValues anketValues = createAnketValues(patientInfo, diagnosisInfo, patientId);
-//
-//        if (questionnaireId != -1) {
-//            // Update existing anket
-//            int rowsAffected = database.update("ankets", anketValues, "id = ?",
-//                    new String[]{String.valueOf(questionnaireId)});
-//            if (rowsAffected == 0) {
-//                throw new SQLException("Failed to update anket");
-//            }
-//            return questionnaireId;
-//        } else {
-//            // Create new anket
-//            long newAnketId = database.insert("ankets", null, anketValues);
-//            if (newAnketId == -1) {
-//                throw new SQLException("Failed to insert anket");
-//            }
-//            return newAnketId;
-//        }
-//    }
-//    private void saveOrUpdateCharacteristics(SQLiteDatabase database, long anketId) {
-//        Map<String, Characteristic> clinicalInfo = getFormData(clinicalInfoAdapter);
-//
-//        if (questionnaireId != -1) {
-//            // Delete existing characteristics for update
-//            database.delete("characterization_anket_patient", "id_anket = ?",
-//                    new String[]{String.valueOf(anketId)});
-//        }
-//
-//        // Insert only filled characteristics (но все характеристики отображаются)
-//        for (Map.Entry<String, Characteristic> entry : clinicalInfo.entrySet()) {
-//            Characteristic characteristic = entry.getValue();
-//            String value = characteristic.getValue();
-//
-//            // Save only if value is not empty
-//            if (value != null && !value.trim().isEmpty()) {
-//                ContentValues values = createCharacteristicValues(characteristic, anketId);
-//                database.insert("characterization_anket_patient", null, values);
-//            }
-//            // Пустые характеристики не сохраняются в БД, но остаются в интерфейсе
-//        }
-//    }
+    private void handleSave() {
+        QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+
+        Patient patient = createPatient();
+        Questionnaire questionnaire = createQuetionnaire();
+        List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
+
+        String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
+        //showMessage(String.format("%s", characterizationAnketPatients.getFirst().getValue()));
+        showMessage(result);
+    }
+    private Patient createPatient(){
+        Patient patient = new Patient();
+        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
+
+        QuestionnaireInformationItem fioPatient = questionnaireInformationItems.get(1);
+        patient.setFio(fioPatient.getValue());
+
+        patient.setId(idPatient);
+
+        return patient;
+    }
+    private Questionnaire createQuetionnaire(){
+        Questionnaire questionnaire = new Questionnaire();
+        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
+        List<DiagnosisItem> diagnosisItems = diagnosisItemAdapter.getDiagnosisItems();
+
+        QuestionnaireInformationItem admittedFrom = questionnaireInformationItems.get(1);
+        questionnaire.setAdmittedFrom(admittedFrom.getValue());
+
+        DiagnosisItem diagnosisItem = diagnosisItems.get(0);
+        questionnaire.setDiagnosis(diagnosisItem.getCodeDiagnosis());
+
+        questionnaire.setId(idQuestionnaire);
+        questionnaire.setIdPatient(idPatient);
+
+        return questionnaire;
+    }
+
+    private List<CharacterizationAnketPatient> createCharacterizationAnketPatients(){
+        List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
+        List<CharacteristicItem> characteristicItems = characteristicItemAdapter.getCharacteristics();
+        for(int i = 0; i < characteristicItems.size(); i++){
+            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
+            CharacteristicItem characteristicItem = characteristicItems.get(i);
+
+            //if (characteristicItem.getValue() == 0) continue;
+            characterizationAnketPatient.setIdCharacteristic(i + 1);
+            characterizationAnketPatient.setValue(characteristicItem.getValue());
+            characterizationAnketPatient.setIdAnket(idQuestionnaire);
+
+            //showMessage(characterizationAnketPatient.toString());
+            characterizationAnketPatients.add(characterizationAnketPatient);
+        }
+        return characterizationAnketPatients;
+    }
 
     // ========== DATA LOADING ==========
 
@@ -319,6 +290,13 @@ public class PatientInformationFragment extends Fragment {
         map.put("Отечный панкреатит", 1);
         map.put("Панкреонекроз среднетяжелое течение", 2);
         map.put("Панкреонекроз тяжелое течение", 3);
+        return map.get(diagnosis);
+    }
+    public int getCodeDiagnosis(String diagnosis){
+        Map<String, Integer> map = new HashMap<>();
+        map.put("Отечный панкреатит", 1);
+        map.put("Панкреонекроз среднетяжелое течение", 5);
+        map.put("Панкреонекроз тяжелое течение", 6);
         return map.get(diagnosis);
     }
     private void showMessage(String message) {

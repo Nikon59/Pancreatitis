@@ -23,8 +23,18 @@ public class DiagnosisItem {
     public int getValue() {
         return value;
     }
-
     public void setValue(int value) {
         this.value = value;
+    }
+    public String getCodeDiagnosis(){
+        if (value == 0){
+            return "";
+        } else if (value == 1) {
+            return "1";
+        } else if (value == 2) {
+            return "5";
+        } else {
+            return "6";
+        }
     }
 }

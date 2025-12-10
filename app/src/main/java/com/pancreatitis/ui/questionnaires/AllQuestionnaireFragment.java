@@ -72,7 +72,10 @@ public class AllQuestionnaireFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_questionnaires_to_anket);
+
+                Bundle args = new Bundle();
+
+                navController.navigate(R.id.action_questionnaires_to_anket, args);
             }
         });
     }

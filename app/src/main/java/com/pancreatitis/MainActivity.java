@@ -128,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
             return "Profile";
         } else if (destinationId == R.id.navigation_auth) {
             return "Login";
+        } else if (destinationId == R.id.navigation_register) {
+            return "Register";
         } else if (destinationId == R.id.navigation_helps) {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {

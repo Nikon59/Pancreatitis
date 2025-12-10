@@ -24,7 +24,7 @@ public class HomeFragment extends Fragment {
 
         Button goToNestedButton = view.findViewById(R.id.btn_pancreatitis);
         goToNestedButton.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.action_home_to_questionnaire);
+            Navigation.findNavController(v).navigate(R.id.action_auth_to_register);
         });
 
         return view;

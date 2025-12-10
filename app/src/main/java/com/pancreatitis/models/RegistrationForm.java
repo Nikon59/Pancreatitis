@@ -4,14 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RegistrationForm {
     private String login;
+    private String password;
     private String fullName;
     private String email;
-    // другие поля...
+    private String number;
 
-    public RegistrationForm(String login, String fullName, String email) {
+    public RegistrationForm() {}
+    public RegistrationForm(String login, String password, String fullName, String email, String number) {
         this.login = login;
+        this.password = password;
         this.fullName = fullName;
         this.email = email;
+        this.number = number;
     }
 
     public String getLogin() {

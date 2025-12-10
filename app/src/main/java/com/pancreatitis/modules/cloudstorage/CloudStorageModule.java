@@ -2,34 +2,41 @@ package com.pancreatitis.modules.cloudstorage;
 
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
-import com.pancreatitis.modules.database.DatabaseModule;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     private CloudStorageModule() {
-        createFolders();
+        // Инициализация папок в фоне
+        executorService.execute(() -> {
+            createFolder("/users/");
+            createFolder("/update/");
+            createFolder("/registration_requests/");
+        });
     }
 
-    public static CloudStorageModule getInstance(){
+    public static CloudStorageModule getInstance() {
         if (instance == null) {
-            instance = new CloudStorageModule();
+            synchronized (CloudStorageModule.class) {
+                if (instance == null) {
+                    instance = new CloudStorageModule();
+                }
+            }
         }
         return instance;
-    }
-
-    private void createFolders() {
-        createFolder("/users/");
-        createFolder("/update/");
-        createFolder("/registration_requests/");
     }
 
     private boolean createFolder(String path) {
@@ -41,6 +48,8 @@ public class CloudStorageModule {
             connection.setRequestMethod("PUT");
             connection.setRequestProperty("Authorization", "OAuth " + authToken);
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
 
             int responseCode = connection.getResponseCode();
             connection.disconnect();
@@ -52,85 +61,107 @@ public class CloudStorageModule {
         }
     }
 
+    // Старые публичные методы с той же сигнатурой
     public boolean isUserFolderExists(String login) {
         try {
-            String path = "/users/" + login;
-            String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
-            String url = API_URL + "?path=" + encodedPath;
+            Future<Boolean> future = executorService.submit(() -> {
+                String path = "/users/" + login;
+                String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+                String url = API_URL + "?path=" + encodedPath;
 
-            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Authorization", "OAuth " + authToken);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
 
-            int responseCode = connection.getResponseCode();
-            connection.disconnect();
+                int responseCode = connection.getResponseCode();
+                connection.disconnect();
 
-            // 200 - exists
-            return responseCode == 200;
+                // 200 - exists
+                return responseCode == 200;
+            });
+
+            return future.get(); // Блокируем до получения результата
         } catch (Exception e) {
             return false;
         }
     }
 
     public byte[] downloadUserKey(String login) throws Exception {
-        String filePath = "/users/" + login + "/key_user.enc";
-        String downloadUrl = getDownloadUrl(filePath);
+        Callable<byte[]> task = () -> {
+            String filePath = "/users/" + login + "/key_user.enc";
+            String downloadUrl = getDownloadUrl(filePath);
 
-        if (downloadUrl == null) {
-            throw new FileNotFoundException("File not found: " + filePath);
-        }
+            if (downloadUrl == null) {
+                throw new FileNotFoundException("File not found: " + filePath);
+            }
 
-        return downloadFileAsBytes(downloadUrl);
+            return downloadFileAsBytes(downloadUrl);
+        };
+
+        return executorService.submit(task).get();
     }
 
     public boolean uploadQuestionnaire(Questionnaire questionnaire, String login) throws Exception {
-        String jsonData = questionnaire.toJson();
+        Callable<Boolean> task = () -> {
+            String jsonData = questionnaire.toJson();
 
-        String fileName = login + "_update" + questionnaire.getId() + ".json";
-        String filePath = "/update/" + fileName;
+            String fileName = login + "_update" + questionnaire.getId() + ".json";
+            String filePath = "/update/" + fileName;
 
-        String uploadUrl = getUploadUrl(filePath, true);
-        if (uploadUrl == null) {
-            System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
-            return false;
-        }
+            String uploadUrl = getUploadUrl(filePath, true);
+            if (uploadUrl == null) {
+                System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
+                return false;
+            }
 
-        boolean success = uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+            return uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+        };
 
-        return success;
+        return executorService.submit(task).get();
     }
 
     public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {
-        String jsonData = registrationForm.toJson();
+        Callable<Boolean> task = () -> {
+            String jsonData = registrationForm.toJson();
 
-        String fileName = registrationForm.getLogin() + ".json";
-        String filePath = "/registration_requests/" + fileName;
+            String fileName = registrationForm.getLogin() + ".json";
+            String filePath = "/registration_requests/" + fileName;
 
-        String uploadUrl = getUploadUrl(filePath, true);
-        if (uploadUrl == null) {
-            System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
-            return false;
-        }
+            String uploadUrl = getUploadUrl(filePath, true);
+            if (uploadUrl == null) {
+                System.err.println("Не удалось получить URL для загрузки файла: " + filePath);
+                return false;
+            }
 
-        boolean success = uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+            return uploadFile(uploadUrl, jsonData.getBytes(StandardCharsets.UTF_8));
+        };
 
-        return success;
+        return executorService.submit(task).get();
     }
 
     public byte[] downloadTrainingData() throws Exception {
-        String filePath = "/algorithm.txt";
-        String downloadUrl = getDownloadUrl(filePath);
+        Callable<byte[]> task = () -> {
+            String filePath = "/algorithm.txt";
+            String downloadUrl = getDownloadUrl(filePath);
 
-        if (downloadUrl == null) {
-            throw new FileNotFoundException("File not found: " + filePath);
-        }
+            if (downloadUrl == null) {
+                throw new FileNotFoundException("File not found: " + filePath);
+            }
 
-        return downloadFileAsBytes(downloadUrl);
+            return downloadFileAsBytes(downloadUrl);
+        };
+
+        return executorService.submit(task).get();
     }
 
+    // Вспомогательные методы (остаются теми же)
     private byte[] downloadFileAsBytes(String downloadUrl) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(downloadUrl).openConnection();
         connection.setRequestMethod("GET");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
 
         try {
             int responseCode = connection.getResponseCode();
@@ -161,30 +192,33 @@ public class CloudStorageModule {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Authorization", "OAuth " + authToken);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
 
-        int responseCode = connection.getResponseCode();
-        if (responseCode == 200) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line;
-            StringBuilder response = new StringBuilder();
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
 
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
+                    // Парсим JSON для получения ссылки
+                    String responseStr = response.toString();
+                    int hrefIndex = responseStr.indexOf("\"href\":\"");
+                    if (hrefIndex != -1) {
+                        int start = hrefIndex + 8;
+                        int end = responseStr.indexOf("\"", start);
+                        return responseStr.substring(start, end);
+                    }
+                }
             }
-            reader.close();
-
-            // Парсим JSON для получения ссылки (упрощенный вариант)
-            String responseStr = response.toString();
-            int hrefIndex = responseStr.indexOf("\"href\":\"");
-            if (hrefIndex != -1) {
-                int start = hrefIndex + 8;
-                int end = responseStr.indexOf("\"", start);
-                return responseStr.substring(start, end);
-            }
+            return null;
+        } finally {
+            connection.disconnect();
         }
-
-        connection.disconnect();
-        return null;
     }
 
     private String getUploadUrl(String path, boolean overwrite) throws Exception {
@@ -194,29 +228,32 @@ public class CloudStorageModule {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Authorization", "OAuth " + authToken);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
 
-        int responseCode = connection.getResponseCode();
-        if (responseCode == 200) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line;
-            StringBuilder response = new StringBuilder();
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
 
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
+                    String responseStr = response.toString();
+                    int hrefIndex = responseStr.indexOf("\"href\":\"");
+                    if (hrefIndex != -1) {
+                        int start = hrefIndex + 8;
+                        int end = responseStr.indexOf("\"", start);
+                        return responseStr.substring(start, end);
+                    }
+                }
             }
-            reader.close();
-
-            String responseStr = response.toString();
-            int hrefIndex = responseStr.indexOf("\"href\":\"");
-            if (hrefIndex != -1) {
-                int start = hrefIndex + 8;
-                int end = responseStr.indexOf("\"", start);
-                return responseStr.substring(start, end);
-            }
+            return null;
+        } finally {
+            connection.disconnect();
         }
-
-        connection.disconnect();
-        return null;
     }
 
     private boolean uploadFile(String uploadUrl, byte[] data) throws Exception {
@@ -224,14 +261,24 @@ public class CloudStorageModule {
         connection.setRequestMethod("PUT");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/octet-stream");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
 
         try (OutputStream outputStream = connection.getOutputStream()) {
             outputStream.write(data);
+            outputStream.flush();
         }
 
         int responseCode = connection.getResponseCode();
         connection.disconnect();
 
         return responseCode == 201 || responseCode == 200;
+    }
+
+    // Метод для очистки ресурсов
+    public void shutdown() {
+        if (!executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 }

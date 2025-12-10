@@ -95,7 +95,7 @@ public class RegisterFragment extends Fragment {
             );
 
             Boolean result = registrationModule.submitRegistrationRequest(registrationForm);
-            showMessage(result.toString());
+            showMessage(result ? "Succesfull" : "Error");
 
         } catch (Exception e) {
             showMessage("Ошибка: " + getErrorMessage(e));

@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
             Set<Integer> hiddenBackButtonFragments = new HashSet<>(Arrays.asList(
                     R.id.navigation_home,
                     R.id.navigation_auth,
+                    R.id.navigation_profile,
                     R.id.navigation_helps
             ));
 

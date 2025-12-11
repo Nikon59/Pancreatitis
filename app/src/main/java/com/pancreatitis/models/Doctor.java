@@ -7,17 +7,20 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import java.time.LocalDateTime;
 
 public class Doctor {
-    private long id = -1;
+    private int id = -1;
     private String fio;
-    private Boolean status;
+    private Boolean status = false;
     private LocalDateTime lastModified;
 
     // Конструкторы
     public Doctor() {}
+    public Doctor(String fio){
+        this.fio = fio;
+    }
 
     // Геттеры и сеттеры
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getFio() { return fio; }
     public void setFio(String fio) { this.fio = fio; }

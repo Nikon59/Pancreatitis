@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.pancreatitis.R;
@@ -68,8 +69,13 @@ public class AuthFragment extends Fragment {
             SecretKey key = authorizationModule.authenticateUser(login, password);
 
             if (key != null) {
-                Navigation.findNavController(requireView())
-                        .navigate(R.id.action_auth_to_profile);
+                NavController navController = Navigation.findNavController(requireView());
+
+                Bundle args = new Bundle();
+                args.putString("login", login);
+                args.putString("password", password);
+
+                navController.navigate(R.id.action_auth_to_profile, args);
             } else {
                 // Неверные данные
                 showMessage("Неверный логин или пароль");

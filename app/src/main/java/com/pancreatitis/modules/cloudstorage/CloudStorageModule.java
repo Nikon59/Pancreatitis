@@ -1,7 +1,11 @@
 package com.pancreatitis.modules.cloudstorage;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.models.User;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -139,6 +143,60 @@ public class CloudStorageModule {
         };
 
         return executorService.submit(task).get();
+    }
+
+    public User downloadUserInfo(String login) throws Exception {
+        Callable<User> task = () -> {
+            String filePath = "/users/" + login + "/user_info.json";
+            String downloadUrl = getDownloadUrl(filePath);
+
+            if (downloadUrl == null) {
+                throw new FileNotFoundException("User info not found: " + filePath);
+            }
+
+            // Скачиваем JSON файл
+            byte[] jsonBytes = downloadFileAsBytes(downloadUrl);
+            String json = new String(jsonBytes, StandardCharsets.UTF_8);
+
+            // Парсим JSON в объект User
+            return parseUserFromJson(json, login);
+        };
+
+        return executorService.submit(task).get();
+    }
+
+    // Вспомогательный метод для парсинга JSON
+    private User parseUserFromJson(String json, String login) throws Exception {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(json);
+
+            // Получаем singleton-объект User
+            User user = User.getInstance();
+
+            // Заполняем поля из JSON
+            if (rootNode.has("email")) {
+                user.setEmail(rootNode.get("email").asText());
+            }
+
+            if (rootNode.has("fullName")) {
+                // Если у вас есть объект Doctor
+                Doctor doctor = new Doctor();
+                doctor.setFio(rootNode.get("fullName").asText());
+                user.setDoctor(doctor);
+            }
+
+            if (rootNode.has("phone")) {
+                user.setPhone(rootNode.get("phone").asText());
+            }
+
+            // Логин передаем параметром, так как он в пути файла
+            user.setLogin(login);
+
+            return user;
+        } catch (Exception e) {
+            throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
+        }
     }
 
     public byte[] downloadTrainingData() throws Exception {

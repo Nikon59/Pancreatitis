@@ -49,7 +49,6 @@ public class PatientInformationFragment extends Fragment {
             idQuestionnaire = args.getInt("idQuestionnaire", -1);
             idPatient = args.getInt("idPatient", -1);
         }
-        showMessage(String.format("%d %d", idPatient, idQuestionnaire));
     }
     private void initViews(View view) {
         try {

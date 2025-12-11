@@ -147,7 +147,7 @@ public class DatabaseModule {
 
         return doctor;
     }
-    private long insertDoctor(Doctor doctor) {
+    public long insertDoctor(Doctor doctor) {
         ContentValues values = new ContentValues();
         values.put("fio", doctor.getFio());
         values.put("status", doctor.getStatus() != null ? (doctor.getStatus() ? 1 : 0) : 0);

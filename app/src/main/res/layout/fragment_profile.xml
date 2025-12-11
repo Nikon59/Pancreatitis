@@ -3,8 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,6 +31,7 @@
                 android:layout_marginBottom="16dp" />
 
             <TextView
+                android:id="@+id/title_fio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Иванов Иван Иванович"
@@ -64,6 +64,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Иванов Иван Иванович"
+                android:enabled="false"
                 android:textSize="16sp"
                 android:textColor="#000000"
                 android:padding="12dp"
@@ -84,6 +85,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ivanov@example.com"
+                android:enabled="false"
                 android:textSize="16sp"
                 android:textColor="#000000"
                 android:padding="12dp"
@@ -104,6 +106,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="+7 (999) 123-45-67"
+                android:enabled="false"
                 android:textSize="16sp"
                 android:textColor="#000000"
                 android:padding="12dp"
@@ -124,6 +127,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ivanov_ii"
+                android:enabled="false"
                 android:textSize="16sp"
                 android:textColor="#000000"
                 android:padding="12dp"
@@ -143,7 +147,8 @@
                 android:id="@+id/passwordValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="••••••••"
+                android:text="••••••••"
+                android:enabled="false"
                 android:textSize="16sp"
                 android:textColor="#000000"
                 android:padding="12dp"
@@ -154,13 +159,13 @@
 
         <!-- Кнопка выхода -->
         <Button
-            android:id="@+id/logoutButton"
+            android:id="@+id/btn_logout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Выйти"
             android:textSize="16sp"
             android:padding="14dp"
-            android:background="#F44336"
+            android:background="@drawable/rounded_background"
             android:textColor="#FFFFFF" />
 
     </LinearLayout>

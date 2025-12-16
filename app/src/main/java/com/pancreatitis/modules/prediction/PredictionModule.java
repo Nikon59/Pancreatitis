@@ -45,31 +45,6 @@ public class PredictionModule {
         // 5. Выполняем прогнозирование
         return currentModel.predict(features);
     }
-//    public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) {
-//        try {
-//            // 1. Получаем тренировочные данные из облака
-//            byte[] rawTrainingData = cloudStorageModule.downloadTrainingData();
-//            TrainingData trainingData = TrainingDataParser.parseFromFile(
-//                    new ByteArrayInputStream(rawTrainingData)
-//            );
-//
-//            // 2. Преобразуем DTO в Characteristic (без значения)
-//            List<Characteristic> characteristics = extractCharacteristicsFromDTO(characteristicDTOs);
-//            this.lastLoadedCharacteristics = characteristics;
-//
-//            // 3. Создаем модель
-//            currentModel = new SimilarityBasedModel(trainingData, characteristics);
-//
-//            // 4. Извлекаем признаки из DTO
-//            float[] features = extractFeaturesFromDTO(characteristicDTOs, trainingData);
-//
-//            // 5. Выполняем прогнозирование
-//            return currentModel.predict(features);
-//
-//        } catch (Exception e) {
-//            throw new ModelNotLoadedException("Ошибка при прогнозировании: " + e.getMessage(), e);
-//        }
-//    }
 
     /**
      * Извлекает список Characteristic из DTO (без значений)

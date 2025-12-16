@@ -124,21 +124,21 @@ public class MainActivity extends AppCompatActivity {
 
     private String getFragmentTitle(int destinationId) {
         if (destinationId == R.id.navigation_home) {
-            return "Welcome";
+            return "Добро пожаловать";
         } else if (destinationId == R.id.navigation_profile) {
-            return "Profile";
+            return "";
         } else if (destinationId == R.id.navigation_auth) {
-            return "Login";
+            return "";
         } else if (destinationId == R.id.navigation_register) {
-            return "Register";
+            return "";
         } else if (destinationId == R.id.navigation_helps) {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {
-            return "Questionnaire Management";
+            return "Менеджер анкет";
         } else if (destinationId == R.id.navigation_anket) {
-            return "Questionnaire";
+            return "Анкета";
         } else {
-            return "Another";
+            return "";
         }
     }
 

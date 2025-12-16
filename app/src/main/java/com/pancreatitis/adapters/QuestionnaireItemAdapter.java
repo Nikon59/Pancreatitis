@@ -93,11 +93,11 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
             textPatientName.setText(questionnaire.getFioPatient());
             textDiagnosis.setText(
-                   questionnaire.getDiagnosis().length() > 30
-                            ? questionnaire.getDiagnosis().substring(0, 30)
+                   questionnaire.getDiagnosis().length() > 20
+                            ? questionnaire.getDiagnosis().substring(0, 20) + "..."
                             : questionnaire.getDiagnosis()
             );
-            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "In Progress" : "Completed");itemView.setOnClickListener(new View.OnClickListener() {
+            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "В процессе" : "Завершено");itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (listener != null) {

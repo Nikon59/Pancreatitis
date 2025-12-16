@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pancreatitis</string>
-    <string name="title_home">Home</string>
-    <string name="title_questionnaires">Questionnaire Management</string>
-    <string name="title_predict">Predict Diagnosis</string>
-    <string name="title_profile">Profile</string>
-    <string name="title_auth">Auth</string>
-    <string name="title_register">Registration</string>
-    <string name="title_helps">Helps</string>
+    <string name="title_home">Главное меню</string>
+    <string name="title_questionnaires">Менеджер анкет</string>
+    <string name="title_predict">Предсказание</string>
+    <string name="title_profile">Профиль</string>
+    <string name="title_auth">Профиль</string>
+    <string name="title_register">Регистрация</string>
+    <string name="title_helps">Помощь</string>
     <string-array name="spinner_items">
         <item>Нет данных</item>
         <item>Отечный панкреатит</item>

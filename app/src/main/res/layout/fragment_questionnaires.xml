@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:textSize="20dp"
             android:textColor="@color/black"
-            android:text="My Questionnaires"
+            android:text="Мои анкеты"
             android:layout_marginTop="10dp"
             android:layout_marginLeft="10dp" />
 
@@ -58,7 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/colorActive"
-        android:text="Create Questionnaire"
+        android:text="Создать анкету"
         android:layout_marginBottom="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"/>

@@ -54,13 +54,13 @@ public class QuestionnaireManagerModule {
             databaseModule.endTransaction();
         }
     }
-    public void submitQuestionnaire() {
+    public void submitQuestionnaire(Questionnaire questionnaire) {
 
     }
-    public void encryptQuestionnaire() {
+    public void encryptQuestionnaire(Questionnaire questionnaire) {
 
     }
-    public void decryptQuestionnaire() {
+    public void decryptQuestionnaire(Questionnaire questionnaire) {
 
     }
 }

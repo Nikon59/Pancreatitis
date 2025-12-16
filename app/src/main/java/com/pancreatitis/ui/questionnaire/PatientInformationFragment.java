@@ -19,6 +19,8 @@ import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.R;
+import com.pancreatitis.modules.prediction.PredictionModule;
+import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.time.LocalDateTime;
@@ -70,7 +72,30 @@ public class PatientInformationFragment extends Fragment {
     // ========== PREDICTION HANDLING ==========
 
     private void handlePrediction() {
+        try {
+            PredictionModule predictionModule = PredictionModule.getInstance();
+            List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
+            PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
+            displayPredictionResults(predictionResult.getProbabilities());
+        } catch (Exception e) {
+            showMessage(e.toString());
+        }
+    }
 
+    private List<CharasteristicDTO> getAllCharasteristicDTO(){
+        List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
+        List<Characteristic> characteristics = loadAllCharacteristic();
+        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
+        for (int i = 0; i < characteristics.size(); i++) {
+            CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getValue());
+            charasteristicDTOS.add(charasteristicDTO);
+        }
+        return charasteristicDTOS;
+    }
+    private List<Characteristic> loadAllCharacteristic(){
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        return databaseModule.getAllCharacteristics();
     }
     private void displayPredictionResults(Map<Integer, Float> probs) {
         float p1 = probs.getOrDefault(1, 0f);

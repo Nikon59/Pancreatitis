@@ -120,9 +120,13 @@ public class SimilarityBasedModel {
 
             if ("кат.".equals(ch.type)) {
                 // Категориальная характеристика
+                if (patientVal == 0) continue;
+
                 contribution = (Math.abs(trainVal - patientVal) < 0.5) ? ch.weight : 0.0;
             } else {
                 // Числовая характеристика
+                if (patientVal == 0) continue;
+
                 double diff = Math.abs(trainVal - patientVal);
                 double range = ch.maxValue - ch.minValue;
 

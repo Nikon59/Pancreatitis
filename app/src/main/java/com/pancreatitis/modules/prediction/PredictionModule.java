@@ -1,6 +1,7 @@
 package com.pancreatitis.modules.prediction;
 
 import android.content.Context;
+import android.widget.Toast;
 
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharasteristicDTO;
@@ -66,19 +67,22 @@ public class PredictionModule {
         // 5. Выполняем прогнозирование
         return currentModel.predict(features);
     }
-
-    // Метод для получения данных из assets с кэшированием
+    //вынести из модуля
     private byte[] getTrainingData() throws Exception {
         if (cachedTrainingData == null) {
             cachedTrainingData = loadFileFromInternalStorage("algorithm.txt");
         }
         return cachedTrainingData;
     }
-
-    // Метод для загрузки файла из внутреннего хранилища
+    //вынести из модуля
     private byte[] loadFileFromInternalStorage(String fileName) throws Exception {
         File filesDir = context.getFilesDir();
         File file = new File(filesDir, fileName);
+
+        // Проверяем существование файла
+        if (!file.exists() || file.length() == 0) {
+            throw new TrainingDataException("Файл algorithm.txt не найден или пуст. Загрузите файл через CloudStorageModule.");
+        }
 
         try (FileInputStream inputStream = new FileInputStream(file);
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {

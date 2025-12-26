@@ -116,14 +116,13 @@ public class PatientInformationFragment extends Fragment {
         List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
 
         String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
-        //showMessage(String.format("%s", characterizationAnketPatients.getFirst().getValue()));
         showMessage(result);
     }
     private Patient createPatient(){
         Patient patient = new Patient();
         List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
 
-        QuestionnaireInformationItem fioPatient = questionnaireInformationItems.get(1);
+        QuestionnaireInformationItem fioPatient = questionnaireInformationItems.get(0);
         patient.setFio(fioPatient.getValue());
 
         patient.setId(idPatient);
@@ -143,6 +142,7 @@ public class PatientInformationFragment extends Fragment {
 
         questionnaire.setId(idQuestionnaire);
         questionnaire.setIdPatient(idPatient);
+        questionnaire.setIdDoctor(User.getInstance().getIdDoctor());
 
         return questionnaire;
     }

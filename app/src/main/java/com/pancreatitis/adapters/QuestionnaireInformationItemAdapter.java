@@ -82,7 +82,7 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
         public void bind(QuestionnaireInformationItem questionnaireInformationItem) {
             textTitle.setText(questionnaireInformationItem.getName());
             editValue.setText(questionnaireInformationItem.getValue());
-            editValue.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            editValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
 
             setupTextWatcher(questionnaireInformationItem);
         }

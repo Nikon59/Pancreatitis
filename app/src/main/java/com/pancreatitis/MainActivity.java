@@ -7,7 +7,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.prediction.PredictionModule;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +18,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,6 +41,11 @@ public class MainActivity extends AppCompatActivity {
         databaseModule.setContext(getApplicationContext());
         databaseModule.initWork();
 
+        PredictionModule predictionModule = PredictionModule.getInstance();
+        predictionModule.setContext(getApplicationContext());
+
+        checkAndDownloadAlgorithmFile();
+
         // Убираем ActionBar
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
@@ -45,6 +55,43 @@ public class MainActivity extends AppCompatActivity {
         setupNavigation();
         setupToolbar();
         setupBackPressedCallback();
+    }
+
+    private void checkAndDownloadAlgorithmFile() {
+        new Thread(() -> {
+            try {
+                downloadAlgorithmFileToAssets();
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error checking algorithm file", e);
+            }
+        }).start();
+    }
+
+    private void downloadAlgorithmFileToAssets() {
+        try {
+            // Получаем экземпляр CloudStorageModule
+            CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
+
+            // Скачиваем файл из облака
+            byte[] fileData = cloudStorageModule.downloadTrainingData();
+
+            // Сохраняем файл во внутреннюю память приложения
+            saveFileToInternalStorage(fileData, "algorithm.txt");
+
+            Log.d("MainActivity", "algorithm.txt downloaded and saved successfully");
+        } catch (Exception e) {
+            Log.e("MainActivity", "Failed to download algorithm.txt", e);
+        }
+    }
+
+    private void saveFileToInternalStorage(byte[] data, String fileName) throws Exception {
+        File filesDir = getFilesDir();
+        File outputFile = new File(filesDir, fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            fos.write(data);
+            fos.flush();
+        }
     }
 
     private void setupBackPressedCallback() {

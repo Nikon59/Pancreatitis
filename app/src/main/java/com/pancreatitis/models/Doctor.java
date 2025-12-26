@@ -7,7 +7,7 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import java.time.LocalDateTime;
 
 public class Doctor {
-    private int id = -1;
+    private int id = 100;
     private String fio;
     private Boolean status = false;
     private LocalDateTime lastModified;

@@ -255,13 +255,13 @@ public class DatabaseModule {
 
         return questionnaire;
     }
-    public List<QuestionnaireItem> getAllQuestionnaireItems() {
+    public List<QuestionnaireItem> getAllQuestionnaireItems(int idDoctor) {
         List<QuestionnaireItem> questionnaires = new ArrayList<>();
         Cursor cursor = null;
 
         try {
             String query = "select ankets.id as idQuestionnaire,patients.id as idPatient,patients.fio as fioPatient,ankets.diagnosis as diagnosis from ankets join patients on ankets.id_patient = patients.id where ankets.id_doctor = ? order by patients.fio";
-            cursor = database.rawQuery(query, new String[]{String.valueOf(2)}); //здесь будет первая сущность Доктора для неавторизованных - проблема с несколькими, но это очень странно
+            cursor = database.rawQuery(query, new String[]{String.valueOf(idDoctor)}); //здесь будет первая сущность Доктора для неавторизованных - проблема с несколькими, но это очень странно
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {

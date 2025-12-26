@@ -16,6 +16,7 @@ public class User {
     private static User instance;
 
     private User() {
+        doctor = new Doctor();
     }
 
     public static User getInstance(){

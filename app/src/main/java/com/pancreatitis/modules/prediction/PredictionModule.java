@@ -1,22 +1,29 @@
 package com.pancreatitis.modules.prediction;
 
+import android.content.Context;
+
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharasteristicDTO;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.*;
 
 public class PredictionModule {
-    private CloudStorageModule cloudStorageModule;
     private SimilarityBasedModel currentModel;
     private List<Characteristic> lastLoadedCharacteristics;
     private static PredictionModule instance;
+    private Context context;
+    private byte[] cachedTrainingData;
 
     private PredictionModule() {
-        cloudStorageModule = CloudStorageModule.getInstance();
         this.currentModel = null;
         this.lastLoadedCharacteristics = null;
+        this.cachedTrainingData = null;
     }
 
     public static PredictionModule getInstance(){
@@ -25,9 +32,23 @@ public class PredictionModule {
         }
         return instance;
     }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) throws Exception {
-        // 1. Получаем тренировочные данные из облака
-        byte[] rawTrainingData = cloudStorageModule.downloadTrainingData();
+        if (context == null) {
+            throw new IllegalStateException("Context not set. Call setContext() first.");
+        }
+
+        // 1. Получаем тренировочные данные из assets
+        byte[] rawTrainingData = getTrainingData();
+
         TrainingData trainingData = TrainingDataParser.parseFromFile(
                 new ByteArrayInputStream(rawTrainingData)
         );
@@ -44,6 +65,32 @@ public class PredictionModule {
 
         // 5. Выполняем прогнозирование
         return currentModel.predict(features);
+    }
+
+    // Метод для получения данных из assets с кэшированием
+    private byte[] getTrainingData() throws Exception {
+        if (cachedTrainingData == null) {
+            cachedTrainingData = loadFileFromInternalStorage("algorithm.txt");
+        }
+        return cachedTrainingData;
+    }
+
+    // Метод для загрузки файла из внутреннего хранилища
+    private byte[] loadFileFromInternalStorage(String fileName) throws Exception {
+        File filesDir = context.getFilesDir();
+        File file = new File(filesDir, fileName);
+
+        try (FileInputStream inputStream = new FileInputStream(file);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            return outputStream.toByteArray();
+        }
     }
 
     /**

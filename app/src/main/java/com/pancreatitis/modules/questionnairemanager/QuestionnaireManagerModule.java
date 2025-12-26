@@ -3,6 +3,7 @@ package com.pancreatitis.modules.questionnairemanager;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
@@ -29,8 +30,9 @@ public class QuestionnaireManagerModule {
         try {
             databaseModule.beginTransaction();
 
-            if (questionnaire.getIdPatient() == -1){
-                long idPatient = databaseModule.insertPatient(patient);
+            long idPatient = questionnaire.getIdPatient();
+            if (idPatient == -1){
+                idPatient = databaseModule.insertPatient(patient);
                 questionnaire.setIdPatient(idPatient);
             }
 
@@ -47,7 +49,8 @@ public class QuestionnaireManagerModule {
             }
             databaseModule.setTransactionSuccessful();
 
-            return "Succesfull";
+            //return "Succesfull";
+            return String.format("%s %s %s", idPatient, idQuestionnaire, User.getInstance().getDoctor().getId());
         } catch (Exception e){
             return e.toString();
         } finally {

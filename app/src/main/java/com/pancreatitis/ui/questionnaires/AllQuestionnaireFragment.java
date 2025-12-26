@@ -82,7 +82,8 @@ public class AllQuestionnaireFragment extends Fragment {
 
     private void loadQuestionnaires() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems();
+        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems(User.getInstance().getIdDoctor());
+        Toast.makeText(getContext(), String.format("%d", User.getInstance().getDoctor().getId()), Toast.LENGTH_LONG).show();
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.updateData(questionnaireList);

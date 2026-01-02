@@ -155,6 +155,27 @@ public class DatabaseModule {
 
         return database.insert("doctors", null, values);
     }
+    public Doctor getDoctorByFio(String fio) {
+        Cursor cursor = null;
+        try {
+            cursor = database.query("doctors", null, "fio = ?",
+                    new String[]{fio}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                Doctor doctor = new Doctor();
+                doctor.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                doctor.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
+                int statusInt = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
+                doctor.setStatus(statusInt == 1);
+                return doctor;
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return null;
+    }
+
 
     // ========== Patient ==========
     public Patient getPatientById(int id_patient) {

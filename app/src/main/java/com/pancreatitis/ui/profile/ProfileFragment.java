@@ -78,9 +78,11 @@ public class ProfileFragment extends Fragment {
 
         User user = User.getInstance();
         User user_info = cloudStorageModule.downloadUserInfo(login);
-        Doctor doctor = new Doctor(user_info.getFullName());
-        long idDoctor = databaseModule.insertDoctor(doctor);
-        doctor.setId((int)idDoctor);
+        Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+        if (doctor == null) {
+            long idDoctor = databaseModule.insertDoctor(doctor);
+        }
+        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
 
         user.setEmail(user_info.getEmail());
         user.setPhone(user_info.getPhone());

@@ -67,14 +67,12 @@ public class PredictionModule {
         // 5. Выполняем прогнозирование
         return currentModel.predict(features);
     }
-    //вынести из модуля
     private byte[] getTrainingData() throws Exception {
         if (cachedTrainingData == null) {
             cachedTrainingData = loadFileFromInternalStorage("algorithm.txt");
         }
         return cachedTrainingData;
     }
-    //вынести из модуля
     private byte[] loadFileFromInternalStorage(String fileName) throws Exception {
         File filesDir = context.getFilesDir();
         File file = new File(filesDir, fileName);

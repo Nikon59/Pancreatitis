@@ -75,15 +75,9 @@ public class PatientInformationFragment extends Fragment {
     private void handlePrediction() {
         try {
             PredictionModule predictionModule = PredictionModule.getInstance();
-
-//            // Проверяем доступность данных перед предсказанием
-//            if (!predictionModule.isTrainingDataAvailable()) {
-//                throw new TrainingDataException("Файл algorithm.txt не найден. Загрузите файл через CloudStorageModule.");
-//            }
-
             List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
             PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
-            displayPredictionResults(predictionResult.getProbabilities());
+            displayPredictionResults(predictionResult.getProbabilities(), charasteristicDTOS.size(), loadAllCharacteristic().size());
         } catch (TrainingDataException e) {
             showMessage(e.getMessage());
         } catch (Exception e) {
@@ -98,7 +92,7 @@ public class PatientInformationFragment extends Fragment {
         for (int i = 0; i < characteristics.size(); i++) {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
             CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getValue());
-            charasteristicDTOS.add(charasteristicDTO);
+            if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
         }
         return charasteristicDTOS;
     }
@@ -106,12 +100,12 @@ public class PatientInformationFragment extends Fragment {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         return databaseModule.getAllCharacteristics();
     }
-    private void displayPredictionResults(Map<Integer, Float> probs) {
+    private void displayPredictionResults(Map<Integer, Float> probs, int current, int max) {
         float p1 = probs.getOrDefault(1, 0f) * 100;
         float p5 = probs.getOrDefault(5, 0f) * 100;
         float p6 = probs.getOrDefault(6, 0f) * 100;
 
-        String result = String.format("Отечный панкреатит: %.3f%%\nСреднетяжелый панкреонекроз: %.3f%%\nТяжелый панкреонекроз: %.3f%%", p1, p5, p6);
+        String result = String.format("На основе %d из %d признаков:\n\nОтечный панкреатит: %.3f%%\nСреднетяжелый панкреонекроз: %.3f%%\nТяжелый панкреонекроз: %.3f%%", current, max, p1, p5, p6);
         showHelpDialog("Предсказание", result);
     }
 

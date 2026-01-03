@@ -77,25 +77,21 @@ public class ProfileFragment extends Fragment {
         Pair<String, String> pair = receiveArguments();
         String login = pair.first, password = pair.second;
 
-        try {
-            User user_info = cloudStorageModule.downloadUserInfo(login);
-            Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-            if (doctor == null) {
-                doctor = new Doctor(user_info.getFullName());
-                databaseModule.insertDoctor(doctor);
-            }
-            doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-
-            User user = User.getInstance();
-            user.setEmail(user_info.getEmail());
-            user.setPhone(user_info.getPhone());
-            user.setDoctor(doctor);
-            user.setLogin(login);
-            user.setPassword(password);
-            user.setKey(user_info.getKey());
-        } catch (Exception e) {
-            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+        User user_info = cloudStorageModule.downloadUserInfo(login);
+        Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+        if (doctor == null) {
+            doctor = new Doctor(user_info.getFullName());
+            databaseModule.insertDoctor(doctor);
         }
+        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+
+        User user = User.getInstance();
+        user.setEmail(user_info.getEmail());
+        user.setPhone(user_info.getPhone());
+        user.setDoctor(doctor);
+        user.setLogin(login);
+        user.setPassword(password);
+        user.setKey(user_info.getKey());
     }
 
     private void setupProfile(){

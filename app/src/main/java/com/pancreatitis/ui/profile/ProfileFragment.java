@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -76,20 +77,25 @@ public class ProfileFragment extends Fragment {
         Pair<String, String> pair = receiveArguments();
         String login = pair.first, password = pair.second;
 
-        User user = User.getInstance();
-        User user_info = cloudStorageModule.downloadUserInfo(login);
-        Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-        if (doctor == null) {
-            long idDoctor = databaseModule.insertDoctor(doctor);
-        }
-        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+        try {
+            User user_info = cloudStorageModule.downloadUserInfo(login);
+            Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+            if (doctor == null) {
+                doctor = new Doctor(user_info.getFullName());
+                databaseModule.insertDoctor(doctor);
+            }
+            doctor = databaseModule.getDoctorByFio(user_info.getFullName());
 
-        user.setEmail(user_info.getEmail());
-        user.setPhone(user_info.getPhone());
-        user.setDoctor(doctor);
-        user.setLogin(login);
-        user.setPassword(password);
-        user.setKey(user_info.getKey());
+            User user = User.getInstance();
+            user.setEmail(user_info.getEmail());
+            user.setPhone(user_info.getPhone());
+            user.setDoctor(doctor);
+            user.setLogin(login);
+            user.setPassword(password);
+            user.setKey(user_info.getKey());
+        } catch (Exception e) {
+            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setupProfile(){

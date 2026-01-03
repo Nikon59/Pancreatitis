@@ -157,23 +157,24 @@ public class DatabaseModule {
     }
     public Doctor getDoctorByFio(String fio) {
         Cursor cursor = null;
+        Doctor doctor = null;
+
         try {
             cursor = database.query("doctors", null, "fio = ?",
-                    new String[]{fio}, null, null, null);
+                    new String[]{String.valueOf(fio)}, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {
-                Doctor doctor = new Doctor();
+                doctor = new Doctor();
                 doctor.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
                 doctor.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
                 int statusInt = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
                 doctor.setStatus(statusInt == 1);
-                return doctor;
             }
         } finally {
             if (cursor != null) {
                 cursor.close();
             }
         }
-        return null;
+        return doctor;
     }
 
 

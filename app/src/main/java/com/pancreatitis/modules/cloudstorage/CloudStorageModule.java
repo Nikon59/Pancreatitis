@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.models.Update;
 import com.pancreatitis.models.User;
 
 import java.io.*;
@@ -12,6 +13,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +25,7 @@ public class CloudStorageModule {
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private CloudStorageModule() {
         // Инициализация папок в фоне
@@ -107,11 +111,11 @@ public class CloudStorageModule {
         return executorService.submit(task).get();
     }
 
-    public boolean uploadQuestionnaire(Questionnaire questionnaire, String login) throws Exception {
+    public boolean uploadQuestionnaire(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
-            String jsonData = questionnaire.toJson();
+            String jsonData = update.toJson();
 
-            String fileName = login + "_update" + questionnaire.getId() + ".json";
+            String fileName = login + "_update" + ".json";
             String filePath = "/update/" + fileName;
 
             String uploadUrl = getUploadUrl(filePath, true);

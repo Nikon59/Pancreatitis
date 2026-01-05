@@ -1,14 +1,23 @@
 package com.pancreatitis.modules.questionnairemanager;
 
+import android.widget.Toast;
+
 import com.pancreatitis.models.CharacterizationAnketPatient;
+import com.pancreatitis.models.CharasteristicDTO;
+import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.models.QuestionnaireDTO;
+import com.pancreatitis.models.Update;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import javax.crypto.SecretKey;
 
 public class QuestionnaireManagerModule {
     private static DatabaseModule databaseModule;
@@ -49,21 +58,59 @@ public class QuestionnaireManagerModule {
             }
             databaseModule.setTransactionSuccessful();
 
-            //return "Succesfull";
-            return String.format("%s %s %s", idPatient, idQuestionnaire, User.getInstance().getDoctor().getId());
+            return "Успешно";
+            //return String.format("%s %s %s", idPatient, idQuestionnaire, User.getInstance().getDoctor().getId());
         } catch (Exception e){
             return e.toString();
         } finally {
             databaseModule.endTransaction();
         }
     }
-    public void submitQuestionnaire(Questionnaire questionnaire) {
-
+    public String submitQuestionnaire(List<Questionnaire> questionnaires, List<Patient> patients) {
+        try {
+            User user = User.getInstance();
+            Update update = new Update();
+            for (Patient patient: patients){
+                encryptPatient(patient);
+            }
+            List<QuestionnaireDTO> questionnaireDTOS = buildQuestionnaireDTO(questionnaires);
+            update.setPatientList(patients);
+            update.setQuestionnaireDTOS(questionnaireDTOS);
+            boolean result = cloudStorageModule.uploadQuestionnaire(update, user.getLogin());
+            return result ? "Успешно" : "Ошибка";
+        } catch (Exception e){
+            return e.getMessage();
+        }
     }
-    public void encryptQuestionnaire(Questionnaire questionnaire) {
 
+    private void encryptPatient(Patient patient) throws Exception {
+        SecretKey key = User.getInstance().getKey();
+        String encyprtFio = safetyModule.encryptString(patient.getFio(), key);
+        patient.setFio(encyprtFio);
     }
-    public void decryptQuestionnaire(Questionnaire questionnaire) {
 
+    private List<QuestionnaireDTO> buildQuestionnaireDTO(List<Questionnaire> questionnaires){
+        List<QuestionnaireDTO> questionnaireDTOS = new ArrayList<>();
+        for (Questionnaire questionnaire: questionnaires){
+            QuestionnaireDTO questionnaireDTO = new QuestionnaireDTO(questionnaire);
+            List<CharasteristicDTO> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
+            questionnaireDTO.setCharacteristicValues(charasteristicDTOS);
+            questionnaireDTOS.add(questionnaireDTO);
+        }
+        return questionnaireDTOS;
+    }
+
+    private List<CharasteristicDTO> buildCharacterusticDTO(long idQuestionnaire){
+        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
+        List<Characteristic> charasteristics = databaseModule.getAllCharacteristics();
+
+        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
+            Characteristic characteristic = charasteristics.get(characterizationAnketPatient.getIdCharacteristic() - 1);
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristic);
+            charasteristicDTO.setValue(characterizationAnketPatient.getValue());
+            charasteristicDTOS.add(charasteristicDTO);
+        }
+        return charasteristicDTOS;
     }
 }

@@ -1,5 +1,6 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.modules.database.DatabaseModule;
@@ -10,6 +11,7 @@ public class Doctor {
     private int id = 2;
     private String fio;
     private Boolean status = false;
+    @JsonIgnore
     private LocalDateTime lastModified;
 
     // Конструкторы

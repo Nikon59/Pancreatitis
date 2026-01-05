@@ -16,6 +16,7 @@ import androidx.navigation.Navigation;
 import com.pancreatitis.R;
 import com.pancreatitis.databinding.FragmentProfileBinding;
 import com.pancreatitis.models.RegistrationForm;
+import com.pancreatitis.models.User;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
@@ -74,6 +75,9 @@ public class AuthFragment extends Fragment {
                 Bundle args = new Bundle();
                 args.putString("login", login);
                 args.putString("password", password);
+
+                User user = User.getInstance();
+                user.setKey(key);
 
                 navController.navigate(R.id.action_auth_to_profile, args);
             } else {

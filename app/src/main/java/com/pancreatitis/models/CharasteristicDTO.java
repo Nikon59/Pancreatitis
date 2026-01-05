@@ -1,6 +1,8 @@
 // CharasteristicDTO.java
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Characteristic;
 
 public class CharasteristicDTO extends Characteristic {
@@ -28,5 +30,14 @@ public class CharasteristicDTO extends Characteristic {
 
     public int getIntValue() {
         return Math.round(value);
+    }
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
+    }
+
+    public static CharasteristicDTO fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, CharasteristicDTO.class);
     }
 }

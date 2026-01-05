@@ -1,5 +1,6 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,6 +16,7 @@ public class Characteristic {
     private float weight;
     private int minValue;
     private int maxValue;
+    @JsonIgnore
     private LocalDateTime lastModified;
 
     // Конструкторы

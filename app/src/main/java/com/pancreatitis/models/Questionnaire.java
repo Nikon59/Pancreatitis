@@ -1,5 +1,6 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,8 +13,10 @@ public class Questionnaire {
     private int idDoctor = -1;
     private int idExpert = -1;
     private String diagnosis;
+    @JsonIgnore
     private LocalDateTime dateOfCompletion;
     private String admittedFrom;
+    @JsonIgnore
     private LocalDateTime lastModified;
 
     // Конструкторы

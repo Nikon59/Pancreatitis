@@ -24,13 +24,14 @@ public class Update {
     public void setQuestionnaireDTOS(List<QuestionnaireDTO> questionnaireDTOS) {
         this.questionnaireDTOS = questionnaireDTOS;
     }
+
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(this);
     }
 
-    public static Patient fromJson(String json) throws JsonProcessingException {
+    public static Update fromJson(String json) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(json, Patient.class);
+        return mapper.readValue(json, Update.class);
     }
 }

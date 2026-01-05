@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
+import com.pancreatitis.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +53,16 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         this.listener = listener;
     }
 
+    public List<QuestionnaireItem> getSelectedQuestionnaires() {
+        List<QuestionnaireItem> selected = new ArrayList<>();
+        for (QuestionnaireItem item : questionnaireList) {
+            if (item.isSelected()) {
+                selected.add(item);
+            }
+        }
+        return selected;
+    }
+
     public void updateData(List<QuestionnaireItem> newQuestionnaires) {
         this.questionnaireList.clear();
         this.questionnaireList.addAll(newQuestionnaires);
@@ -82,22 +94,36 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         private TextView textPatientName;
         private TextView textDiagnosis;
         private TextView textStatus;
+        private CheckBox isChecked;
 
         public QuestionnaireViewHolder(@NonNull View itemView) {
             super(itemView);
             textPatientName = itemView.findViewById(R.id.text_fio);
             textDiagnosis = itemView.findViewById(R.id.text_diagnosis);
             textStatus = itemView.findViewById(R.id.text_status);
+            isChecked = itemView.findViewById(R.id.is_checked);
         }
 
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
+            User user = User.getInstance();
+            if (user.getKey() == null){
+                //isChecked.setVisibility(View.GONE);
+            }
+            isChecked.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    questionnaire.setSelected(!questionnaire.isSelected());
+                }
+            });
+
             textPatientName.setText(questionnaire.getFioPatient());
             textDiagnosis.setText(
                    questionnaire.getDiagnosis().length() > 20
                             ? questionnaire.getDiagnosis().substring(0, 20) + "..."
                             : questionnaire.getDiagnosis()
             );
-            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "В процессе" : "Завершено");itemView.setOnClickListener(new View.OnClickListener() {
+            textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "В процессе" : "Завершено");
+            itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (listener != null) {

@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DiagnosisItem {
-    private final String name = "Diagnosis";
+    private final String name = "Диагноз";
     private final List<String> options = new ArrayList<>(Arrays.asList("Нет данных", "Отечный панкреатит", "Панкреонекроз среднетяжелое течение", "Панкреонекроз тяжелое течение"));
 
     private int value = 0;

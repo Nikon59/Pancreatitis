@@ -7,7 +7,8 @@ public class QuestionnaireItem {
     private long idQuestionnaire;
     private int idPatient;
     private String fioPatient;
-    private String diagnosis;
+    private String diagnosis = "-";
+    private boolean selected = false;
 
     public QuestionnaireItem() {}
     public QuestionnaireItem(long idQuestionnaire, int idPatient, String fioPatient, String diagnosis) {
@@ -23,6 +24,14 @@ public class QuestionnaireItem {
         diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
         diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
         return diagnosisMap.getOrDefault(code, "-");
+    }
+
+    public boolean isSelected(){
+        return selected;
+    }
+
+    public void setSelected(boolean selected){
+        this.selected = selected;
     }
 
     public long getIdQuestionnaire() {

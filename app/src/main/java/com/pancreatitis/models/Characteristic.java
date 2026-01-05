@@ -19,6 +19,19 @@ public class Characteristic {
 
     // Конструкторы
     public Characteristic() {}
+
+    public Characteristic(Characteristic characteristic) {
+        this.id = characteristic.getId();
+        this.name = characteristic.getName();
+        this.opis = characteristic.getOpis();
+        this.type = characteristic.getType();
+        this.hints = characteristic.getHints();
+        this.weight = characteristic.getWeight();
+        this.minValue = characteristic.getMinValue();
+        this.maxValue = characteristic.getMaxValue();
+        this.lastModified = characteristic.getLastModified();
+    }
+
     public Characteristic(int id, String name, String opis, String type,
                           String hints, float weight, int minValue,
                           int maxValue, LocalDateTime lastModified) {

@@ -11,12 +11,6 @@ public class QuestionnaireItem {
     private boolean selected = false;
 
     public QuestionnaireItem() {}
-    public QuestionnaireItem(long idQuestionnaire, int idPatient, String fioPatient, String diagnosis) {
-        this.idQuestionnaire = idQuestionnaire;
-        this.idPatient = idPatient;
-        this.fioPatient = fioPatient;
-        this.diagnosis = diagnosis;
-    }
 
     private String codeToDiagnosis(String code){
         Map<String, String> diagnosisMap = new HashMap<>();

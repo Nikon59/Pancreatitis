@@ -18,6 +18,17 @@ public class Questionnaire {
 
     // Конструкторы
     public Questionnaire() {}
+
+    public Questionnaire(Questionnaire questionnaire) {
+        this.id = questionnaire.getId();
+        this.idPatient = questionnaire.getIdPatient();
+        this.idDoctor = questionnaire.getIdDoctor();
+        this.idExpert = questionnaire.getIdExpert();
+        this.diagnosis = questionnaire.getCodeDiagnosis();
+        this.dateOfCompletion = questionnaire.getDateOfCompletion();
+        this.admittedFrom = questionnaire.getAdmittedFrom();
+        this.lastModified = questionnaire.getLastModified();
+    }
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(this);

@@ -1,5 +1,8 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 
 public class Update {
@@ -20,5 +23,14 @@ public class Update {
 
     public void setQuestionnaireDTOS(List<QuestionnaireDTO> questionnaireDTOS) {
         this.questionnaireDTOS = questionnaireDTOS;
+    }
+    public String toJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this);
+    }
+
+    public static Patient fromJson(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, Patient.class);
     }
 }

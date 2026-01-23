@@ -172,12 +172,6 @@ public class MainActivity extends AppCompatActivity {
     private String getFragmentTitle(int destinationId) {
         if (destinationId == R.id.navigation_home) {
             return "Добро пожаловать";
-        } else if (destinationId == R.id.navigation_profile) {
-            return "";
-        } else if (destinationId == R.id.navigation_auth) {
-            return "";
-        } else if (destinationId == R.id.navigation_register) {
-            return "";
         } else if (destinationId == R.id.navigation_helps) {
             return "Helps";
         } else if (destinationId == R.id.navigation_questionnaires) {

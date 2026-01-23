@@ -89,7 +89,7 @@ public class AuthFragment extends Fragment {
                     databaseModule.insertDoctor(doctor);
                     doctor = databaseModule.getDoctorByFio(user_info.getFullName());
                 }
-                
+
                 user.setKey(key);
                 user.setEmail(user_info.getEmail());
                 user.setPhone(user_info.getPhone());

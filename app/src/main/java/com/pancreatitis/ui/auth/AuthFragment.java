@@ -87,9 +87,9 @@ public class AuthFragment extends Fragment {
                 if (doctor == null) {
                     doctor = new Doctor(user_info.getFullName());
                     databaseModule.insertDoctor(doctor);
+                    doctor = databaseModule.getDoctorByFio(user_info.getFullName());
                 }
-                doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-
+                
                 user.setKey(key);
                 user.setEmail(user_info.getEmail());
                 user.setPhone(user_info.getPhone());

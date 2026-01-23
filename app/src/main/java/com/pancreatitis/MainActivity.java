@@ -68,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
     private void downloadAlgorithmFileToAssets() {
         try {
             CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-            LocalStorageModule localStorageModule = LocalStorageModule.getInstance(getBaseContext());
+            LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
+            localStorageModule.setContext(getBaseContext());
 
             // Скачиваем файл из облака
             byte[] fileData = cloudStorageModule.downloadTrainingData();

@@ -47,7 +47,8 @@ public class PredictionModule {
         if (context == null) {
             throw new IllegalStateException("Context not set. Call setContext() first.");
         }
-        LocalStorageModule localStorageModule = LocalStorageModule.getInstance(context);
+        LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
+        localStorageModule.setContext(getContext());
 
         // 1. Получаем тренировочные данные из assets
         byte[] rawTrainingData = localStorageModule.getTrainingData();
@@ -68,33 +69,6 @@ public class PredictionModule {
 
         // 5. Выполняем прогнозирование
         return currentModel.predict(features);
-    }
-    private byte[] getTrainingData() throws Exception {
-        if (cachedTrainingData == null) {
-            cachedTrainingData = loadFileFromInternalStorage("algorithm.txt");
-        }
-        return cachedTrainingData;
-    }
-    private byte[] loadFileFromInternalStorage(String fileName) throws Exception {
-        File filesDir = context.getFilesDir();
-        File file = new File(filesDir, fileName);
-
-        // Проверяем существование файла
-        if (!file.exists() || file.length() == 0) {
-            throw new TrainingDataException("Файл algorithm.txt не найден или пуст. Загрузите файл через CloudStorageModule.");
-        }
-
-        try (FileInputStream inputStream = new FileInputStream(file);
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            return outputStream.toByteArray();
-        }
     }
 
     /**

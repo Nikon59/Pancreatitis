@@ -22,6 +22,7 @@ import com.pancreatitis.models.User;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
 import java.util.Objects;
@@ -33,7 +34,7 @@ public class AuthFragment extends Fragment {
     private EditText loginEditText;
     private EditText passwordEditText;
     private AuthorizationModule authorizationModule;
-    private CloudStorageModule cloudStorageModule;
+    private LocalStorageModule localStorageModule;
     private DatabaseModule databaseModule;
 
     @Override
@@ -46,7 +47,7 @@ public class AuthFragment extends Fragment {
         passwordEditText = view.findViewById(R.id.passwordEditText);
         authorizationModule = AuthorizationModule.getInstance();
         authorizationModule.setContext(getContext());
-        cloudStorageModule = CloudStorageModule.getInstance();
+        localStorageModule = LocalStorageModule.getInstance();
         databaseModule = DatabaseModule.getInstance();
 
         // Кнопка регистрации (всегда доступна)
@@ -81,7 +82,7 @@ public class AuthFragment extends Fragment {
             if (key != null) {
                 NavController navController = Navigation.findNavController(requireView());
 
-                User user_info = cloudStorageModule.downloadUserInfo(login);
+                User user_info = localStorageModule.downloadUserInfo(login);
                 User user = User.getInstance();
 
                 Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());

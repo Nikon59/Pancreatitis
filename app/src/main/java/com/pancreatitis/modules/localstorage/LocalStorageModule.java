@@ -5,6 +5,7 @@ import android.os.Environment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
@@ -31,20 +32,27 @@ public class LocalStorageModule {
     private static final String APP_DIR_NAME = "PancreatitisApp";
     private static final String USERS_DIR = "users";
 
-    private LocalStorageModule(Context context) {
-        this.context = context;
+    private LocalStorageModule() {
         initializeStorage();
     }
 
-    public static LocalStorageModule getInstance(Context context) {
+    public static LocalStorageModule getInstance() {
         if (instance == null) {
             synchronized (LocalStorageModule.class) {
                 if (instance == null) {
-                    instance = new LocalStorageModule(context);
+                    instance = new LocalStorageModule();
                 }
             }
         }
         return instance;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     private void initializeStorage() {
@@ -56,12 +64,7 @@ public class LocalStorageModule {
 
     private File getStorageBaseDir() {
         if (storageBaseDir == null) {
-            // Используем внешнее хранилище, если доступно, иначе внутреннее
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                storageBaseDir = new File(context.getExternalFilesDir(null), APP_DIR_NAME);
-            } else {
-                storageBaseDir = new File(context.getFilesDir(), APP_DIR_NAME);
-            }
+            storageBaseDir = new File(context.getFilesDir(), APP_DIR_NAME);
         }
         return storageBaseDir;
     }
@@ -72,6 +75,32 @@ public class LocalStorageModule {
             return folder.mkdirs();
         }
         return true;
+    }
+
+    public boolean createUserFolder(String login) {
+        try {
+            Future<Boolean> future = executorService.submit(() -> {
+                File userFolder = new File(getFolder(USERS_DIR), login);
+
+                if (userFolder.exists()) {
+                    return true;
+                }
+
+                boolean created = userFolder.mkdirs();
+
+                if (created) {
+                    System.out.println("Папка пользователя создана: " + userFolder.getAbsolutePath());
+                } else {
+                    System.out.println("Не удалось создать папку пользователя: " + login);
+                }
+
+                return created;
+            });
+
+            return future.get();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private File getFolder(String folderName) {
@@ -104,6 +133,26 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
+    public boolean saveLocalUserKey(String login, byte[] keyData) throws Exception {
+        File userFolder = new File(getFolder(USERS_DIR), login);
+
+        if (!userFolder.exists()) {
+            if (!userFolder.mkdirs()) {
+                throw new IOException("Не удалось создать папку пользователя: " + login);
+            }
+        }
+
+        File keyFile = new File(userFolder, "key_user.enc");
+
+        try (FileOutputStream fos = new FileOutputStream(keyFile)) {
+            fos.write(keyData);
+            fos.flush();
+            return true;
+        } catch (IOException e) {
+            throw new IOException("Ошибка при сохранении ключа: " + e.getMessage(), e);
+        }
+    }
+
     public boolean isUserKeyExists(String login) throws Exception {
         Callable<Boolean> task = () -> {
             File keyFile = new File(new File(getFolder(USERS_DIR), login), "key_user.enc");
@@ -125,6 +174,51 @@ public class LocalStorageModule {
             String json = new String(jsonBytes, StandardCharsets.UTF_8);
 
             return parseUserFromJson(json, login);
+        };
+
+        return executorService.submit(task).get();
+    }
+
+    public boolean saveUserInfo(User user) throws Exception {
+        Callable<Boolean> task = () -> {
+            if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
+                throw new IllegalArgumentException("User or login cannot be null or empty");
+            }
+
+            // Создаем папку пользователя, если её нет
+            File userFolder = new File(getFolder(USERS_DIR), user.getLogin());
+            if (!userFolder.exists()) {
+                if (!userFolder.mkdirs()) {
+                    throw new IOException("Failed to create user folder: " + user.getLogin());
+                }
+            }
+
+            // Создаем объект для сериализации в JSON
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode userJson = mapper.createObjectNode();
+
+            // Заполняем JSON данными из объекта User
+            if (user.getEmail() != null) {
+                userJson.put("email", user.getEmail());
+            }
+
+            if (user.getDoctor() != null && user.getDoctor().getFio() != null) {
+                userJson.put("fullName", user.getDoctor().getFio());
+            }
+
+            if (user.getPhone() != null) {
+                userJson.put("phone", user.getPhone());
+            }
+
+            userJson.put("login", user.getLogin());
+            userJson.put("updatedAt", LocalDateTime.now().format(formatter));
+
+            // Конвертируем в JSON строку
+            String jsonData = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(userJson);
+
+            // Сохраняем в файл
+            File userInfoFile = new File(userFolder, "user_info.json");
+            return writeFile(userInfoFile, jsonData.getBytes(StandardCharsets.UTF_8));
         };
 
         return executorService.submit(task).get();

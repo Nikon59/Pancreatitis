@@ -6,6 +6,7 @@ import android.widget.Toast;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharasteristicDTO;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,9 +47,10 @@ public class PredictionModule {
         if (context == null) {
             throw new IllegalStateException("Context not set. Call setContext() first.");
         }
+        LocalStorageModule localStorageModule = LocalStorageModule.getInstance(context);
 
         // 1. Получаем тренировочные данные из assets
-        byte[] rawTrainingData = getTrainingData();
+        byte[] rawTrainingData = localStorageModule.getTrainingData();
 
         TrainingData trainingData = TrainingDataParser.parseFromFile(
                 new ByteArrayInputStream(rawTrainingData)

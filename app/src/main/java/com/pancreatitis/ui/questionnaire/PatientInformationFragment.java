@@ -75,6 +75,7 @@ public class PatientInformationFragment extends Fragment {
     private void handlePrediction() {
         try {
             PredictionModule predictionModule = PredictionModule.getInstance();
+            predictionModule.setContext(getContext());
             List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
             PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
             displayPredictionResults(predictionResult.getProbabilities(), charasteristicDTOS.size(), loadAllCharacteristic().size());

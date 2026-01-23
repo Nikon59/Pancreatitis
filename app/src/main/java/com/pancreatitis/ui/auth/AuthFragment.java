@@ -45,6 +45,7 @@ public class AuthFragment extends Fragment {
         loginEditText = view.findViewById(R.id.loginEditText);
         passwordEditText = view.findViewById(R.id.passwordEditText);
         authorizationModule = AuthorizationModule.getInstance();
+        authorizationModule.setContext(getContext());
         cloudStorageModule = CloudStorageModule.getInstance();
         databaseModule = DatabaseModule.getInstance();
 

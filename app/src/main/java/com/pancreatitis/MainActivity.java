@@ -9,6 +9,7 @@ import android.widget.TextView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
 
 import androidx.activity.OnBackPressedCallback;
@@ -41,9 +42,6 @@ public class MainActivity extends AppCompatActivity {
         databaseModule.setContext(getApplicationContext());
         databaseModule.initWork();
 
-        PredictionModule predictionModule = PredictionModule.getInstance();
-        predictionModule.setContext(getApplicationContext());
-
         checkAndDownloadAlgorithmFile();
 
         // Убираем ActionBar
@@ -69,28 +67,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void downloadAlgorithmFileToAssets() {
         try {
-            // Получаем экземпляр CloudStorageModule
             CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
+            LocalStorageModule localStorageModule = LocalStorageModule.getInstance(getBaseContext());
 
             // Скачиваем файл из облака
             byte[] fileData = cloudStorageModule.downloadTrainingData();
 
             // Сохраняем файл во внутреннюю память приложения
-            saveFileToInternalStorage(fileData, "algorithm.txt");
+            localStorageModule.downloadAlgorithmFile(fileData);
 
             Log.d("MainActivity", "algorithm.txt downloaded and saved successfully");
         } catch (Exception e) {
             Log.e("MainActivity", "Failed to download algorithm.txt", e);
-        }
-    }
-
-    private void saveFileToInternalStorage(byte[] data, String fileName) throws Exception {
-        File filesDir = getFilesDir();
-        File outputFile = new File(filesDir, fileName);
-
-        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-            fos.write(data);
-            fos.flush();
         }
     }
 

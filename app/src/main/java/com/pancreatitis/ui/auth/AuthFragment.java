@@ -1,6 +1,7 @@
 package com.pancreatitis.ui.auth;
 
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,9 +16,12 @@ import androidx.navigation.Navigation;
 
 import com.pancreatitis.R;
 import com.pancreatitis.databinding.FragmentProfileBinding;
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.authorization.AuthorizationModule;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
 import java.util.Objects;
@@ -29,6 +33,8 @@ public class AuthFragment extends Fragment {
     private EditText loginEditText;
     private EditText passwordEditText;
     private AuthorizationModule authorizationModule;
+    private CloudStorageModule cloudStorageModule;
+    private DatabaseModule databaseModule;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,6 +45,8 @@ public class AuthFragment extends Fragment {
         loginEditText = view.findViewById(R.id.loginEditText);
         passwordEditText = view.findViewById(R.id.passwordEditText);
         authorizationModule = AuthorizationModule.getInstance();
+        cloudStorageModule = CloudStorageModule.getInstance();
+        databaseModule = DatabaseModule.getInstance();
 
         // Кнопка регистрации (всегда доступна)
         TextView goToNestedButton = view.findViewById(R.id.btn_register);
@@ -72,14 +80,24 @@ public class AuthFragment extends Fragment {
             if (key != null) {
                 NavController navController = Navigation.findNavController(requireView());
 
-                Bundle args = new Bundle();
-                args.putString("login", login);
-                args.putString("password", password);
-
+                User user_info = cloudStorageModule.downloadUserInfo(login);
                 User user = User.getInstance();
-                user.setKey(key);
 
-                navController.navigate(R.id.action_auth_to_profile, args);
+                Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+                if (doctor == null) {
+                    doctor = new Doctor(user_info.getFullName());
+                    databaseModule.insertDoctor(doctor);
+                }
+                doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+
+                user.setKey(key);
+                user.setEmail(user_info.getEmail());
+                user.setPhone(user_info.getPhone());
+                user.setDoctor(doctor);
+                user.setLogin(login);
+                user.setPassword(password);
+
+                navController.navigate(R.id.action_auth_to_profile);
             } else {
                 // Неверные данные
                 showMessage("Неверный логин или пароль");

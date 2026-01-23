@@ -106,7 +106,7 @@ public class PatientInformationFragment extends Fragment {
         float p6 = probs.getOrDefault(6, 0f) * 100;
 
         String result = String.format("На основе %d из %d признаков:\n\nОтечный панкреатит: %.3f%%\nСреднетяжелый панкреонекроз: %.3f%%\nТяжелый панкреонекроз: %.3f%%", current, max, p1, p5, p6);
-        showHelpDialog("Предсказание", result);
+        showHelpDialog("Прогноз", result);
     }
 
     // ========== SAVE HANDLING ==========

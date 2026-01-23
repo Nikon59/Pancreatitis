@@ -33,8 +33,6 @@ public class ProfileFragment extends Fragment {
     private EditText loginValue;
     private EditText passwordValue;
     private OnBackPressedCallback onBackPressedCallback;
-    private CloudStorageModule cloudStorageModule;
-    private DatabaseModule databaseModule;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -44,7 +42,6 @@ public class ProfileFragment extends Fragment {
         // Настройка обработки кнопки "Назад"
         try {
             initViews(view);
-            loadrofile();
             setupProfile();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -62,36 +59,6 @@ public class ProfileFragment extends Fragment {
         phoneValue = view.findViewById(R.id.phoneValue);
         loginValue = view.findViewById(R.id.loginValue);
         passwordValue = view.findViewById(R.id.passwordValue);
-        cloudStorageModule = CloudStorageModule.getInstance();
-        databaseModule = DatabaseModule.getInstance();
-    }
-
-    private Pair<String, String> receiveArguments() {
-        Bundle args = getArguments();
-        String login = args.getString("login");
-        String password = args.getString("password");
-        return new Pair<>(login, password);
-    }
-
-    private void loadrofile() throws Exception {
-        Pair<String, String> pair = receiveArguments();
-        String login = pair.first, password = pair.second;
-
-        User user_info = cloudStorageModule.downloadUserInfo(login);
-        Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-        if (doctor == null) {
-            doctor = new Doctor(user_info.getFullName());
-            databaseModule.insertDoctor(doctor);
-        }
-        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-
-        User user = User.getInstance();
-        user.setEmail(user_info.getEmail());
-        user.setPhone(user_info.getPhone());
-        user.setDoctor(doctor);
-        user.setLogin(login);
-        user.setPassword(password);
-        user.setKey(user_info.getKey());
     }
 
     private void setupProfile(){

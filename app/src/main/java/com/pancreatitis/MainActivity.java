@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
@@ -14,6 +15,8 @@ import com.pancreatitis.modules.prediction.PredictionModule;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private NavController navController;
     private ImageView backButton;
     private TextView toolbarTitle;
+    private Toolbar toolbar; // Добавляем ссылку на весь тулбар
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         backButton = findViewById(R.id.btn_back);
         toolbarTitle = findViewById(R.id.toolbar_title);
+        toolbar = findViewById(R.id.toolbar);
     }
 
     private void setupNavigation() {
@@ -140,6 +145,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateToolbar(int destinationId) {
+        // Определяем, на каких фрагментах скрывать тулбар
+        Set<Integer> hiddenToolbarFragments = new HashSet<>(Arrays.asList(
+                R.id.navigation_auth,
+                R.id.navigation_profile
+        ));
+
+        // Скрываем или показываем весь тулбар
+        if (toolbar != null) {
+            boolean showToolbar = !hiddenToolbarFragments.contains(destinationId);
+            toolbar.setVisibility(showToolbar ? View.VISIBLE : View.GONE);
+        }
+
         if (backButton != null) {
             Set<Integer> hiddenBackButtonFragments = new HashSet<>(Arrays.asList(
                     R.id.navigation_home,
@@ -162,7 +179,11 @@ public class MainActivity extends AppCompatActivity {
         if (destinationId == R.id.navigation_home) {
             return "Добро пожаловать";
         } else if (destinationId == R.id.navigation_helps) {
-            return "Helps";
+            return "Помощь";}
+        else if (destinationId == R.id.navigation_auth) {
+            return "Аут";
+        } else if (destinationId == R.id.navigation_profile) {
+            return "Личный кабинет";
         } else if (destinationId == R.id.navigation_questionnaires) {
             return "Менеджер анкет";
         } else if (destinationId == R.id.navigation_anket) {
@@ -176,5 +197,20 @@ public class MainActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    // Дополнительные методы для управления тулбаром из фрагментов (опционально)
+    public void setToolbarVisibility(boolean visible) {
+        if (toolbar != null) {
+            toolbar.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    public void showToolbar() {
+        setToolbarVisibility(true);
+    }
+
+    public void hideToolbar() {
+        setToolbarVisibility(false);
     }
 }

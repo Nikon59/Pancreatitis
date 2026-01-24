@@ -5,41 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <!-- Заголовок профиля -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="24dp"
-            android:background="#3F51B5"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Личный кабинет"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:id="@+id/title_fio"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Иванов Иван Иванович"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF" />
-
-        </LinearLayout>
-
         <!-- Карточка с информацией -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -168,5 +133,4 @@
             android:background="@drawable/rounded_background"
             android:textColor="#FFFFFF" />
 
-    </LinearLayout>
 </ScrollView>

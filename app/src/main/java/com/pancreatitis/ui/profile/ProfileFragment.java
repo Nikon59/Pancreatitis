@@ -26,7 +26,6 @@ public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
     private Button btn_logout;
-    private TextView title_fio;
     private EditText fioValue;
     private EditText emailValue;
     private EditText phoneValue;
@@ -53,7 +52,6 @@ public class ProfileFragment extends Fragment {
 
     private void initViews(View view){
         btn_logout = view.findViewById(R.id.btn_logout);
-        title_fio = view.findViewById(R.id.title_fio);
         fioValue = view.findViewById(R.id.fioValue);
         emailValue = view.findViewById(R.id.emailValue);
         phoneValue = view.findViewById(R.id.phoneValue);
@@ -64,7 +62,6 @@ public class ProfileFragment extends Fragment {
     private void setupProfile(){
         User user = User.getInstance();
         fioValue.setText(user.getFullName());
-        title_fio.setText(user.getFullName());
         emailValue.setText(user.getEmail());
         phoneValue.setText(user.getPhone());
         loginValue.setText(user.getLogin());

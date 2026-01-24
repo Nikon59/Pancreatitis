@@ -147,8 +147,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateToolbar(int destinationId) {
         // Определяем, на каких фрагментах скрывать тулбар
         Set<Integer> hiddenToolbarFragments = new HashSet<>(Arrays.asList(
-                R.id.navigation_auth,
-                R.id.navigation_profile
+                R.id.navigation_auth
         ));
 
         // Скрываем или показываем весь тулбар

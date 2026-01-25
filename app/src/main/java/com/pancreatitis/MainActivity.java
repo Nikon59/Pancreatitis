@@ -69,15 +69,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void downloadAlgorithmFileToAssets() {
         try {
-            CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
             LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
             localStorageModule.setContext(getBaseContext());
+            if (!localStorageModule.isTrainingData()){
+                CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
 
-            // Скачиваем файл из облака
-            byte[] fileData = cloudStorageModule.downloadTrainingData();
+                byte[] fileData = cloudStorageModule.downloadTrainingData();
 
-            // Сохраняем файл во внутреннюю память приложения
-            localStorageModule.downloadAlgorithmFile(fileData);
+                localStorageModule.downloadAlgorithmFile(fileData);
+            }
 
             Log.d("MainActivity", "algorithm.txt downloaded and saved successfully");
         } catch (Exception e) {
@@ -164,9 +164,7 @@ public class MainActivity extends AppCompatActivity {
         if (destinationId == R.id.navigation_home) {
             return "Добро пожаловать";
         } else if (destinationId == R.id.navigation_helps) {
-            return "Помощь";}
-        else if (destinationId == R.id.navigation_auth) {
-            return "Аут";
+            return "Помощь";
         } else if (destinationId == R.id.navigation_profile) {
             return "Личный кабинет";
         } else if (destinationId == R.id.navigation_questionnaires) {

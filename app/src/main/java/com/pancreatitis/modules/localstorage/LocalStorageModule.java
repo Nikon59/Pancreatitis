@@ -267,6 +267,15 @@ public class LocalStorageModule {
         return executorService.submit(task).get();
     }
 
+    public boolean isTrainingData() throws Exception {
+        Callable<Boolean> task = () -> {
+            File keyFile = new File(getStorageBaseDir(), "algorithm.txt");
+            return keyFile.exists();
+        };
+
+        return executorService.submit(task).get();
+    }
+
     public void downloadAlgorithmFile(byte[] algorithmData) throws Exception {
         Callable<Boolean> task = () -> {
             File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");

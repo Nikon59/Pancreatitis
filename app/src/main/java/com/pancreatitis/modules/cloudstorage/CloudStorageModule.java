@@ -25,7 +25,7 @@ public class CloudStorageModule {
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 
     private CloudStorageModule() {
         // Инициализация папок в фоне
@@ -114,8 +114,8 @@ public class CloudStorageModule {
     public boolean uploadQuestionnaire(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
             String jsonData = update.toJson();
-
-            String fileName = login + "_update" + ".json";
+            String datetime = LocalDateTime.now().format(formatter);
+            String fileName = login + "_update_" + datetime + ".json";
             String filePath = "/update/" + fileName;
 
             String uploadUrl = getUploadUrl(filePath, true);

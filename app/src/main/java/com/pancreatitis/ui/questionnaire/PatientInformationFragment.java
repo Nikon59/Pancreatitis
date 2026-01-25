@@ -198,7 +198,7 @@ public class PatientInformationFragment extends Fragment {
         // 3)
         QuestionnaireInformationItem lastModify = new QuestionnaireInformationItem();
         lastModify.setName("Дата создания");
-        lastModify.setValue("");
+        lastModify.setValue("-");
 
         questionnaireInformationItems.add(fioPatient);
         questionnaireInformationItems.add(admittedFrom);

@@ -82,9 +82,17 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
         public void bind(QuestionnaireInformationItem questionnaireInformationItem) {
             textTitle.setText(questionnaireInformationItem.getName());
             editValue.setText(questionnaireInformationItem.getValue());
-            editValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
 
-            setupTextWatcher(questionnaireInformationItem);
+            String title = questionnaireInformationItem.getName();
+            boolean isPatientName = "Имя пациента".equals(title);
+            boolean isCreationDate = "Дата создания".equals(title);
+
+            if ((isPatientName && !questionnaireInformationItem.getValue().isEmpty()) || isCreationDate) {
+                editValue.setEnabled(false);
+            } else {
+                editValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+                setupTextWatcher(questionnaireInformationItem);
+            }
         }
 
         private void setupTextWatcher(QuestionnaireInformationItem questionnaireInformationItem) {

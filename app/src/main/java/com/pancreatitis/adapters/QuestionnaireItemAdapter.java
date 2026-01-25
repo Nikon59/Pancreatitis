@@ -109,6 +109,8 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
             if (user.getKey() == null){
                 //isChecked.setVisibility(View.GONE);
             }
+
+            isChecked.setChecked(questionnaire.isSelected());
             isChecked.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

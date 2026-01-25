@@ -43,7 +43,7 @@ public class AllQuestionnaireFragment extends Fragment {
         try {
             loadQuestionnaires();
         } catch (Exception e){
-            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         return view;

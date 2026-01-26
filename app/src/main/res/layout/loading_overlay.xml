@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/loading_overlay"
+    android:visibility="gone"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ProgressBar
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:layout_width="64dp"
+        android:layout_height="64dp"/>
+
+    <TextView
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:textColor="@color/black"
+        android:textSize="20dp"
+        android:text="Отправляем анкеты..." />
+</FrameLayout>

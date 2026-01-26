@@ -1,6 +1,8 @@
 package com.pancreatitis.ui.questionnaires;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -23,11 +25,14 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AllQuestionnaireFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private QuestionnaireItemAdapter adapter;
+    private View loading_overlay;
     private Button btn_anket;
     private Button submit_anket;
     private EditText searchBar;
@@ -54,6 +59,7 @@ public class AllQuestionnaireFragment extends Fragment {
         btn_anket = view.findViewById(R.id.create_anket);
         submit_anket = view.findViewById(R.id.submit_ankets);
         searchBar = view.findViewById(R.id.search_bar);
+        loading_overlay = view.findViewById(R.id.loading_overlay);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new QuestionnaireItemAdapter(questionnaireList, new QuestionnaireItemAdapter.OnItemClickListener() {
@@ -85,20 +91,42 @@ public class AllQuestionnaireFragment extends Fragment {
 
         submit_anket.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                // Получаем выбранные анкеты из адаптера
-                List<QuestionnaireItem> selectedQuestionnaires = adapter.getSelectedQuestionnaires();
-
-                if (selectedQuestionnaires.isEmpty()) {
+            public void onClick(View view) {
+                List<QuestionnaireItem> selected = adapter.getSelectedQuestionnaires();
+                if (selected.isEmpty()) {
                     Toast.makeText(getContext(), "Выберите хотя бы одну анкету", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-                List<Questionnaire> questionnaires = getAllQuestionnaires(selectedQuestionnaires);
-                List<Patient> patients = getAllPatient(selectedQuestionnaires);
-                String result = questionnaireManagerModule.submitQuestionnaire(questionnaires, patients);
-                Toast.makeText(getContext(), result, Toast.LENGTH_SHORT).show();
+                if (User.getInstance().getKey() == null) {
+                    Toast.makeText(getContext(), "Авторизуйтесь для отправки анкет", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Показываем загрузку и блокируем UI
+                loading_overlay.setVisibility(View.VISIBLE);
+
+                // Выполняем в фоне
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        QuestionnaireManagerModule qm = QuestionnaireManagerModule.getInstance();
+                        List<Questionnaire> questionnaires = getAllQuestionnaires(selected);
+                        List<Patient> patients = getAllPatient(selected);
+
+                        final String result = qm.submitQuestionnaire(questionnaires, patients);
+
+                        Handler mainHandler = new Handler(Looper.getMainLooper());
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                loading_overlay.setVisibility(View.GONE);
+                                Toast.makeText(getContext(), result, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                });
             }
         });
     }

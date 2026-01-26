@@ -21,5 +21,5 @@
         android:layout_marginTop="64dp"
         android:textColor="@color/black"
         android:textSize="20dp"
-        android:text="Отправляем анкеты..." />
+        android:text="Работаем..." />
 </FrameLayout>

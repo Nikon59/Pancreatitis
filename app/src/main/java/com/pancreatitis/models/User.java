@@ -15,7 +15,7 @@ public class User {
     private String password;
     private static User instance;
 
-    private User() {
+    public User() {
         doctor = new Doctor();
     }
 
@@ -24,6 +24,10 @@ public class User {
             instance = new User();
         }
         return instance;
+    }
+
+    public static void setInstance() {
+        instance = null;
     }
 
     public SecretKey getKey() {

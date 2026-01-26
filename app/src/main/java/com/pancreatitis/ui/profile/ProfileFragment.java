@@ -26,6 +26,7 @@ public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
     private Button btn_logout;
+    private Button btn_update_training_data;
     private EditText fioValue;
     private EditText emailValue;
     private EditText phoneValue;
@@ -52,6 +53,7 @@ public class ProfileFragment extends Fragment {
 
     private void initViews(View view){
         btn_logout = view.findViewById(R.id.btn_logout);
+        btn_update_training_data = view.findViewById(R.id.btn_update_training_data);
         fioValue = view.findViewById(R.id.fioValue);
         emailValue = view.findViewById(R.id.emailValue);
         phoneValue = view.findViewById(R.id.phoneValue);
@@ -85,9 +87,12 @@ public class ProfileFragment extends Fragment {
 
         // Кнопка регистрации (всегда доступна)
         btn_logout.setOnClickListener(v -> {
+            User.setInstance();
             Navigation.findNavController(v).navigate(R.id.action_profile_to_auth);
         });
     }
+
+
 
     @Override
     public void onDestroyView() {

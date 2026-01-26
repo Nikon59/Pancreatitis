@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
@@ -15,6 +16,7 @@ import com.pancreatitis.modules.prediction.PredictionModule;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -180,5 +182,19 @@ public class MainActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    public void lockNavigation() {
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        bottomNavigationView.setVisibility(View.GONE);
+        toolbar.setVisibility(View.GONE);
+    }
+
+    public void unlockNavigation() {
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        bottomNavigationView.setVisibility(View.VISIBLE);
+        toolbar.setVisibility(View.VISIBLE);
     }
 }

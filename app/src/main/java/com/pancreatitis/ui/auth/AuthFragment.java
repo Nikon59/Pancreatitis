@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.pancreatitis.MainActivity;
 import com.pancreatitis.R;
 import com.pancreatitis.databinding.FragmentProfileBinding;
 import com.pancreatitis.models.Doctor;
@@ -69,6 +70,7 @@ public class AuthFragment extends Fragment {
             public void onClick(View v) {
                 // Показываем загрузку и блокируем UI
                 loading_overlay.setVisibility(View.VISIBLE);
+                ((MainActivity) requireActivity()).lockNavigation();
 
                 // Выполняем в фоне
                 ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -119,6 +121,7 @@ public class AuthFragment extends Fragment {
                             public void run() {
                                 // Скрываем загрузку
                                 loading_overlay.setVisibility(View.GONE);
+                                ((MainActivity) requireActivity()).unlockNavigation();
 
                                 if ("OK".equals(finalMessage)) {
                                     // Навигация только в UI-потоке

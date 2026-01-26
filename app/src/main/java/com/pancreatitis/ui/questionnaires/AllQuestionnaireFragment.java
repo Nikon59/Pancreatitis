@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.pancreatitis.MainActivity;
 import com.pancreatitis.models.*;
 import com.pancreatitis.adapters.QuestionnaireItemAdapter;
 import com.pancreatitis.R;
@@ -105,6 +106,7 @@ public class AllQuestionnaireFragment extends Fragment {
 
                 // Показываем загрузку и блокируем UI
                 loading_overlay.setVisibility(View.VISIBLE);
+                ((MainActivity) requireActivity()).lockNavigation();
 
                 // Выполняем в фоне
                 ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -122,6 +124,7 @@ public class AllQuestionnaireFragment extends Fragment {
                             @Override
                             public void run() {
                                 loading_overlay.setVisibility(View.GONE);
+                                ((MainActivity) requireActivity()).unlockNavigation();
                                 Toast.makeText(getContext(), result, Toast.LENGTH_SHORT).show();
                             }
                         });

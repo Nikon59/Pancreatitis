@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pancreatitis.adapters.DiagnosisItemAdapter;
 import com.pancreatitis.adapters.QuestionnaireInformationItemAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
@@ -62,7 +63,7 @@ public class PatientInformationFragment extends Fragment {
             loadDisplayData();
             loadDataQuestionnaire();
         } catch (Exception e) {
-            showMessage(e.toString());
+            showError(e.getMessage());
         }
     }
     private void setupClickListeners() {
@@ -82,7 +83,7 @@ public class PatientInformationFragment extends Fragment {
         } catch (TrainingDataException e) {
             showMessage(e.getMessage());
         } catch (Exception e) {
-            showMessage(e.toString());
+            showMessage(e.getMessage());
         }
     }
 
@@ -318,7 +319,7 @@ public class PatientInformationFragment extends Fragment {
         map.put("Отечный панкреатит", 1);
         map.put("Панкреонекроз среднетяжелое течение", 2);
         map.put("Панкреонекроз тяжелое течение", 3);
-        return map.get(diagnosis);
+        return map.getOrDefault(diagnosis, 0);
     }
     public int getCodeDiagnosis(String diagnosis){
         Map<String, Integer> map = new HashMap<>();

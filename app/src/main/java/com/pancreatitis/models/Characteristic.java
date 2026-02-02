@@ -9,7 +9,7 @@ public class Characteristic {
     private int id;
     private String name;
     private String opis;
-    private String type;
+    private int idType;
     private String hints;
     private float weight;
     private int minValue;
@@ -23,7 +23,7 @@ public class Characteristic {
         this.id = characteristic.getId();
         this.name = characteristic.getName();
         this.opis = characteristic.getOpis();
-        this.type = characteristic.getType();
+        this.idType = characteristic.getIdType();
         this.hints = characteristic.getHints();
         this.weight = characteristic.getWeight();
         this.minValue = characteristic.getMinValue();
@@ -45,8 +45,8 @@ public class Characteristic {
     public String getOpis() { return opis; }
     public void setOpis(String opis) { this.opis = opis; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public int getIdType() { return idType; }
+    public void setIdType(int type) { this.idType = type; }
 
     public String getHints() { return hints; }
     public void setHints(String hints) { this.hints = hints; }

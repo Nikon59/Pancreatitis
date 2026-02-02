@@ -1,7 +1,5 @@
 package com.pancreatitis.modules.questionnairemanager;
 
-import android.widget.Toast;
-
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.CharasteristicDTO;
 import com.pancreatitis.models.Characteristic;
@@ -59,7 +57,6 @@ public class QuestionnaireManagerModule {
             databaseModule.setTransactionSuccessful();
 
             return "Успешно";
-            //return String.format("%s %s %s", idPatient, idQuestionnaire, User.getInstance().getDoctor().getId());
         } catch (Exception e){
             return e.toString();
         } finally {
@@ -108,7 +105,7 @@ public class QuestionnaireManagerModule {
         for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
             Characteristic characteristic = charasteristics.get(characterizationAnketPatient.getIdCharacteristic() - 1);
             CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristic);
-            charasteristicDTO.setValue(characterizationAnketPatient.getValue());
+            charasteristicDTO.setValue(characterizationAnketPatient.getIdValue());
             charasteristicDTOS.add(charasteristicDTO);
         }
         return charasteristicDTOS;

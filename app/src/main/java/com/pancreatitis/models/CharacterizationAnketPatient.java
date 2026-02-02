@@ -6,24 +6,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CharacterizationAnketPatient {
     private long idAnket = -1;
     private int idCharacteristic = -1;
-    private int value = 0;
+    private int idValue = 0;
+    private float value = 0;
+    private String createdAt;
     private String lastModified;
 
-    // Конструкторы
     public CharacterizationAnketPatient() {}
 
-    public CharacterizationAnketPatient(long idAnket, int value, String lastModified) {
-        this.idAnket = idAnket;
-        this.value = value;
-        this.lastModified = lastModified;
-    }
-
-    // Геттеры и сеттеры
     public long getIdAnket() { return idAnket; }
     public void setIdAnket(long idAnket) { this.idAnket = idAnket; }
 
-    public int getValue() { return value; }
-    public void setValue(int value) { this.value = value; }
+    public int getIdValue() { return idValue; }
+    public void setIdValue(int id_value) { this.idValue = id_value; }
 
     public String getLastModified() { return lastModified; }
     public void setLastModified(String lastModified) { this.lastModified = lastModified; }
@@ -36,14 +30,20 @@ public class CharacterizationAnketPatient {
         this.idCharacteristic = idCharacteristic;
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-                "idAnket=" + idAnket +
-                ", idCharacteristic=" + idCharacteristic +
-                ", value=" + value +
-                ", lastModified=" + lastModified +
-                '}';
+    public float getValue() {
+        return value;
+    }
+
+    public void setValue(float value) {
+        this.value = value;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String toJson() throws JsonProcessingException {

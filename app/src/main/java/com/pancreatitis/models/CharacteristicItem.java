@@ -1,13 +1,13 @@
 package com.pancreatitis.models;
 
+import android.annotation.SuppressLint;
+
 import java.util.List;
 
 public class CharacteristicItem {
     private int idCharacteristic;
     private String name;
     private String hint;
-    private List<String> options;
-    private int value = 0;
 
     public CharacteristicItem() {
     }
@@ -18,22 +18,6 @@ public class CharacteristicItem {
 
     public void setIdCharacteristic(int idCharacteristic) {
         this.idCharacteristic = idCharacteristic;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int value) {
-        this.value = value;
-    }
-
-    public List<String> getOptions() {
-        return options;
-    }
-
-    public void setOptions(List<String> options) {
-        this.options = options;
     }
 
     public String getName() {

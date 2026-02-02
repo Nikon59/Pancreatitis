@@ -54,7 +54,7 @@ public class DatabaseModule {
                 characteristic.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
                 characteristic.setName(cursor.getString(cursor.getColumnIndexOrThrow("name")));
                 characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
-                characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
+                characteristic.setIdType(cursor.getInt(cursor.getColumnIndexOrThrow("id_type")));
                 characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
                 characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                 characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
@@ -85,7 +85,7 @@ public class DatabaseModule {
                     characteristic.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
                     characteristic.setName(cursor.getString(cursor.getColumnIndexOrThrow("name")));
                     characteristic.setOpis(cursor.getString(cursor.getColumnIndexOrThrow("opis")));
-                    characteristic.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
+                    characteristic.setIdType(cursor.getInt(cursor.getColumnIndexOrThrow("id_type")));
                     characteristic.setHints(cursor.getString(cursor.getColumnIndexOrThrow("hints")));
                     characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                     characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
@@ -291,19 +291,23 @@ public class DatabaseModule {
         ContentValues values = new ContentValues();
         values.put("id_characteristic", characterization.getIdCharacteristic());
         values.put("id_anket", characterization.getIdAnket());
+        values.put("id_value", characterization.getIdValue());
         values.put("value", characterization.getValue());
+        values.put("created_at", LocalDateTime.now().format(formatter));
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("characterization_anket_patient", null, values);
     }
+    // не будет использоваться
     public void updateAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){
         for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
             updateCharacterizationAnketPatient(cap);
         }
     }
+    // не будет использоваться
     public int updateCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
         ContentValues values = new ContentValues();
-        values.put("value", characterization.getValue());
+        values.put("value", characterization.getIdValue());
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
         // Указание условия для обновления
@@ -328,7 +332,9 @@ public class DatabaseModule {
                     CharacterizationAnketPatient characterization = new CharacterizationAnketPatient();
                     characterization.setIdAnket(cursor.getInt(cursor.getColumnIndexOrThrow("id_anket")));
                     characterization.setIdCharacteristic(cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic")));
-                    characterization.setValue(cursor.getInt(cursor.getColumnIndexOrThrow("value")));
+                    characterization.setIdValue(cursor.getInt(cursor.getColumnIndexOrThrow("id_value")));
+                    characterization.setValue(cursor.getFloat(cursor.getColumnIndexOrThrow("value")));
+                    characterization.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
                     characterization.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
 
                     characterizations.add(characterization);

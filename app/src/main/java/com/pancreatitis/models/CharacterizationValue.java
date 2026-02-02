@@ -10,18 +10,8 @@ public class CharacterizationValue {
     private String value;
     private String lastModified;
 
-    // Конструкторы
     public CharacterizationValue() {}
-    public CharacterizationValue(long id, int idCharacteristic, int idValue,
-                      String value, String lastModified) {
-        this.id = id;
-        this.idCharacteristic = idCharacteristic;
-        this.idValue = idValue;
-        this.value = value;
-        this.lastModified = lastModified;
-    }
 
-    // Геттеры и сеттеры
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 

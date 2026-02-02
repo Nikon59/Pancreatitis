@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pancreatitis.adapters.DiagnosisItemAdapter;
 import com.pancreatitis.adapters.QuestionnaireInformationItemAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
@@ -25,8 +24,6 @@ import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.prediction.TrainingDataException;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -93,7 +90,7 @@ public class PatientInformationFragment extends Fragment {
         List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
         for (int i = 0; i < characteristics.size(); i++) {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
-            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getValue());
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getId_value());
             if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
         }
         return charasteristicDTOS;
@@ -161,7 +158,7 @@ public class PatientInformationFragment extends Fragment {
 
             //if (characteristicItem.getValue() == 0) continue;
             characterizationAnketPatient.setIdCharacteristic(i + 1);
-            characterizationAnketPatient.setValue(characteristicItem.getValue());
+            characterizationAnketPatient.setId_value(characteristicItem.getValue());
             characterizationAnketPatient.setIdAnket(idQuestionnaire);
 
             //showMessage(characterizationAnketPatient.toString());
@@ -265,7 +262,7 @@ public class PatientInformationFragment extends Fragment {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
             CharacteristicItem characteristicItem = characteristicItems.get(i);
 
-            characteristicItem.setValue(characterizationAnketPatient.getValue());
+            characteristicItem.setValue(characterizationAnketPatient.getId_value());
         }
     }
     private void loadQuestionnaireDiagnosis(){

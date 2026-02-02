@@ -3,18 +3,16 @@ package com.pancreatitis.models;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
-
 public class CharacterizationAnketPatient {
     private long idAnket = -1;
     private int idCharacteristic = -1;
     private int value = 0;
-    private LocalDateTime lastModified;
+    private String lastModified;
 
     // Конструкторы
     public CharacterizationAnketPatient() {}
 
-    public CharacterizationAnketPatient(long idAnket, int value, LocalDateTime lastModified) {
+    public CharacterizationAnketPatient(long idAnket, int value, String lastModified) {
         this.idAnket = idAnket;
         this.value = value;
         this.lastModified = lastModified;
@@ -27,8 +25,8 @@ public class CharacterizationAnketPatient {
     public int getValue() { return value; }
     public void setValue(int value) { this.value = value; }
 
-    public LocalDateTime getLastModified() { return lastModified; }
-    public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
+    public String getLastModified() { return lastModified; }
+    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
 
     public int getIdCharacteristic() {
         return idCharacteristic;

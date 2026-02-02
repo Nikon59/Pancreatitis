@@ -1,10 +1,8 @@
 package com.pancreatitis.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class Characteristic {
@@ -16,8 +14,7 @@ public class Characteristic {
     private float weight;
     private int minValue;
     private int maxValue;
-    @JsonIgnore
-    private LocalDateTime lastModified;
+    private String lastModified;
 
     // Конструкторы
     public Characteristic() {}
@@ -32,20 +29,6 @@ public class Characteristic {
         this.minValue = characteristic.getMinValue();
         this.maxValue = characteristic.getMaxValue();
         this.lastModified = characteristic.getLastModified();
-    }
-
-    public Characteristic(int id, String name, String opis, String type,
-                          String hints, float weight, int minValue,
-                          int maxValue, LocalDateTime lastModified) {
-        this.id = id;
-        this.name = name;
-        this.opis = opis;
-        this.type = type;
-        this.hints = hints;
-        this.weight = weight;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.lastModified = lastModified;
     }
 
     // Геттеры и сеттеры
@@ -77,8 +60,8 @@ public class Characteristic {
     public int getMaxValue() { return maxValue; }
     public void setMaxValue(int maxValue) { this.maxValue = maxValue; }
 
-    public LocalDateTime getLastModified() { return lastModified; }
-    public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
+    public String getLastModified() { return lastModified; }
+    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
 
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();

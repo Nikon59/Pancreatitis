@@ -59,11 +59,7 @@ public class DatabaseModule {
                 characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                 characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
                 characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
-
-                String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                if (lastModifiedStr != null) {
-                    characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                }
+                characteristic.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting characteristic by id: " + id, e);
@@ -94,11 +90,7 @@ public class DatabaseModule {
                     characteristic.setWeight(cursor.getFloat(cursor.getColumnIndexOrThrow("weight")));
                     characteristic.setMinValue(cursor.getInt(cursor.getColumnIndexOrThrow("min_value")));
                     characteristic.setMaxValue(cursor.getInt(cursor.getColumnIndexOrThrow("max_value")));
-
-                    String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                    if (lastModifiedStr != null) {
-                        characteristic.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                    }
+                    characteristic.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
 
                     characteristics.add(characteristic);
 
@@ -132,10 +124,7 @@ public class DatabaseModule {
                 int statusInt = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
                 doctor.setStatus(statusInt == 1);
 
-                String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                if (lastModifiedStr != null) {
-                    doctor.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                }
+                doctor.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting doctor by id: " + id_doctor, e);
@@ -191,11 +180,7 @@ public class DatabaseModule {
                 patient = new Patient();
                 patient.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
                 patient.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
-
-                String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                if (lastModifiedStr != null) {
-                    patient.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                }
+                patient.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting patient by id: " + id_patient, e);
@@ -256,16 +241,8 @@ public class DatabaseModule {
                 questionnaire.setIdExpert(cursor.getInt(cursor.getColumnIndexOrThrow("id_expert")));
                 questionnaire.setDiagnosis(cursor.getString(cursor.getColumnIndexOrThrow("diagnosis")));
                 questionnaire.setAdmittedFrom(cursor.getString(cursor.getColumnIndexOrThrow("admitted_from")));
-
-                String dateOfCompletionStr = cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion"));
-                if (dateOfCompletionStr != null) {
-                    questionnaire.setDateOfCompletion(LocalDateTime.parse(dateOfCompletionStr, formatter));
-                }
-
-                String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                if (lastModifiedStr != null) {
-                    questionnaire.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                }
+                questionnaire.setDateOfCompletion(cursor.getString(cursor.getColumnIndexOrThrow("date_of_completion")));
+                questionnaire.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting anket by id: " + id_questionnaire, e);
@@ -352,11 +329,7 @@ public class DatabaseModule {
                     characterization.setIdAnket(cursor.getInt(cursor.getColumnIndexOrThrow("id_anket")));
                     characterization.setIdCharacteristic(cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic")));
                     characterization.setValue(cursor.getInt(cursor.getColumnIndexOrThrow("value")));
-
-                    String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                    if (lastModifiedStr != null) {
-                        characterization.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                    }
+                    characterization.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
 
                     characterizations.add(characterization);
                 } while (cursor.moveToNext());
@@ -389,11 +362,7 @@ public class DatabaseModule {
                     characterizationValue.setIdCharacteristic(cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic")));
                     characterizationValue.setIdValue(cursor.getInt(cursor.getColumnIndexOrThrow("id_value")));
                     characterizationValue.setValue(cursor.getString(cursor.getColumnIndexOrThrow("value")));
-
-                    String lastModifiedStr = cursor.getString(cursor.getColumnIndexOrThrow("last_modified"));
-                    if (lastModifiedStr != null) {
-                        characterizationValue.setLastModified(LocalDateTime.parse(lastModifiedStr, formatter));
-                    }
+                    characterizationValue.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
 
                     values.add(characterizationValue);
                 } while (cursor.moveToNext());

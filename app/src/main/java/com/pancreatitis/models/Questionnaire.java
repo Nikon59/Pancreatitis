@@ -1,10 +1,8 @@
 package com.pancreatitis.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class Questionnaire {
@@ -13,11 +11,9 @@ public class Questionnaire {
     private int idDoctor = -1;
     private int idExpert = -1;
     private String diagnosis;
-    @JsonIgnore
-    private LocalDateTime dateOfCompletion;
+    private String dateOfCompletion;
     private String admittedFrom;
-    @JsonIgnore
-    private LocalDateTime lastModified;
+    private String lastModified;
 
     // Конструкторы
     public Questionnaire() {}
@@ -90,13 +86,13 @@ public class Questionnaire {
     public String getCodeDiagnosis() { return diagnosis; }
     public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
 
-    public LocalDateTime getDateOfCompletion() { return dateOfCompletion; }
-    public void setDateOfCompletion(LocalDateTime dateOfCompletion) { this.dateOfCompletion = dateOfCompletion; }
+    public String getDateOfCompletion() { return dateOfCompletion; }
+    public void setDateOfCompletion(String dateOfCompletion) { this.dateOfCompletion = dateOfCompletion; }
 
     public String getAdmittedFrom() { return admittedFrom; }
     public void setAdmittedFrom(String admittedFrom) { this.admittedFrom = admittedFrom; }
 
-    public LocalDateTime getLastModified() { return lastModified; }
-    public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
+    public String getLastModified() { return lastModified; }
+    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
 
 }

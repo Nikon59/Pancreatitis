@@ -1,18 +1,13 @@
 package com.pancreatitis.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pancreatitis.modules.database.DatabaseModule;
-
-import java.time.LocalDateTime;
 
 public class Doctor {
     private int id = 2;
     private String fio;
     private Boolean status = false;
-    @JsonIgnore
-    private LocalDateTime lastModified;
+    private String lastModified;
 
     // Конструкторы
     public Doctor() {}
@@ -30,8 +25,8 @@ public class Doctor {
     public Boolean getStatus() { return status; }
     public void setStatus(Boolean status) { this.status = status; }
 
-    public LocalDateTime getLastModified() { return lastModified; }
-    public void setLastModified(LocalDateTime lastModified) { this.lastModified = lastModified; }
+    public String getLastModified() { return lastModified; }
+    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
 
     public String toJson() throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();

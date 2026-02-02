@@ -284,7 +284,7 @@ public class PatientInformationFragment extends Fragment {
         QuestionnaireInformationItem lastModify = questionnaireInformationItems.get(2);
         Questionnaire questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
         admittedFrom.setValue(questionnaire.getAdmittedFrom());
-        lastModify.setValue(questionnaire.getDateOfCompletion().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        lastModify.setValue(questionnaire.getDateOfCompletion());
     }
     private void loadPatient(){
         DatabaseModule databaseModule = DatabaseModule.getInstance();

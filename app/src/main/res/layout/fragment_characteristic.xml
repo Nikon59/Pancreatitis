@@ -8,7 +8,7 @@
     android:layout_marginRight="10dp">
 
     <include
-        layout="@layout/characteristic"
+        layout="@layout/item_characteristic_title"
         />
 
     <androidx.recyclerview.widget.RecyclerView

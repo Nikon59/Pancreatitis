@@ -17,7 +17,7 @@ import com.pancreatitis.adapters.QuestionnaireInformationItemAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.pancreatitis.adapters.CharacteristicItemAdapter;
+import com.pancreatitis.adapters.CharacteristicItemTitleAdapter;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
@@ -31,7 +31,7 @@ public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
-    private CharacteristicItemAdapter characteristicItemAdapter;
+    private CharacteristicItemTitleAdapter characteristicItemTitleAdapter;
     private QuestionnaireInformationItemAdapter questionnaireInformationItemAdapter;
     private DiagnosisItemAdapter diagnosisItemAdapter;
     private int idQuestionnaire, idPatient;
@@ -64,8 +64,8 @@ public class PatientInformationFragment extends Fragment {
         }
     }
     private void setupClickListeners() {
-        btnPredict.setOnClickListener(v -> handlePrediction());
-        btnSave.setOnClickListener(v -> handleSave());
+        //btnPredict.setOnClickListener(v -> handlePrediction());
+        //btnSave.setOnClickListener(v -> handleSave());
     }
 
     // ========== PREDICTION HANDLING ==========
@@ -90,8 +90,8 @@ public class PatientInformationFragment extends Fragment {
         List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
         for (int i = 0; i < characteristics.size(); i++) {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
-            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getId_value());
-            if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
+            //CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getId_value());
+            //if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
         }
         return charasteristicDTOS;
     }
@@ -151,17 +151,15 @@ public class PatientInformationFragment extends Fragment {
 
     private List<CharacterizationAnketPatient> createCharacterizationAnketPatients(){
         List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
-        List<CharacteristicItem> characteristicItems = characteristicItemAdapter.getCharacteristics();
+        List<CharacteristicItem> characteristicItems = characteristicItemTitleAdapter.getCharacteristics();
         for(int i = 0; i < characteristicItems.size(); i++){
             CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
             CharacteristicItem characteristicItem = characteristicItems.get(i);
 
-            //if (characteristicItem.getValue() == 0) continue;
             characterizationAnketPatient.setIdCharacteristic(i + 1);
-            characterizationAnketPatient.setId_value(characteristicItem.getValue());
+            //characterizationAnketPatient.setIdValue(characteristicItem.getIValue());
             characterizationAnketPatient.setIdAnket(idQuestionnaire);
 
-            //showMessage(characterizationAnketPatient.toString());
             characterizationAnketPatients.add(characterizationAnketPatient);
         }
         return characterizationAnketPatients;
@@ -174,7 +172,7 @@ public class PatientInformationFragment extends Fragment {
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems();
         List<DiagnosisItem> diagnosisItem = loadDiagnosis();
 
-        characteristicItemAdapter = new CharacteristicItemAdapter(characteristicItems);
+        characteristicItemTitleAdapter = new CharacteristicItemTitleAdapter(characteristicItems);
         questionnaireInformationItemAdapter = new QuestionnaireInformationItemAdapter(questionnaireInformationItems);
         diagnosisItemAdapter = new DiagnosisItemAdapter(diagnosisItem);
 
@@ -210,16 +208,10 @@ public class PatientInformationFragment extends Fragment {
         List<Characteristic> characteristics = databaseModule.getAllCharacteristics();
         for(int i = 0; i < characteristics.size(); i++){
             Characteristic characteristic = characteristics.get(i);
-            List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
-            List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
-            options.addAll(characterizationValues.stream()
-                    .map(CharacterizationValue::getValue)
-                    .collect(Collectors.toList()));
 
             CharacteristicItem characteristicItem = new CharacteristicItem();
             characteristicItem.setName(characteristic.getOpis());
             characteristicItem.setHint(characteristic.getHints());
-            characteristicItem.setOptions(options);
 
             characteristicItems.add(characteristicItem);
         }
@@ -238,14 +230,14 @@ public class PatientInformationFragment extends Fragment {
 
         androidx.recyclerview.widget.ConcatAdapter concatAdapter =
                 new androidx.recyclerview.widget.ConcatAdapter(title1, questionnaireInformationItemAdapter,
-                        title2, characteristicItemAdapter, title3, diagnosisItemAdapter);
+                        title2, characteristicItemTitleAdapter, title3, diagnosisItemAdapter);
 
         recyclerView.setAdapter(concatAdapter);
     }
 
     private void loadDataQuestionnaire(){
         if (idQuestionnaire != -1){
-            loadCharacteristicValues();
+            //loadCharacteristicValues();
             loadQuestionnaireInformation();
             loadQuestionnaireDiagnosis();
         }
@@ -255,14 +247,14 @@ public class PatientInformationFragment extends Fragment {
     }
     private void loadCharacteristicValues(){
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<CharacteristicItem> characteristicItems = characteristicItemAdapter.getCharacteristics();
+        List<CharacteristicItem> characteristicItems = characteristicItemTitleAdapter.getCharacteristics();
 
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
         for(int i = 0; i < characterizationAnketPatients.size(); i++){
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
             CharacteristicItem characteristicItem = characteristicItems.get(i);
 
-            characteristicItem.setValue(characterizationAnketPatient.getId_value());
+            //characteristicItem.setValue(characterizationAnketPatient.getId_value());
         }
     }
     private void loadQuestionnaireDiagnosis(){

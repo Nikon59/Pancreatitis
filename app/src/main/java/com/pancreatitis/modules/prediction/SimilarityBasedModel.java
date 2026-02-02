@@ -8,7 +8,7 @@ public class SimilarityBasedModel {
 
     private static class CharacteristicInfo {
         int id;
-        String type;
+        int type;
         int weight;
         int minValue;
         int maxValue;
@@ -49,14 +49,14 @@ public class SimilarityBasedModel {
             Characteristic patientChar = patientCharMap.get(charId);
             if (patientChar != null) {
                 // Характеристика есть у пациента
-                info.type = patientChar.getType();
+                info.type = patientChar.getIdType();
                 info.weight = Math.round(patientChar.getWeight());
                 info.minValue = patientChar.getMinValue();
                 info.maxValue = patientChar.getMaxValue();
                 info.availableInPatient = true;
             } else {
                 // Характеристики нет у пациента
-                info.type = "unknown";
+                info.type = 0;
                 info.weight = 0;
                 info.minValue = 0;
                 info.maxValue = 0;
@@ -118,9 +118,8 @@ public class SimilarityBasedModel {
 
             double contribution;
 
-            if ("кат.".equals(ch.type)) {
+            if (ch.type == 1) {
                 // Категориальная характеристика
-
                 contribution = (Math.abs(trainVal - patientVal) < 0.5) ? ch.weight : 0.0;
             } else {
                 // Числовая характеристика

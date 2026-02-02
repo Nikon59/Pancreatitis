@@ -20,11 +20,11 @@ import com.pancreatitis.models.*;
 
 import java.util.*;
 
-public class CharacteristicItemAdapter extends RecyclerView.Adapter<CharacteristicItemAdapter.CharacteristicViewHolder> {
+public class CharacteristicItemTitleAdapter extends RecyclerView.Adapter<CharacteristicItemTitleAdapter.CharacteristicViewHolder> {
 
     private List<CharacteristicItem> characteristicItems;
 
-    public CharacteristicItemAdapter(List<CharacteristicItem> characteristicItems) {
+    public CharacteristicItemTitleAdapter(List<CharacteristicItem> characteristicItems) {
         this.characteristicItems = characteristicItems;
     }
 
@@ -32,7 +32,7 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
     @Override
     public CharacteristicViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_characteristic_non_numeric, parent, false);
+                .inflate(R.layout.item_characteristic_title, parent, false);
         return new CharacteristicViewHolder(view);
     }
 
@@ -63,58 +63,24 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
 
     class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
-        private Spinner spinnerValue;
         private ImageView btnHelp;
         private Context context;
-        private ArrayAdapter<String> spinnerAdapter;
 
         public CharacteristicViewHolder(@NonNull View itemView) {
             super(itemView);
             textTitle = itemView.findViewById(R.id.name_characteristic);
-            spinnerValue = itemView.findViewById(R.id.value_characteristic);
             btnHelp = itemView.findViewById(R.id.get_helps);
             context = itemView.getContext();
-
-            spinnerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, new ArrayList<>());
-            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerValue.setAdapter(spinnerAdapter);
         }
 
         public void bind(CharacteristicItem characteristic) {
             try {
                 textTitle.setText(characteristic.getName());
-
-                List<String> options = characteristic.getOptions();
-
-                spinnerAdapter.clear();
-                spinnerAdapter.addAll(options);
-                spinnerAdapter.notifyDataSetChanged();
-
-                setSpinnerSelection(characteristic);
-                setupSpinnerListener(characteristic);
                 setupHelpButton(characteristic);
 
             } catch (Exception e) {
                 Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
             }
-        }
-
-        private void setupSpinnerListener(CharacteristicItem characteristic) {
-            spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    characteristic.setValue(position);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    characteristic.setValue(0);
-                }
-            });
-        }
-
-        private void setSpinnerSelection(CharacteristicItem characteristic) {
-            spinnerValue.setSelection(characteristic.getValue());
         }
 
         private void setupHelpButton(CharacteristicItem characteristic) {
@@ -132,17 +98,6 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
             String hints = characteristic.getHint();
             if (hints != null && !hints.trim().isEmpty()) {
                 message.append(hints);
-            }
-
-            // Показываем доступные опции
-            List<String> options = characteristic.getOptions();
-            if (options != null && !options.isEmpty()) {
-                message.append("\n\nДоступные варианты:");
-                for (String option : options) {
-                    if (!option.isEmpty()) {
-                        message.append("\n• ").append(option);
-                    }
-                }
             }
 
             return message.toString();

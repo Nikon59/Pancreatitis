@@ -82,7 +82,7 @@ public class PredictionModule {
             ch.setId(dto.getId());
             ch.setName(dto.getName());
             ch.setOpis(dto.getOpis());
-            ch.setType(dto.getType());
+            ch.setIdType(dto.getIdType());
             ch.setWeight(dto.getWeight());
             ch.setMinValue(dto.getMinValue());
             ch.setMaxValue(dto.getMaxValue());

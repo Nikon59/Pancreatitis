@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 public class CharacteristicFragment extends Fragment {
     private FragmentCharacteristicBinding binding;
+    private Characteristic characteristic;
     private RecyclerView recyclerView;
     private ImageView btnHelp;
     private CharacteristicItemAdapter adapter;
@@ -61,28 +62,42 @@ public class CharacteristicFragment extends Fragment {
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             btnHelp = view.findViewById(R.id.get_helps);
             nameCharacteristic = view.findViewById(R.id.name_characteristic);
+            setupHelpButton();
             loadData();
         } catch (Exception e) {
             showError(e.toString());
         }
     }
-    private void setupHelpButton(CharacteristicItem characteristic) {
-        String hints = characteristic.getHint();
-        boolean hasHints = hints != null && !hints.trim().isEmpty();
-
-        btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
-        String dialogMessage = buildDialogMessage(characteristic);
+    private void setupHelpButton() {
+        String dialogMessage = buildDialogMessage();
         btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
     }
 
-    private String buildDialogMessage(CharacteristicItem characteristic) {
+    private String buildDialogMessage() {
         StringBuilder message = new StringBuilder();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
 
-        String hints = characteristic.getHint();
+        Characteristic characteristic = databaseModule.getCharacteristicById(idCharacteristic);
+        String hints = characteristic.getHints();
         if (hints != null && !hints.trim().isEmpty()) {
             message.append(hints);
         }
 
+        // Показываем доступные опции
+        if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
+            List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(idCharacteristic);
+            List<String> options = characterizationValues.stream()
+                    .map(CharacterizationValue::getValue)
+                    .collect(Collectors.toList());
+            if (options != null && !options.isEmpty()) {
+                message.append("\n\nДоступные варианты:\n• Нет данных");
+                for (String option : options) {
+                    if (!option.isEmpty()) {
+                        message.append("\n• ").append(option);
+                    }
+                }
+            }
+        }
         return message.toString();
     }
 

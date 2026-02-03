@@ -332,10 +332,17 @@ public class DatabaseModule {
                     CharacterizationAnketPatient characterization = new CharacterizationAnketPatient();
                     characterization.setIdAnket(cursor.getInt(cursor.getColumnIndexOrThrow("id_anket")));
                     characterization.setIdCharacteristic(cursor.getInt(cursor.getColumnIndexOrThrow("id_characteristic")));
-                    characterization.setIdValue(cursor.getInt(cursor.getColumnIndexOrThrow("id_value")));
-                    characterization.setValue(cursor.getFloat(cursor.getColumnIndexOrThrow("value")));
-                    characterization.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
+                    characterization.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
                     characterization.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
+
+//                    int idValueColumnIndex = cursor.getColumnIndexOrThrow("id_value");
+//                    if (!cursor.isNull(idValueColumnIndex)) {
+//                        characterization.setIdValue(cursor.getInt(idValueColumnIndex));
+//                    }
+//                    int valueColumnIndex = cursor.getColumnIndexOrThrow("value");
+//                    if (!cursor.isNull(valueColumnIndex)) {
+//                        characterization.setValue(cursor.getFloat(valueColumnIndex));
+//                    }
 
                     characterizations.add(characterization);
                 } while (cursor.moveToNext());

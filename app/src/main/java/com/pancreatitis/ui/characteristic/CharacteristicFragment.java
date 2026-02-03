@@ -16,11 +16,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
+import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.databinding.FragmentHelpsBinding;
 import com.pancreatitis.databinding.FragmentProfileBinding;
 import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.models.CharacteristicItem;
+import com.pancreatitis.models.CharacteristicItemNonNumeric;
+import com.pancreatitis.models.CharacteristicItemNumeric;
+import com.pancreatitis.models.CharacterizationAnketPatient;
+import com.pancreatitis.models.CharacterizationValue;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CharacteristicFragment extends Fragment {
     private FragmentHelpsBinding binding;
@@ -54,6 +65,57 @@ public class CharacteristicFragment extends Fragment {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         Characteristic characteristic = databaseModule.getCharacteristicById(idCharacteristic);
         nameCharacteristic.setText(characteristic.getOpis());
+        List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
+        CharacteristicItemAdapter adapter = new CharacteristicItemAdapter(characteristicItems);
+        recyclerView.setAdapter(adapter);
+    }
+    private List<CharacteristicItem> loadCharacteristicItems(Characteristic characteristic){
+        List<CharacteristicItem> characteristicItems = new ArrayList<>();
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        Toast.makeText(getContext(), String.format("%d", characterizationAnketPatients.size()), Toast.LENGTH_SHORT).show();
+
+        for (CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients) {
+            if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
+                if (characteristic.getIdType() == 1) {
+                    List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+                    List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
+                    options.addAll(characterizationValues.stream()
+                            .map(CharacterizationValue::getValue)
+                            .collect(Collectors.toList()));
+
+                    CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
+                    characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setHint(characteristic.getHints());
+                    characteristicItem.setOptions(options);
+
+                    characteristicItems.add(characteristicItem);
+                } else if (characteristic.getIdType() == 2) {
+                    List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+                    List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
+                    options.addAll(characterizationValues.stream()
+                            .map(CharacterizationValue::getValue)
+                            .collect(Collectors.toList()));
+
+                    CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
+                    characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setHint(characteristic.getHints());
+                    characteristicItem.setOptions(options);
+
+                    characteristicItems.add(characteristicItem);
+                } else if (characteristic.getIdType() == 3) {
+                    CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
+                    characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setHint(characteristic.getHints());
+
+                    characteristicItems.add(characteristicItem);
+                }
+            }
+        }
+        return characteristicItems;
     }
     @Override
     public void onDestroyView() {

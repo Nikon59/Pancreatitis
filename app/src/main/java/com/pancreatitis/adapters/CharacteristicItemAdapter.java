@@ -26,12 +26,10 @@ import com.pancreatitis.models.CharacteristicItemNumeric;
 import java.util.List;
 
 public class CharacteristicItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private int idQuestionnaire;
     private List<CharacteristicItem> characteristicItems;
 
-    public CharacteristicItemAdapter(List<CharacteristicItem> characteristicItems, int idQuestionnaire) {
+    public CharacteristicItemAdapter(List<CharacteristicItem> characteristicItems) {
         this.characteristicItems = characteristicItems;
-        this.idQuestionnaire = idQuestionnaire;
     }
 
     @NonNull

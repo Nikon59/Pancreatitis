@@ -6,10 +6,19 @@ import java.util.List;
 
 public class CharacteristicItem {
     private int idCharacteristic;
+    private int IdType;
     private String name;
     private String hint;
 
     public CharacteristicItem() {
+    }
+
+    public int getIdType() {
+        return IdType;
+    }
+
+    public void setIdType(int idType) {
+        IdType = idType;
     }
 
     public int getIdCharacteristic() {

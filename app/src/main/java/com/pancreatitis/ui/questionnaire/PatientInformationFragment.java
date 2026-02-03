@@ -211,6 +211,7 @@ public class PatientInformationFragment extends Fragment {
 
             CharacteristicItem characteristicItem = new CharacteristicItem();
             characteristicItem.setIdCharacteristic(characteristic.getId());
+            characteristicItem.setIdType(characteristic.getIdType());
             characteristicItem.setName(characteristic.getOpis());
             characteristicItem.setHint(characteristic.getHints());
 

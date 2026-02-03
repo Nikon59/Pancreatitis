@@ -55,6 +55,7 @@ public class CharacteristicFragment extends Fragment {
     private void initViews(View view) {
         try {
             recyclerView = view.findViewById(R.id.recycler_view_value_of_characteristic);
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             nameCharacteristic = view.findViewById(R.id.name_characteristic);
             loadData();
         } catch (Exception e) {
@@ -65,6 +66,7 @@ public class CharacteristicFragment extends Fragment {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         Characteristic characteristic = databaseModule.getCharacteristicById(idCharacteristic);
         nameCharacteristic.setText(characteristic.getOpis());
+
         List<CharacteristicItemNonNumeric> characteristicItems = loadCharacteristicItems(characteristic);
         adapter = new CharacteristicItemAdapter(characteristicItems);
         recyclerView.setAdapter(adapter);

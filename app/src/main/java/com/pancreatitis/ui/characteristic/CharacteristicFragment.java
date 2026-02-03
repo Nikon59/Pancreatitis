@@ -65,12 +65,12 @@ public class CharacteristicFragment extends Fragment {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         Characteristic characteristic = databaseModule.getCharacteristicById(idCharacteristic);
         nameCharacteristic.setText(characteristic.getOpis());
-        List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
-        adapter = new CharacteristicItemAdapter(characteristicItems, getContext());
+        List<CharacteristicItemNonNumeric> characteristicItems = loadCharacteristicItems(characteristic);
+        adapter = new CharacteristicItemAdapter(characteristicItems);
         recyclerView.setAdapter(adapter);
     }
-    private List<CharacteristicItem> loadCharacteristicItems(Characteristic characteristic){
-        List<CharacteristicItem> characteristicItems = new ArrayList<>();
+    private List<CharacteristicItemNonNumeric> loadCharacteristicItems(Characteristic characteristic){
+        List<CharacteristicItemNonNumeric> characteristicItems = new ArrayList<>();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
 
@@ -106,15 +106,16 @@ public class CharacteristicFragment extends Fragment {
                     characteristicItem.setOptions(options);
 
                     characteristicItems.add(characteristicItem);
-                } else if (characteristic.getIdType() == 3) {
-                    CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
-                    characteristicItem.setIdCharacteristic(characteristic.getId());
-                    characteristicItem.setIdType(characteristic.getIdType());
-                    characteristicItem.setName(characteristic.getOpis());
-                    characteristicItem.setHint(characteristic.getHints());
-
-                    characteristicItems.add(characteristicItem);
                 }
+//                else if (characteristic.getIdType() == 3) {
+//                    CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
+//                    characteristicItem.setIdCharacteristic(characteristic.getId());
+//                    characteristicItem.setIdType(characteristic.getIdType());
+//                    characteristicItem.setName(characteristic.getOpis());
+//                    characteristicItem.setHint(characteristic.getHints());
+//
+//                    characteristicItems.add(characteristicItem);
+//                }
             }
         }
         return characteristicItems;

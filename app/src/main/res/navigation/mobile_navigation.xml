@@ -48,7 +48,12 @@
         android:id="@+id/navigation_anket"
         android:name="com.pancreatitis.ui.questionnaire.PatientInformationFragment"
         android:label="@string/title_predict"
-        tools:layout="@layout/fragment_questionnaire" />
+        tools:layout="@layout/fragment_questionnaire" >
+
+        <action
+            android:id="@+id/action_anket_to_characteristic"
+            app:destination="@id/navigation_characteristic" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_auth"
@@ -70,4 +75,15 @@
         android:name="com.pancreatitis.ui.register.RegisterFragment"
         android:label="@string/title_register"
         tools:layout="@layout/fragment_register" />
+
+    <fragment
+        android:id="@+id/navigation_characteristic"
+        android:name="com.pancreatitis.ui.characteristic.CharacteristicFragment"
+        android:label="@string/title_characteristic"
+        tools:layout="@layout/fragment_characteristic" >
+
+        <action
+            android:id="@+id/action_characteristic_to_ankter"
+            app:destination="@id/navigation_anket" />
+    </fragment>
 </navigation>

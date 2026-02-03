@@ -8,6 +8,7 @@
     <string name="title_auth">Профиль</string>
     <string name="title_register">Регистрация</string>
     <string name="title_helps">Помощь</string>
+    <string name="title_characteristic">Характеристика</string>
     <string-array name="spinner_items">
         <item>Нет данных</item>
         <item>Отечный панкреатит</item>

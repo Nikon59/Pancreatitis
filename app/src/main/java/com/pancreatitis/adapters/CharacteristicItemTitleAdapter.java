@@ -2,6 +2,7 @@ package com.pancreatitis.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
@@ -21,11 +24,12 @@ import com.pancreatitis.models.*;
 import java.util.*;
 
 public class CharacteristicItemTitleAdapter extends RecyclerView.Adapter<CharacteristicItemTitleAdapter.CharacteristicViewHolder> {
-
+    private int idQuestionnaire;
     private List<CharacteristicItem> characteristicItems;
 
-    public CharacteristicItemTitleAdapter(List<CharacteristicItem> characteristicItems) {
+    public CharacteristicItemTitleAdapter(List<CharacteristicItem> characteristicItems, int idQuestionnaire) {
         this.characteristicItems = characteristicItems;
+        this.idQuestionnaire = idQuestionnaire;
     }
 
     @NonNull
@@ -77,6 +81,16 @@ public class CharacteristicItemTitleAdapter extends RecyclerView.Adapter<Charact
             try {
                 textTitle.setText(characteristic.getName());
                 setupHelpButton(characteristic);
+                // Настройка клика по самому элементу
+                itemView.setOnClickListener(v -> {
+                    NavController navController = Navigation.findNavController(v);
+
+                    Bundle args = new Bundle();
+                    args.putInt("idQuestionnaire", idQuestionnaire);
+                    args.putInt("idCharacteristic", characteristic.getIdCharacteristic());
+
+                    navController.navigate(R.id.action_anket_to_characteristic, args);
+                });
 
             } catch (Exception e) {
                 Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();

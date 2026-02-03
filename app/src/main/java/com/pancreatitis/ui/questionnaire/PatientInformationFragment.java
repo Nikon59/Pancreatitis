@@ -172,7 +172,7 @@ public class PatientInformationFragment extends Fragment {
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems();
         List<DiagnosisItem> diagnosisItem = loadDiagnosis();
 
-        characteristicItemTitleAdapter = new CharacteristicItemTitleAdapter(characteristicItems);
+        characteristicItemTitleAdapter = new CharacteristicItemTitleAdapter(characteristicItems, idQuestionnaire);
         questionnaireInformationItemAdapter = new QuestionnaireInformationItemAdapter(questionnaireInformationItems);
         diagnosisItemAdapter = new DiagnosisItemAdapter(diagnosisItem);
 
@@ -210,6 +210,7 @@ public class PatientInformationFragment extends Fragment {
             Characteristic characteristic = characteristics.get(i);
 
             CharacteristicItem characteristicItem = new CharacteristicItem();
+            characteristicItem.setIdCharacteristic(characteristic.getId());
             characteristicItem.setName(characteristic.getOpis());
             characteristicItem.setHint(characteristic.getHints());
 

@@ -28,25 +28,48 @@ import com.pancreatitis.models.DiagnosisItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CharacteristicItemAdapter extends RecyclerView.Adapter<CharacteristicItemAdapter.CharacteristicItemNonNumericViewHolder> {
-    private List<CharacteristicItemNonNumeric> characteristicItems;
+public class CharacteristicItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private List<CharacteristicItem> characteristicItems;
 
-    public CharacteristicItemAdapter(List<CharacteristicItemNonNumeric> characteristicItems) {
+    public CharacteristicItemAdapter(List<CharacteristicItem> characteristicItems) {
         this.characteristicItems = characteristicItems;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        CharacteristicItem item = characteristicItems.get(position);
+        return item.getIdType();
     }
 
     @NonNull
     @Override
-    public CharacteristicItemNonNumericViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_characteristic_non_numeric, parent, false);
-        return new CharacteristicItemNonNumericViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+
+        switch (viewType) {
+            case 1:
+            case 2:
+                View nonNumericView = inflater.inflate(R.layout.item_characteristic_non_numeric, parent, false);
+                return new CharacteristicItemNonNumericViewHolder(nonNumericView);
+
+            case 3:
+                View numericView = inflater.inflate(R.layout.item_characteristic_numeric, parent, false);
+                return new CharacteristicItemNumericViewHolder(numericView);
+
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CharacteristicItemNonNumericViewHolder holder, int position) {
-        CharacteristicItemNonNumeric characteristicItem = characteristicItems.get(position);
-        holder.bind(characteristicItem);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        CharacteristicItem characteristicItem = characteristicItems.get(position);
+
+        if (holder instanceof CharacteristicItemNonNumericViewHolder && characteristicItem instanceof CharacteristicItemNonNumeric) {
+            ((CharacteristicItemNonNumericViewHolder) holder).bind((CharacteristicItemNonNumeric) characteristicItem);
+        } else if (holder instanceof CharacteristicItemNumericViewHolder && characteristicItem instanceof CharacteristicItemNumeric) {
+            ((CharacteristicItemNumericViewHolder) holder).bind((CharacteristicItemNumeric) characteristicItem);
+        }
     }
 
     @Override
@@ -54,16 +77,32 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<Characterist
         return characteristicItems.size();
     }
 
-    public void updateData(List<CharacteristicItemNonNumeric> newCharacteristics) {
+    public void updateData(List<CharacteristicItem> newCharacteristics) {
         characteristicItems.clear();
         characteristicItems.addAll(newCharacteristics);
         notifyDataSetChanged();
     }
 
-    public List<CharacteristicItemNonNumeric> getCharacteristics() {
+    public List<CharacteristicItem> getCharacteristics() {
         return characteristicItems;
     }
+    class CharacteristicItemNumericViewHolder extends RecyclerView.ViewHolder {
+        private Context context;
+        private EditText valueCharacteristic;
+        private TextView createdAt;
 
+        public CharacteristicItemNumericViewHolder(@NonNull View itemView) {
+            super(itemView);
+            createdAt = itemView.findViewById(R.id.created_at);
+            valueCharacteristic = itemView.findViewById(R.id.value_characteristic);
+            context = itemView.getContext();
+        }
+
+        public void bind(CharacteristicItemNumeric characteristic) {
+            createdAt.setText("2026");
+            valueCharacteristic.setText("2026");
+        }
+    }
     class CharacteristicItemNonNumericViewHolder extends RecyclerView.ViewHolder {
         private Spinner spinnerValue;
         private Context context;

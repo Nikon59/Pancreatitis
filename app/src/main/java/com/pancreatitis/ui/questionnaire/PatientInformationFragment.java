@@ -25,6 +25,8 @@ import com.pancreatitis.modules.prediction.PredictionResult;
 import com.pancreatitis.modules.prediction.TrainingDataException;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,7 +68,7 @@ public class PatientInformationFragment extends Fragment {
     }
     private void setupClickListeners() {
         btnPredict.setOnClickListener(v -> handlePrediction());
-        //btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
+        btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
     }
 
     // ========== PREDICTION HANDLING ==========
@@ -160,6 +162,8 @@ public class PatientInformationFragment extends Fragment {
             characterizationAnketPatient.setIdCharacteristic(i + 1);
             if (characteristicItem instanceof CharacteristicItemNonNumeric) {
                 characterizationAnketPatient.setIdValue(((CharacteristicItemNonNumeric) characteristicItem).getValue());
+            } else if (characteristicItem instanceof CharacteristicItemNumeric) {
+                characterizationAnketPatient.setValue(((CharacteristicItemNumeric) characteristicItem).getValue());
             }
             characterizationAnketPatient.setIdAnket(idQuestionnaire);
 
@@ -223,7 +227,7 @@ public class PatientInformationFragment extends Fragment {
         CharacteristicItem characteristicItems = null;
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
-
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatients) {
             if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
                 if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
@@ -242,7 +246,9 @@ public class PatientInformationFragment extends Fragment {
                     characteristicItem.setValue(characterizationAnketPatient.getIdValue());
                     characteristicItem.setOptions(options);
 
-                    characteristicItems = characteristicItem;
+                    if (characteristicItems == null || LocalDateTime.parse(characteristicItem.getCreatedAt(), formatter).isAfter(LocalDateTime.parse(characteristicItems.getCreatedAt(), formatter))) {
+                        characteristicItems = characteristicItem;
+                    }
                 } else if (characteristic.getIdType() == 3) {
                     CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
@@ -252,7 +258,9 @@ public class PatientInformationFragment extends Fragment {
                     characteristicItem.setCreatedAt(characterizationAnketPatient.getCreatedAt());
                     characteristicItem.setValue(characterizationAnketPatient.getValue());
 
-                    characteristicItems = characteristicItem;
+                    if (characteristicItems == null || LocalDateTime.parse(characteristicItem.getCreatedAt(), formatter).isAfter(LocalDateTime.parse(characteristicItems.getCreatedAt(), formatter))) {
+                        characteristicItems = characteristicItem;
+                    }
                 }
             }
         }

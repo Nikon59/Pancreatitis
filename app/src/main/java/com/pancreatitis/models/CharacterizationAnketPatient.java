@@ -7,7 +7,7 @@ public class CharacterizationAnketPatient {
     private long idAnket = -1;
     private int idCharacteristic = -1;
     private int idValue = 0;
-    private float value = 0;
+    private float value = -1;
     private String createdAt;
     private String lastModified;
 

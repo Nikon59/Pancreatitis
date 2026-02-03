@@ -291,8 +291,8 @@ public class DatabaseModule {
         ContentValues values = new ContentValues();
         values.put("id_characteristic", characterization.getIdCharacteristic());
         values.put("id_anket", characterization.getIdAnket());
-        values.put("id_value", characterization.getIdValue());
-        values.put("value", characterization.getValue());
+        if (characterization.getIdValue() != 0) values.put("id_value", characterization.getIdValue());
+        if (characterization.getValue() != -1) values.put("value", characterization.getValue());
         values.put("created_at", LocalDateTime.now().format(formatter));
         values.put("last_modified", LocalDateTime.now().format(formatter));
 

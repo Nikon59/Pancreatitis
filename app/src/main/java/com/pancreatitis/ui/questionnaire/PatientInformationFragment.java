@@ -66,7 +66,7 @@ public class PatientInformationFragment extends Fragment {
     }
     private void setupClickListeners() {
         //btnPredict.setOnClickListener(v -> handlePrediction());
-        //btnSave.setOnClickListener(v -> handleSave());
+        //btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
     }
 
     // ========== PREDICTION HANDLING ==========
@@ -386,6 +386,16 @@ public class PatientInformationFragment extends Fragment {
     }
     private void showError(String error) {
         Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+    }
+    private void showSaveConfirmationDialog() {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Подтверждение сохранения")
+                .setMessage("Вы уверены, что хотите сохранить изменения?")
+                .setPositiveButton("Да", (dialog, which) -> {
+                    handleSave();
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
     }
     private void showHelpDialog(String title, String message) {
         new AlertDialog.Builder(getContext())

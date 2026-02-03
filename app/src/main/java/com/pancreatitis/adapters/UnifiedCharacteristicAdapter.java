@@ -21,12 +21,15 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
+import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
 import com.pancreatitis.models.CharacteristicItemNonNumeric;
 import com.pancreatitis.models.CharacteristicItemNumeric;
+import com.pancreatitis.models.CharacterizationValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCharacteristicAdapter.CharacteristicViewHolder> {
     private List<CharacteristicItem> characteristicItems;
@@ -255,8 +258,30 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             if (hints != null && !hints.trim().isEmpty()) {
                 message.append(hints);
             }
+
+            // Показываем доступные опции
+            if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
+                List<String> options = ((CharacteristicItemNonNumeric) characteristic).getOptions();
+                if (options != null && !options.isEmpty()) {
+                    message.append("\n\nДоступные варианты:\n• Нет данных");
+                    for (String option : options) {
+                        if (!option.isEmpty()) {
+                            message.append("\n• ").append(option);
+                        }
+                    }
+                }
+            }
             return message.toString();
         }
+
+//        private String buildDialogMessage(CharacteristicItem characteristic) {
+//            StringBuilder message = new StringBuilder();
+//            String hints = characteristic.getHint();
+//            if (hints != null && !hints.trim().isEmpty()) {
+//                message.append(hints);
+//            }
+//            return message.toString();
+//        }
 
         private void showHelpDialog(String message) {
             new AlertDialog.Builder(context)

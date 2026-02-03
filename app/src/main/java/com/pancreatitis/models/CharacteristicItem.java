@@ -9,6 +9,16 @@ public class CharacteristicItem {
     private int IdType;
     private String name;
     private String hint;
+    private String createdAt;
+    private boolean isNewItem = false;
+
+    public boolean isNewItem() {
+        return isNewItem;
+    }
+
+    public void setNewItem(boolean newItem) {
+        isNewItem = newItem;
+    }
 
     public CharacteristicItem() {
     }
@@ -43,5 +53,13 @@ public class CharacteristicItem {
 
     public void setHint(String hint) {
         this.hint = hint;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

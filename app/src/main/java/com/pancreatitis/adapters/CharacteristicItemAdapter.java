@@ -83,6 +83,11 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<RecyclerView
         notifyDataSetChanged();
     }
 
+    public void addItem(CharacteristicItem characteristicItem){
+        characteristicItems.add(characteristicItem);
+        notifyDataSetChanged();
+    }
+
     public List<CharacteristicItem> getCharacteristics() {
         return characteristicItems;
     }
@@ -99,8 +104,8 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<RecyclerView
         }
 
         public void bind(CharacteristicItemNumeric characteristic) {
-            createdAt.setText("2026");
-            valueCharacteristic.setText("2026");
+            createdAt.setText(characteristic.getCreatedAt());
+            valueCharacteristic.setText(Float.toString(characteristic.getValue()));
         }
     }
     class CharacteristicItemNonNumericViewHolder extends RecyclerView.ViewHolder {
@@ -121,7 +126,7 @@ public class CharacteristicItemAdapter extends RecyclerView.Adapter<RecyclerView
         }
 
         public void bind(CharacteristicItemNonNumeric characteristic) {
-            createdAt.setText("2026");
+            createdAt.setText(characteristic.getCreatedAt());
             List<String> options = characteristic.getOptions();
 
             spinnerAdapter.clear();

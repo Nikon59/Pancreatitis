@@ -124,6 +124,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
     class CharacteristicViewHolder extends RecyclerView.ViewHolder {
         private TextView textTitle;
         private ImageView btnHelp;
+        private LinearLayout container;
         private Context context;
 
         // Поля для числовых характеристик
@@ -143,6 +144,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             this.context = itemView.getContext();
 
             // Инициализация заголовка (общая часть)
+            container = itemView.findViewById(R.id.characteristic_container);
             textTitle = itemView.findViewById(R.id.name_characteristic);
             btnHelp = itemView.findViewById(R.id.get_helps);
 
@@ -168,7 +170,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             setupHelpButton(characteristic);
 
             // Настройка клика по заголовку
-            textTitle.setOnClickListener(v -> {
+            container.setOnClickListener(v -> {
                 if (showTitle) {
                     NavController navController = Navigation.findNavController(v);
                     Bundle args = new Bundle();
@@ -210,7 +212,10 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
                 spinnerAdapter.addAll(options);
                 spinnerAdapter.notifyDataSetChanged();
                 setSpinnerSelection(characteristic);
-                setupSpinnerListener(characteristic);
+//                setupSpinnerListener(characteristic);
+                spinnerValue.setClickable(false);
+                spinnerValue.setFocusable(false);
+                spinnerValue.setFocusableInTouchMode(false);
             }
         }
 

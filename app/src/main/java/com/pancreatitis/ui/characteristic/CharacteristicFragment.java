@@ -1,11 +1,13 @@
 package com.pancreatitis.ui.characteristic;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 public class CharacteristicFragment extends Fragment {
     private FragmentCharacteristicBinding binding;
     private RecyclerView recyclerView;
+    private ImageView btnHelp;
     private CharacteristicItemAdapter adapter;
     private TextView nameCharacteristic;
     private int idQuestionnaire, idCharacteristic;
@@ -56,11 +59,39 @@ public class CharacteristicFragment extends Fragment {
         try {
             recyclerView = view.findViewById(R.id.recycler_view_value_of_characteristic);
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            btnHelp = view.findViewById(R.id.get_helps);
             nameCharacteristic = view.findViewById(R.id.name_characteristic);
             loadData();
         } catch (Exception e) {
             showError(e.toString());
         }
+    }
+    private void setupHelpButton(CharacteristicItem characteristic) {
+        String hints = characteristic.getHint();
+        boolean hasHints = hints != null && !hints.trim().isEmpty();
+
+        btnHelp.setVisibility(hasHints ? View.VISIBLE : View.GONE);
+        String dialogMessage = buildDialogMessage(characteristic);
+        btnHelp.setOnClickListener(v -> showHelpDialog(dialogMessage));
+    }
+
+    private String buildDialogMessage(CharacteristicItem characteristic) {
+        StringBuilder message = new StringBuilder();
+
+        String hints = characteristic.getHint();
+        if (hints != null && !hints.trim().isEmpty()) {
+            message.append(hints);
+        }
+
+        return message.toString();
+    }
+
+    private void showHelpDialog(String message) {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Справка")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
     private void loadData() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();

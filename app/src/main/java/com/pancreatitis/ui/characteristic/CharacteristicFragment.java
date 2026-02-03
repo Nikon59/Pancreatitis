@@ -17,8 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
-import com.pancreatitis.databinding.FragmentHelpsBinding;
-import com.pancreatitis.databinding.FragmentProfileBinding;
+import com.pancreatitis.databinding.FragmentCharacteristicBinding;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
 import com.pancreatitis.models.CharacteristicItemNonNumeric;
@@ -34,8 +33,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CharacteristicFragment extends Fragment {
-    private FragmentHelpsBinding binding;
+    private FragmentCharacteristicBinding binding;
     private RecyclerView recyclerView;
+    private CharacteristicItemAdapter adapter;
     private TextView nameCharacteristic;
     private int idQuestionnaire, idCharacteristic;
 
@@ -66,14 +66,13 @@ public class CharacteristicFragment extends Fragment {
         Characteristic characteristic = databaseModule.getCharacteristicById(idCharacteristic);
         nameCharacteristic.setText(characteristic.getOpis());
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
-        CharacteristicItemAdapter adapter = new CharacteristicItemAdapter(characteristicItems);
+        adapter = new CharacteristicItemAdapter(characteristicItems, getContext());
         recyclerView.setAdapter(adapter);
     }
     private List<CharacteristicItem> loadCharacteristicItems(Characteristic characteristic){
         List<CharacteristicItem> characteristicItems = new ArrayList<>();
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
-        Toast.makeText(getContext(), String.format("%d", characterizationAnketPatients.size()), Toast.LENGTH_SHORT).show();
 
         for (CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients) {
             if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
@@ -86,6 +85,7 @@ public class CharacteristicFragment extends Fragment {
 
                     CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setIdType(characteristic.getIdType());
                     characteristicItem.setName(characteristic.getOpis());
                     characteristicItem.setHint(characteristic.getHints());
                     characteristicItem.setOptions(options);
@@ -100,6 +100,7 @@ public class CharacteristicFragment extends Fragment {
 
                     CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setIdType(characteristic.getIdType());
                     characteristicItem.setName(characteristic.getOpis());
                     characteristicItem.setHint(characteristic.getHints());
                     characteristicItem.setOptions(options);
@@ -108,6 +109,7 @@ public class CharacteristicFragment extends Fragment {
                 } else if (characteristic.getIdType() == 3) {
                     CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setIdType(characteristic.getIdType());
                     characteristicItem.setName(characteristic.getOpis());
                     characteristicItem.setHint(characteristic.getHints());
 

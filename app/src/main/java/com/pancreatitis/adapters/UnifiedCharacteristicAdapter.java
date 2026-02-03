@@ -169,16 +169,16 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             textTitle.setText(characteristic.getName());
             setupHelpButton(characteristic);
 
-            // Настройка клика по заголовку
-            container.setOnClickListener(v -> {
-                if (showTitle) {
-                    NavController navController = Navigation.findNavController(v);
-                    Bundle args = new Bundle();
-                    args.putInt("idQuestionnaire", idQuestionnaire);
-                    args.putInt("idCharacteristic", characteristic.getIdCharacteristic());
-                    navController.navigate(R.id.action_anket_to_characteristic, args);
-                }
-            });
+//            // Настройка клика по заголовку
+//            container.setOnClickListener(v -> {
+//                if (showTitle) {
+//                    NavController navController = Navigation.findNavController(v);
+//                    Bundle args = new Bundle();
+//                    args.putInt("idQuestionnaire", idQuestionnaire);
+//                    args.putInt("idCharacteristic", characteristic.getIdCharacteristic());
+//                    navController.navigate(R.id.action_anket_to_characteristic, args);
+//                }
+//            });
 
             // Отображение/скрытие заголовка
             textTitle.setVisibility(showTitle ? View.VISIBLE : View.GONE);
@@ -212,10 +212,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
                 spinnerAdapter.addAll(options);
                 spinnerAdapter.notifyDataSetChanged();
                 setSpinnerSelection(characteristic);
-//                setupSpinnerListener(characteristic);
-                spinnerValue.setClickable(false);
-                spinnerValue.setFocusable(false);
-                spinnerValue.setFocusableInTouchMode(false);
+                setupSpinnerListener(characteristic);
             }
         }
 

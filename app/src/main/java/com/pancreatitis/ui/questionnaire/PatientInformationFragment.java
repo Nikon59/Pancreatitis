@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.adapters.DiagnosisItemAdapter;
 import com.pancreatitis.adapters.QuestionnaireInformationItemAdapter;
 import com.pancreatitis.adapters.TitleAdapter;
+import com.pancreatitis.adapters.UnifiedCharacteristicAdapter;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.adapters.CharacteristicItemTitleAdapter;
@@ -31,7 +32,7 @@ public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private Button btnPredict, btnSave;
-    private CharacteristicItemTitleAdapter characteristicItemTitleAdapter;
+    private UnifiedCharacteristicAdapter characteristicItemTitleAdapter;
     private QuestionnaireInformationItemAdapter questionnaireInformationItemAdapter;
     private DiagnosisItemAdapter diagnosisItemAdapter;
     private int idQuestionnaire, idPatient;
@@ -172,7 +173,7 @@ public class PatientInformationFragment extends Fragment {
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems();
         List<DiagnosisItem> diagnosisItem = loadDiagnosis();
 
-        characteristicItemTitleAdapter = new CharacteristicItemTitleAdapter(characteristicItems, idQuestionnaire);
+        characteristicItemTitleAdapter = new UnifiedCharacteristicAdapter(characteristicItems, idQuestionnaire);
         questionnaireInformationItemAdapter = new QuestionnaireInformationItemAdapter(questionnaireInformationItems);
         diagnosisItemAdapter = new DiagnosisItemAdapter(diagnosisItem);
 
@@ -209,15 +210,76 @@ public class PatientInformationFragment extends Fragment {
         for(int i = 0; i < characteristics.size(); i++){
             Characteristic characteristic = characteristics.get(i);
 
-            CharacteristicItem characteristicItem = new CharacteristicItem();
-            characteristicItem.setIdCharacteristic(characteristic.getId());
-            characteristicItem.setIdType(characteristic.getIdType());
-            characteristicItem.setName(characteristic.getOpis());
-            characteristicItem.setHint(characteristic.getHints());
+            CharacteristicItem characteristicItem = loadValueCharacteristicItems(characteristic);
 
             characteristicItems.add(characteristicItem);
         }
 
+        return characteristicItems;
+    }
+    private CharacteristicItem loadValueCharacteristicItems(Characteristic characteristic) {
+        CharacteristicItem characteristicItems = null;
+        DatabaseModule databaseModule = DatabaseModule.getInstance();
+        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+
+        for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatients) {
+            if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
+                if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
+                    List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+                    List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
+                    options.addAll(characterizationValues.stream()
+                            .map(CharacterizationValue::getValue)
+                            .collect(Collectors.toList()));
+
+                    CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
+                    characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setIdType(characteristic.getIdType());
+                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setHint(characteristic.getHints());
+                    characteristicItem.setCreatedAt(characterizationAnketPatient.getCreatedAt());
+                    characteristicItem.setValue(characterizationAnketPatient.getIdValue());
+                    characteristicItem.setOptions(options);
+
+                    characteristicItems = characteristicItem;
+                } else if (characteristic.getIdType() == 3) {
+                    CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
+                    characteristicItem.setIdCharacteristic(characteristic.getId());
+                    characteristicItem.setIdType(characteristic.getIdType());
+                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setHint(characteristic.getHints());
+                    characteristicItem.setCreatedAt(characterizationAnketPatient.getCreatedAt());
+                    characteristicItem.setValue(characterizationAnketPatient.getValue());
+
+                    characteristicItems = characteristicItem;
+                }
+            }
+        }
+        if (characteristicItems == null){
+            if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2){
+                List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
+                List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
+                options.addAll(characterizationValues.stream()
+                        .map(CharacterizationValue::getValue)
+                        .collect(Collectors.toList()));
+
+                CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
+                characteristicItem.setIdCharacteristic(characteristic.getId());
+                characteristicItem.setIdType(characteristic.getIdType());
+                characteristicItem.setName(characteristic.getOpis());
+                characteristicItem.setHint(characteristic.getHints());
+                characteristicItem.setOptions(options);
+
+                characteristicItems = characteristicItem;
+            } else if (characteristic.getIdType() == 3) {
+                CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
+                characteristicItem.setIdCharacteristic(characteristic.getId());
+                characteristicItem.setIdType(characteristic.getIdType());
+                characteristicItem.setName(characteristic.getOpis());
+                characteristicItem.setHint(characteristic.getHints());
+
+                characteristicItems = characteristicItem;
+            }
+        }
         return characteristicItems;
     }
     private List<DiagnosisItem> loadDiagnosis(){

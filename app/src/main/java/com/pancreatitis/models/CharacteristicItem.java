@@ -9,7 +9,7 @@ public class CharacteristicItem {
     private int IdType;
     private String name;
     private String hint;
-    private String createdAt;
+    private String createdAt = "-";
     private boolean isNewItem = false;
 
     public boolean isNewItem() {

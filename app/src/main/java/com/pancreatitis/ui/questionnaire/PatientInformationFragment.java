@@ -65,7 +65,7 @@ public class PatientInformationFragment extends Fragment {
         }
     }
     private void setupClickListeners() {
-        //btnPredict.setOnClickListener(v -> handlePrediction());
+        btnPredict.setOnClickListener(v -> handlePrediction());
         //btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
     }
 
@@ -91,8 +91,8 @@ public class PatientInformationFragment extends Fragment {
         List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
         for (int i = 0; i < characteristics.size(); i++) {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
-            //CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getId_value());
-            //if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getIdValue());
+            if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
         }
         return charasteristicDTOS;
     }
@@ -158,7 +158,9 @@ public class PatientInformationFragment extends Fragment {
             CharacteristicItem characteristicItem = characteristicItems.get(i);
 
             characterizationAnketPatient.setIdCharacteristic(i + 1);
-            //characterizationAnketPatient.setIdValue(characteristicItem.getIValue());
+            if (characteristicItem instanceof CharacteristicItemNonNumeric) {
+                characterizationAnketPatient.setIdValue(((CharacteristicItemNonNumeric) characteristicItem).getValue());
+            }
             characterizationAnketPatient.setIdAnket(idQuestionnaire);
 
             characterizationAnketPatients.add(characterizationAnketPatient);

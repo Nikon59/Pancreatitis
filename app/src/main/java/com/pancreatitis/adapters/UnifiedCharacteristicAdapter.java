@@ -274,15 +274,6 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             return message.toString();
         }
 
-//        private String buildDialogMessage(CharacteristicItem characteristic) {
-//            StringBuilder message = new StringBuilder();
-//            String hints = characteristic.getHint();
-//            if (hints != null && !hints.trim().isEmpty()) {
-//                message.append(hints);
-//            }
-//            return message.toString();
-//        }
-
         private void showHelpDialog(String message) {
             new AlertDialog.Builder(context)
                     .setTitle("Справка")

@@ -46,14 +46,13 @@ public class QuestionnaireManagerModule {
             long idQuestionnaire;
             if (questionnaire.getId() == -1){
                 idQuestionnaire = databaseModule.insertQuestionnaire(questionnaire);
-                characterizationAnketPatientList.stream().forEach(сharacterizationAnketPatient -> сharacterizationAnketPatient.setIdAnket(idQuestionnaire));
-                databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatientList);
             } else {
                 databaseModule.updateQuestionnaire(questionnaire);
                 idQuestionnaire = questionnaire.getId();
-                characterizationAnketPatientList.stream().forEach(сharacterizationAnketPatient -> сharacterizationAnketPatient.setIdAnket(idQuestionnaire));
-                databaseModule.updateAllCharacterizationAnketPatient(characterizationAnketPatientList);
             }
+            characterizationAnketPatientList.stream().forEach(сharacterizationAnketPatient -> сharacterizationAnketPatient.setIdAnket(idQuestionnaire));
+            databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatientList);
+
             databaseModule.setTransactionSuccessful();
 
             return "Успешно";

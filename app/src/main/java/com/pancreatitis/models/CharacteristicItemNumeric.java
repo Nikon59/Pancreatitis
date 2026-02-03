@@ -1,7 +1,7 @@
 package com.pancreatitis.models;
 
 public class CharacteristicItemNumeric extends CharacteristicItem {
-    private float value = 0.0F;
+    private float value = -1F;
     public CharacteristicItemNumeric() {
         super();
     }

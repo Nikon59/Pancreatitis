@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -30,6 +31,7 @@ import com.pancreatitis.models.CharacterizationValue;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,7 +92,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             CharacteristicItem characteristicItem = characteristicItems.get(position);
             holder.bind(characteristicItem);
         } catch (Exception e) {
-            Toast.makeText(holder.context, e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(holder.context, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -175,16 +177,16 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             textTitle.setText(characteristic.getName());
             setupHelpButton(characteristic);
 
-//            // Настройка клика по заголовку
-//            container.setOnClickListener(v -> {
-//                if (showTitle) {
-//                    NavController navController = Navigation.findNavController(v);
-//                    Bundle args = new Bundle();
-//                    args.putInt("idQuestionnaire", idQuestionnaire);
-//                    args.putInt("idCharacteristic", characteristic.getIdCharacteristic());
-//                    navController.navigate(R.id.action_anket_to_characteristic, args);
-//                }
-//            });
+            // Настройка клика по заголовку
+            container.setOnClickListener(v -> {
+                if (showTitle) {
+                    NavController navController = Navigation.findNavController(v);
+                    Bundle args = new Bundle();
+                    args.putInt("idQuestionnaire", idQuestionnaire);
+                    args.putInt("idCharacteristic", characteristic.getIdCharacteristic());
+                    navController.navigate(R.id.action_anket_to_characteristic, args);
+                }
+            });
 
             // Отображение/скрытие заголовка
             textTitle.setVisibility(showTitle ? View.VISIBLE : View.GONE);
@@ -224,6 +226,18 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
 
                 // Восстанавливаем слушатель в следующем цикле UI, чтобы не поймать программное событие
                 spinnerValue.post(() -> setupSpinnerListener(characteristic));
+
+                if (showTitle) {
+                    spinnerValue.setOnTouchListener(new View.OnTouchListener() {
+                        @Override
+                        public boolean onTouch(View v, MotionEvent event) {
+                            if (event.getAction() == MotionEvent.ACTION_UP) {
+                                container.performClick();
+                            }
+                            return true; // блокируем стандартное поведение Spinner (не раскрывать)
+                        }
+                    });
+                }
             }
         }
 

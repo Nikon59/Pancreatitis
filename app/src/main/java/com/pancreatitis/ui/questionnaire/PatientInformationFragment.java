@@ -63,7 +63,7 @@ public class PatientInformationFragment extends Fragment {
             loadDisplayData();
             loadDataQuestionnaire();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showMessage(e.getMessage());
         }
     }
     private void setupClickListeners() {
@@ -80,8 +80,6 @@ public class PatientInformationFragment extends Fragment {
             List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
             PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
             displayPredictionResults(predictionResult.getProbabilities(), charasteristicDTOS.size(), loadAllCharacteristic().size());
-        } catch (TrainingDataException e) {
-            showMessage(e.getMessage());
         } catch (Exception e) {
             showMessage(e.getMessage());
         }
@@ -217,7 +215,6 @@ public class PatientInformationFragment extends Fragment {
             Characteristic characteristic = characteristics.get(i);
 
             CharacteristicItem characteristicItem = loadValueCharacteristicItems(characteristic);
-
             characteristicItems.add(characteristicItem);
         }
 
@@ -328,7 +325,7 @@ public class PatientInformationFragment extends Fragment {
             CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
             CharacteristicItem characteristicItem = characteristicItems.get(i);
 
-            //characteristicItem.setValue(characterizationAnketPatient.getId_value());
+            //characteristicItem.setValue(characterizationAnketPatient.getIdValue());
         }
     }
     private void loadQuestionnaireDiagnosis(){

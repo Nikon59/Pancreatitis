@@ -293,7 +293,7 @@ public class DatabaseModule {
         values.put("id_anket", characterization.getIdAnket());
         if (characterization.getIdValue() != 0) values.put("id_value", characterization.getIdValue());
         if (characterization.getValue() != -1) values.put("value", characterization.getValue());
-        values.put("created_at", LocalDateTime.now().format(formatter));
+        values.put("created_at", characterization.getCreatedAt());
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
         return database.insert("characterization_anket_patient", null, values);

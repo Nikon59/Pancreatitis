@@ -27,6 +27,8 @@ import com.pancreatitis.models.CharacteristicItemNonNumeric;
 import com.pancreatitis.models.CharacteristicItemNumeric;
 import com.pancreatitis.models.CharacterizationValue;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,6 +131,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
         private ImageView btnHelp;
         private LinearLayout container;
         private Context context;
+        private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         // Поля для числовых характеристик
         private EditText valueCharacteristic;
@@ -138,8 +141,8 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
         private Spinner spinnerValue;
         private ArrayAdapter<String> spinnerAdapter;
         private TextView createdAtNonNumeric;
-
         private int viewType;
+        private AdapterView.OnItemSelectedListener spinnerListener;
 
         public CharacteristicViewHolder(@NonNull View itemView, int viewType) {
             super(itemView);
@@ -214,25 +217,38 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
                 spinnerAdapter.clear();
                 spinnerAdapter.addAll(options);
                 spinnerAdapter.notifyDataSetChanged();
-                setSpinnerSelection(characteristic);
-                setupSpinnerListener(characteristic);
+
+                // Убираем слушатель перед программной установкой
+                spinnerValue.setOnItemSelectedListener(null);
+                spinnerValue.setSelection(characteristic.getValue());
+
+                // Восстанавливаем слушатель в следующем цикле UI, чтобы не поймать программное событие
+                spinnerValue.post(() -> setupSpinnerListener(characteristic));
             }
         }
 
         private void setupSpinnerListener(CharacteristicItemNonNumeric characteristic) {
-            if (spinnerValue != null) {
-                spinnerValue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        characteristic.setValue(position);
-                    }
+            if (spinnerValue == null) return;
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-                        characteristic.setValue(0);
+            // Сохраняем слушатель, чтобы иметь возможность снять/восстановить при необходимости
+            spinnerListener = new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    // Это вызов от пользователя — обновляем value и createdAt
+                    characteristic.setValue(position);
+                    characteristic.setCreatedAt(LocalDateTime.now().format(formatter));
+                    if (createdAtNonNumeric != null) {
+                        createdAtNonNumeric.setText(characteristic.getCreatedAt());
                     }
-                });
-            }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    characteristic.setValue(0);
+                }
+            };
+
+            spinnerValue.setOnItemSelectedListener(spinnerListener);
         }
 
         private void setSpinnerSelection(CharacteristicItemNonNumeric characteristic) {

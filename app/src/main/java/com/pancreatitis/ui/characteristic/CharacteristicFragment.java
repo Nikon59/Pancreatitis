@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pancreatitis.R;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
+import com.pancreatitis.adapters.UnifiedCharacteristicAdapter;
 import com.pancreatitis.databinding.FragmentCharacteristicBinding;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
@@ -44,7 +45,7 @@ public class CharacteristicFragment extends Fragment {
     private Characteristic characteristic;
     private RecyclerView recyclerView;
     private ImageView btnHelp;
-    private CharacteristicItemAdapter adapter;
+    private UnifiedCharacteristicAdapter adapter;
     private TextView nameCharacteristic;
     private Button btnAdd, btnSave;
     private int idQuestionnaire, idCharacteristic;
@@ -151,9 +152,8 @@ public class CharacteristicFragment extends Fragment {
         nameCharacteristic.setText(characteristic.getOpis());
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
         //sortCharacteristicItems(characteristicItems);
-        adapter = new CharacteristicItemAdapter(characteristicItems);
+        adapter = new UnifiedCharacteristicAdapter(characteristicItems, idQuestionnaire, false);
         recyclerView.setAdapter(adapter);
-        updateSaveButtonState();
     }
 
     private void sortCharacteristicItems(List<CharacteristicItem> items) {
@@ -205,8 +205,6 @@ public class CharacteristicFragment extends Fragment {
     }
 
     private void addNewCharacteristicItem() {
-        String currentDate = dateFormat.format(new Date());
-
         if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
             List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
             List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
@@ -219,10 +217,9 @@ public class CharacteristicFragment extends Fragment {
             newItem.setIdType(characteristic.getIdType());
             newItem.setName(characteristic.getOpis());
             newItem.setHint(characteristic.getHints());
-            newItem.setCreatedAt(currentDate);
-            newItem.setValue(0); // По умолчанию "Нет данных"
+            newItem.setValue(0);
             newItem.setOptions(options);
-            newItem.setNewItem(true); // Помечаем как новый элемент
+            newItem.setNewItem(true);
 
             //List<CharacteristicItem> items = adapter.getCharacteristics();
             //items.add(newItem);
@@ -235,9 +232,8 @@ public class CharacteristicFragment extends Fragment {
             newItem.setIdType(characteristic.getIdType());
             newItem.setName(characteristic.getOpis());
             newItem.setHint(characteristic.getHints());
-            newItem.setCreatedAt(currentDate);
-            newItem.setValue(0.0f); // По умолчанию 0
-            newItem.setNewItem(true); // Помечаем как новый элемент
+            newItem.setValue(-1f);
+            newItem.setNewItem(true);
 
             List<CharacteristicItem> items = adapter.getCharacteristics();
             items.add(newItem);
@@ -246,7 +242,6 @@ public class CharacteristicFragment extends Fragment {
         }
 
         hasUnsavedChanges = true;
-        //updateSaveButtonState();
     }
 
     private void showSaveConfirmationDialog() {
@@ -266,7 +261,6 @@ public class CharacteristicFragment extends Fragment {
 //        // Временная заглушка
 //        showMessage("Сохранение успешно выполнено (заглушка)");
 //        hasUnsavedChanges = false;
-//        updateSaveButtonState();
 //
 //        // Снимаем флаги новых элементов
 //        List<CharacteristicItem> items = adapter.getCharacteristics();
@@ -277,18 +271,6 @@ public class CharacteristicFragment extends Fragment {
 //                ((CharacteristicItemNumeric) item).setNewItem(false);
 //            }
 //        }
-    }
-
-    private void updateSaveButtonState() {
-        if (hasUnsavedChanges) {
-            btnSave.setEnabled(true);
-            btnSave.setBackgroundTintList(getContext().getResources().getColorStateList(R.color.colorActive));
-            btnSave.setTextColor(getContext().getResources().getColor(R.color.white));
-        } else {
-            btnSave.setEnabled(false);
-            btnSave.setBackgroundTintList(getContext().getResources().getColorStateList(R.color.white));
-            btnSave.setTextColor(getContext().getResources().getColor(R.color.black));
-        }
     }
 
     @Override

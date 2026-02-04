@@ -304,8 +304,6 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
                             createdAtNumeric.setText(characteristic.getCreatedAt());
                         }
                     } catch (NumberFormatException e) {
-                        // можно оставить пусто или откатить в прежнее число:
-                        // valueCharacteristic.setText(beforeText);
                     }
                 }
             };

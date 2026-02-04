@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -298,8 +299,8 @@ public class PatientInformationFragment extends Fragment {
         TitleAdapter title2 = new TitleAdapter("Клинические характеристики");
         TitleAdapter title3 = new TitleAdapter("Диагноз");
 
-        androidx.recyclerview.widget.ConcatAdapter concatAdapter =
-                new androidx.recyclerview.widget.ConcatAdapter(title1, questionnaireInformationItemAdapter,
+        ConcatAdapter concatAdapter =
+                new ConcatAdapter(title1, questionnaireInformationItemAdapter,
                         title2, characteristicItemTitleAdapter, title3, diagnosisItemAdapter);
 
         recyclerView.setAdapter(concatAdapter);

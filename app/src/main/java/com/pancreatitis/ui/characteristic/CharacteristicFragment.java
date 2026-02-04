@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pancreatitis.R;
-import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.adapters.UnifiedCharacteristicAdapter;
 import com.pancreatitis.databinding.FragmentCharacteristicBinding;
 import com.pancreatitis.models.Characteristic;

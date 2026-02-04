@@ -153,7 +153,7 @@ public class AllQuestionnaireFragment extends Fragment {
 
     private void loadQuestionnaires() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems(1);
+        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems(User.getInstance().getIdDoctor());
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.updateData(questionnaireList);

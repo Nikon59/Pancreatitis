@@ -19,7 +19,6 @@ import com.pancreatitis.adapters.TitleAdapter;
 import com.pancreatitis.adapters.UnifiedCharacteristicAdapter;
 import com.pancreatitis.models.*;
 import com.pancreatitis.modules.database.DatabaseModule;
-import com.pancreatitis.adapters.CharacteristicItemTitleAdapter;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
@@ -118,8 +117,23 @@ public class PatientInformationFragment extends Fragment {
         Patient patient = createPatient();
         Questionnaire questionnaire = createQuetionnaire();
 
-        String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient);
-        showMessage(result);
+        if (checkValidForSave(patient, questionnaire)) {
+            String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient);
+            showMessage(result);
+        }
+    }
+    private boolean checkValidForSave(Patient patient, Questionnaire questionnaire) {
+        if (patient.getFio() == null || Objects.equals(patient.getFio(), "")) {
+            showMessage("Имя пациента не должно быть пустым");
+            return false;
+        }
+
+        if (questionnaire.getAdmittedFrom() == null || Objects.equals(questionnaire.getAdmittedFrom(), "")) {
+            showMessage("Поле откуда поступил пациент не должно быть пустым");
+            return false;
+        }
+
+        return true;
     }
     private Patient createPatient(){
         Patient patient = new Patient();

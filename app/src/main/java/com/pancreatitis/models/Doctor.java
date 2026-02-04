@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Doctor {
-    private int id = 2;
+    private int id = 100;
     private String fio;
     private Boolean status = false;
     private String lastModified;

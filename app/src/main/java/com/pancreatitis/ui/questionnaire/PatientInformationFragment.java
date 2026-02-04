@@ -116,9 +116,8 @@ public class PatientInformationFragment extends Fragment {
 
         Patient patient = createPatient();
         Questionnaire questionnaire = createQuetionnaire();
-        List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
 
-        String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient, characterizationAnketPatients);
+        String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient);
         showMessage(result);
     }
     private Patient createPatient(){

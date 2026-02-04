@@ -3,6 +3,8 @@ package com.pancreatitis.adapters;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCharacteristicAdapter.CharacteristicViewHolder> {
     private List<CharacteristicItem> characteristicItems;
     private int idQuestionnaire;
+    private CharacteristicViewHolder  lastViewHolder;
     private boolean showTitle = true; // Флаг для отображения заголовка
 
     public UnifiedCharacteristicAdapter(List<CharacteristicItem> characteristicItems, int idQuestionnaire) {
@@ -87,10 +90,24 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
     }
 
     @Override
+    public void onViewRecycled(@NonNull CharacteristicViewHolder holder) {
+        super.onViewRecycled(holder);
+        // Очищаем ссылку, если этот ViewHolder был для последнего элемента
+        if (lastViewHolder == holder) {
+            lastViewHolder = null;
+        }
+    }
+
+    @Override
     public void onBindViewHolder(@NonNull CharacteristicViewHolder holder, int position) {
         try {
             CharacteristicItem characteristicItem = characteristicItems.get(position);
             holder.bind(characteristicItem);
+
+            // Сохраняем ссылку на ViewHolder последнего добавленного элемента
+            if (position == characteristicItems.size() - 1) {
+                lastViewHolder = holder;
+            }
         } catch (Exception e) {
             Toast.makeText(holder.context, e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -110,6 +127,20 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
     public void addItem(CharacteristicItem characteristicItem) {
         characteristicItems.add(characteristicItem);
         notifyDataSetChanged();
+    }
+
+    public void disableLastItem() {
+        if (lastViewHolder != null) {
+            // Отключаем EditText для числовых характеристик
+            if (lastViewHolder.valueCharacteristic != null) {
+                lastViewHolder.valueCharacteristic.setEnabled(false);
+            }
+
+            // Отключаем Spinner для нечисловых характеристик
+            if (lastViewHolder.spinnerValue != null) {
+                lastViewHolder.spinnerValue.setEnabled(false);
+            }
+        }
     }
 
     public List<CharacteristicItem> getCharacteristics() {
@@ -145,6 +176,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
         private TextView createdAtNonNumeric;
         private int viewType;
         private AdapterView.OnItemSelectedListener spinnerListener;
+        private TextWatcher valueTextWatcher;
 
         public CharacteristicViewHolder(@NonNull View itemView, int viewType) {
             super(itemView);
@@ -200,14 +232,87 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             }
         }
 
+
         private void bindNumeric(CharacteristicItemNumeric characteristic) {
             if (createdAtNumeric != null) {
                 createdAtNumeric.setText(characteristic.getCreatedAt());
             }
             if (valueCharacteristic != null) {
+                // Убираем слушатель перед программной установкой
+                if (valueTextWatcher != null) {
+                    valueCharacteristic.removeTextChangedListener(valueTextWatcher);
+                }
+
+                // Программно установить текст (без триггера)
                 valueCharacteristic.setText(Float.toString(characteristic.getValue()));
+
+                // Восстанавливаем слушатель в следующем цикле UI, чтобы не поймать программное событие
+                valueCharacteristic.post(() -> setupValueWatcher(characteristic));
+
+                if (showTitle) {
+                    valueCharacteristic.setOnTouchListener(new View.OnTouchListener() {
+                        @Override
+                        public boolean onTouch(View v, MotionEvent event) {
+                            if (event.getAction() == MotionEvent.ACTION_UP) {
+                                container.performClick();
+                            }
+                            return true; // блокируем фокус/клавиатуру
+                        }
+                    });
+
+
+                } else {
+                    valueCharacteristic.setOnTouchListener(null);
+
+                    if (!characteristic.isNewItem()) {
+                        valueCharacteristic.setEnabled(false);
+                    }
+                }
             }
         }
+
+
+        private void setupValueWatcher(CharacteristicItemNumeric characteristic) {
+            if (valueCharacteristic == null) return;
+
+            // Сохраняем TextWatcher, чтобы можно было снять/восстановить при программной установке
+            valueTextWatcher = new TextWatcher() {
+                private String beforeText;
+
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    //beforeText = s == null ? "" : s.toString();
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    // ничего не делаем здесь
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    String newText = s == null ? "" : s.toString();
+                    // Игнорируем если текст не изменился по сути
+                    if (newText.equals(beforeText)) return;
+
+                    // Попытка распарсить float; если невалидно — не менять значение (или можно установить 0)
+                    try {
+                        float newValue = Float.parseFloat(newText);
+                        characteristic.setValue(newValue);
+                        characteristic.setCreatedAt(LocalDateTime.now().format(formatter));
+                        if (createdAtNumeric != null) {
+                            createdAtNumeric.setText(characteristic.getCreatedAt());
+                        }
+                    } catch (NumberFormatException e) {
+                        // можно оставить пусто или откатить в прежнее число:
+                        // valueCharacteristic.setText(beforeText);
+                    }
+                }
+            };
+
+            valueCharacteristic.addTextChangedListener(valueTextWatcher);
+        }
+
 
         private void bindNonNumeric(CharacteristicItemNonNumeric characteristic) {
             if (createdAtNonNumeric != null) {
@@ -237,6 +342,10 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
                             return true; // блокируем стандартное поведение Spinner (не раскрывать)
                         }
                     });
+                } else {
+                    if (!characteristic.isNewItem()) {
+                        spinnerValue.setEnabled(false);
+                    }
                 }
             }
         }
@@ -263,12 +372,6 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             };
 
             spinnerValue.setOnItemSelectedListener(spinnerListener);
-        }
-
-        private void setSpinnerSelection(CharacteristicItemNonNumeric characteristic) {
-            if (spinnerValue != null) {
-                spinnerValue.setSelection(characteristic.getValue());
-            }
         }
 
         private void setupHelpButton(CharacteristicItem characteristic) {

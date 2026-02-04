@@ -33,7 +33,7 @@ public class QuestionnaireManagerModule {
         }
         return instance;
     }
-    public String saveQuestionnaire(Questionnaire questionnaire, Patient patient, List<CharacterizationAnketPatient> characterizationAnketPatientList){
+    public String saveQuestionnaire(Questionnaire questionnaire, Patient patient){
         try {
             databaseModule.beginTransaction();
 
@@ -50,8 +50,6 @@ public class QuestionnaireManagerModule {
                 databaseModule.updateQuestionnaire(questionnaire);
                 idQuestionnaire = questionnaire.getId();
             }
-            characterizationAnketPatientList.stream().forEach(сharacterizationAnketPatient -> сharacterizationAnketPatient.setIdAnket(idQuestionnaire));
-            databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatientList);
 
             databaseModule.setTransactionSuccessful();
 

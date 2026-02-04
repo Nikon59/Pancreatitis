@@ -17,6 +17,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pancreatitis.R;
 import com.pancreatitis.adapters.CharacteristicItemAdapter;
 import com.pancreatitis.adapters.UnifiedCharacteristicAdapter;
@@ -38,6 +39,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class CharacteristicFragment extends Fragment {
@@ -51,7 +53,6 @@ public class CharacteristicFragment extends Fragment {
     private int idQuestionnaire, idCharacteristic;
     private boolean hasUnsavedChanges = false;
     private DatabaseModule databaseModule;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -221,9 +222,6 @@ public class CharacteristicFragment extends Fragment {
             newItem.setOptions(options);
             newItem.setNewItem(true);
 
-            //List<CharacteristicItem> items = adapter.getCharacteristics();
-            //items.add(newItem);
-            //sortCharacteristicItems(items);
             adapter.addItem(newItem);
 
         } else if (characteristic.getIdType() == 3) {
@@ -235,10 +233,7 @@ public class CharacteristicFragment extends Fragment {
             newItem.setValue(-1f);
             newItem.setNewItem(true);
 
-            List<CharacteristicItem> items = adapter.getCharacteristics();
-            items.add(newItem);
-            sortCharacteristicItems(items);
-            adapter.updateData(items);
+            adapter.addItem(newItem);
         }
 
         hasUnsavedChanges = true;
@@ -256,21 +251,47 @@ public class CharacteristicFragment extends Fragment {
     }
 
     private void saveChanges() {
-        // TODO: Реализовать сохранение в базу данных
+        try {
+            CharacteristicItem newItem = getNewItem();
+            CharacterizationAnketPatient ch = new CharacterizationAnketPatient();
+            ch.setIdAnket(idQuestionnaire);
+            ch.setIdCharacteristic(idCharacteristic);
+            ch.setCreatedAt(newItem.getCreatedAt());
+            if (newItem instanceof CharacteristicItemNumeric) ch.setValue(((CharacteristicItemNumeric) newItem).getValue());
+            if (newItem instanceof CharacteristicItemNonNumeric) ch.setIdValue(((CharacteristicItemNonNumeric) newItem).getValue());
 
-//        // Временная заглушка
-//        showMessage("Сохранение успешно выполнено (заглушка)");
-//        hasUnsavedChanges = false;
-//
-//        // Снимаем флаги новых элементов
-//        List<CharacteristicItem> items = adapter.getCharacteristics();
-//        for (CharacteristicItem item : items) {
-//            if (item instanceof CharacteristicItemNonNumeric) {
-//                ((CharacteristicItemNonNumeric) item).setNewItem(false);
-//            } else if (item instanceof CharacteristicItemNumeric) {
-//                ((CharacteristicItemNumeric) item).setNewItem(false);
-//            }
-//        }
+            if (checkValidNewItem(ch)) {
+                databaseModule.insertCharacterizationAnketPatient(ch);
+                newItem.setNewItem(false);
+                adapter.disableLastItem();
+                hasUnsavedChanges = false;
+            }
+        } catch (Exception e) {
+            showMessage(e.getMessage());
+        }
+    }
+
+    private boolean checkValidNewItem(CharacterizationAnketPatient ch) {
+        if (ch.getIdValue() == 0 && ch.getValue() == -1) {
+            showMessage("Нельзя сохранять отсутствие данных");
+            return false;
+        }
+
+        if (ch.getCreatedAt() == null || Objects.equals(ch.getCreatedAt(), "")) {
+            showMessage("Отсутствует время выполнения");
+            return false;
+        }
+        return true;
+    }
+
+    private CharacteristicItem getNewItem() {
+        List<CharacteristicItem> ch = adapter.getCharacteristics();
+        for(int i = 0; i < ch.size(); i++) {
+            if (ch.get(i).isNewItem()) {
+                return ch.get(i);
+            }
+        }
+        return null;
     }
 
     @Override

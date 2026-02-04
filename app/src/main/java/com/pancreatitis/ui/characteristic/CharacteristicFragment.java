@@ -152,18 +152,8 @@ public class CharacteristicFragment extends Fragment {
         characteristic = databaseModule.getCharacteristicById(idCharacteristic);
         nameCharacteristic.setText(characteristic.getOpis());
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
-        //sortCharacteristicItems(characteristicItems);
         adapter = new UnifiedCharacteristicAdapter(characteristicItems, idQuestionnaire, false);
         recyclerView.setAdapter(adapter);
-    }
-
-    private void sortCharacteristicItems(List<CharacteristicItem> items) {
-        Collections.sort(items, new Comparator<CharacteristicItem>() {
-            @Override
-            public int compare(CharacteristicItem item1, CharacteristicItem item2) {
-                return item1.getCreatedAt().compareTo(item2.getCreatedAt());
-            }
-        });
     }
 
     private List<CharacteristicItem> loadCharacteristicItems(Characteristic characteristic) {
@@ -278,7 +268,12 @@ public class CharacteristicFragment extends Fragment {
         }
 
         if (ch.getCreatedAt() == null || Objects.equals(ch.getCreatedAt(), "")) {
-            showMessage("Отсутствует время выполнения");
+            showMessage("Отсутствует время заполнения");
+            return false;
+        }
+
+        if (ch.getValue() != -1 && (ch.getValue() > characteristic.getMaxValue() || ch.getValue() < characteristic.getMinValue())){
+            showMessage(String.format("Значение должно быть от %.3f до %.3f", characteristic.getMinValue(), characteristic.getMaxValue()));
             return false;
         }
         return true;

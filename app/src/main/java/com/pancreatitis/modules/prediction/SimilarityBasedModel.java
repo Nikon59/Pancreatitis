@@ -10,8 +10,8 @@ public class SimilarityBasedModel {
         int id;
         int type;
         int weight;
-        int minValue;
-        int maxValue;
+        float minValue;
+        float maxValue;
         boolean availableInPatient; // есть ли у пациента эта характеристика
     }
 

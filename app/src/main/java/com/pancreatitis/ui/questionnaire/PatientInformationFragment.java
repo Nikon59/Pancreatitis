@@ -47,7 +47,6 @@ public class PatientInformationFragment extends Fragment {
         receiveArguments();
         initViews(view);
         setupClickListeners();
-        showMessage(String.format("%d %d", idQuestionnaire, idPatient));
         return view;
     }
     private void receiveArguments() {

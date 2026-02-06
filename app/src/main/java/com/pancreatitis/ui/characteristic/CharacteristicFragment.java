@@ -68,7 +68,6 @@ public class CharacteristicFragment extends Fragment {
         if (args != null) {
             idQuestionnaire = args.getInt("idQuestionnaire", -1);
             idCharacteristic = args.getInt("idCharacteristic", -1);
-            showMessage(String.format("%d %d", idQuestionnaire, idCharacteristic));
         }
     }
 

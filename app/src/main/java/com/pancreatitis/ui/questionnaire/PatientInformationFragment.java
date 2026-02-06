@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -45,6 +47,7 @@ public class PatientInformationFragment extends Fragment {
         receiveArguments();
         initViews(view);
         setupClickListeners();
+        showMessage(String.format("%d %d", idQuestionnaire, idPatient));
         return view;
     }
     private void receiveArguments() {
@@ -119,8 +122,23 @@ public class PatientInformationFragment extends Fragment {
 
         if (checkValidForSave(patient, questionnaire)) {
             String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient);
+            idQuestionnaire = (int)questionnaire.getId();
+            idPatient = (int)questionnaire.getIdPatient();
+            reloadFragmentWithNewIds(idQuestionnaire, idPatient);
             showMessage(result);
         }
+    }
+    private void reloadFragmentWithNewIds(int newQuestionnaireId, int newPatientId) {
+        Bundle args = new Bundle();
+        args.putInt("idQuestionnaire", newQuestionnaireId);
+        args.putInt("idPatient", newPatientId);
+
+        NavController navController = Navigation.findNavController(requireView());
+
+        navController.navigate(
+                R.id.navigation_anket,
+                args
+        );
     }
     private boolean checkValidForSave(Patient patient, Questionnaire questionnaire) {
         if (patient.getFio() == null || Objects.equals(patient.getFio(), "")) {

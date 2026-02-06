@@ -65,8 +65,11 @@ public class CharacteristicFragment extends Fragment {
 
     private void receiveArguments() {
         Bundle args = getArguments();
-        idQuestionnaire = args.getInt("idQuestionnaire", -1);
-        idCharacteristic = args.getInt("idCharacteristic", -1);
+        if (args != null) {
+            idQuestionnaire = args.getInt("idQuestionnaire", -1);
+            idCharacteristic = args.getInt("idCharacteristic", -1);
+            showMessage(String.format("%d %d", idQuestionnaire, idCharacteristic));
+        }
     }
 
     private void initViews(View view) {
@@ -261,6 +264,11 @@ public class CharacteristicFragment extends Fragment {
     }
 
     private boolean checkValidNewItem(CharacterizationAnketPatient ch) {
+        if (idQuestionnaire == -1) {
+            showMessage("Сначала сохраните анкету");
+            return false;
+        }
+
         if (ch.getIdValue() == 0 && ch.getValue() == -1) {
             showMessage("Нельзя сохранять отсутствие данных");
             return false;

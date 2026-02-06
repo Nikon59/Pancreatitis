@@ -41,14 +41,15 @@ public class QuestionnaireManagerModule {
             if (idPatient == -1){
                 idPatient = databaseModule.insertPatient(patient);
                 questionnaire.setIdPatient(idPatient);
+                patient.setId(idPatient);
             }
 
-            long idQuestionnaire;
-            if (questionnaire.getId() == -1){
+            long idQuestionnaire = questionnaire.getId();
+            if (idQuestionnaire == -1){
                 idQuestionnaire = databaseModule.insertQuestionnaire(questionnaire);
+                questionnaire.setId(idQuestionnaire);
             } else {
                 databaseModule.updateQuestionnaire(questionnaire);
-                idQuestionnaire = questionnaire.getId();
             }
 
             databaseModule.setTransactionSuccessful();

@@ -64,16 +64,39 @@ public class QuestionnaireManagerModule {
     public String submitQuestionnaire(List<Questionnaire> questionnaires, List<Patient> patients) {
         try {
             User user = User.getInstance();
-            Update update = new Update();
-            for (Patient patient: patients){
-                encryptPatient(patient);
+            List<Boolean> uploadResults = new ArrayList<>();
+
+            // Проверяем, что списки имеют одинаковый размер
+            if (questionnaires.size() != patients.size()) {
+                return "Ошибка: количество опросников и пациентов не совпадает";
             }
-            List<QuestionnaireDTO> questionnaireDTOS = buildQuestionnaireDTO(questionnaires);
-            update.setPatientList(patients);
-            update.setQuestionnaireDTOS(questionnaireDTOS);
-            boolean result = cloudStorageModule.uploadQuestionnaire(update, user.getLogin());
-            return result ? "Успешно" : "Ошибка";
-        } catch (Exception e){
+
+            // Создаем и загружаем отдельный Update для каждой пары
+            for (int i = 0; i < patients.size(); i++) {
+                Patient patient = patients.get(i);
+                Questionnaire questionnaire = questionnaires.get(i);
+
+                // Шифруем данные пациента
+                encryptPatient(patient);
+
+                // Создаем DTO для опросника
+                QuestionnaireDTO questionnaireDTO = buildQuestionnaireDTO(questionnaire);
+
+                // Создаем Update объект
+                Update update = new Update();
+                update.setPatient(patient);
+                update.setQuestionnaireDTO(questionnaireDTO);
+
+                // Загружаем отдельный файл для этой пары
+                boolean result = cloudStorageModule.uploadQuestionnaire(update, user.getLogin());
+                uploadResults.add(result);
+            }
+
+            // Проверяем результаты всех загрузок
+            boolean allSuccessful = uploadResults.stream().allMatch(result -> result);
+            return allSuccessful ? "Успешно" : "Частичная ошибка при загрузке";
+
+        } catch (Exception e) {
             return e.getMessage();
         }
     }

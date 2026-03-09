@@ -107,15 +107,11 @@ public class QuestionnaireManagerModule {
         patient.setFio(encyprtFio);
     }
 
-    private List<QuestionnaireDTO> buildQuestionnaireDTO(List<Questionnaire> questionnaires){
-        List<QuestionnaireDTO> questionnaireDTOS = new ArrayList<>();
-        for (Questionnaire questionnaire: questionnaires){
-            QuestionnaireDTO questionnaireDTO = new QuestionnaireDTO(questionnaire);
-            List<CharasteristicDTO> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
-            questionnaireDTO.setCharacteristicValues(charasteristicDTOS);
-            questionnaireDTOS.add(questionnaireDTO);
-        }
-        return questionnaireDTOS;
+    private QuestionnaireDTO buildQuestionnaireDTO(Questionnaire questionnaire){
+        QuestionnaireDTO questionnaireDTO = new QuestionnaireDTO(questionnaire);
+        List<CharasteristicDTO> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
+        questionnaireDTO.setCharacteristicValues(charasteristicDTOS);
+        return questionnaireDTO;
     }
 
     private List<CharasteristicDTO> buildCharacterusticDTO(long idQuestionnaire){

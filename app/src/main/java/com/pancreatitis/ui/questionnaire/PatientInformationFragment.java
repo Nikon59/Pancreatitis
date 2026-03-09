@@ -24,7 +24,6 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.prediction.PredictionResult;
-import com.pancreatitis.modules.prediction.TrainingDataException;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.time.LocalDateTime;
@@ -365,7 +364,7 @@ public class PatientInformationFragment extends Fragment {
 
         DiagnosisItem diagnosisItem = diagnosisItems.get(0);
         Questionnaire questionnaire = databaseModule.getQuestionnaireById(idQuestionnaire);
-        diagnosisItem.setValue(getIndexCodeDiagnosis(questionnaire.getDiagnosis()));
+        diagnosisItem.setValue(getIndexCodeDiagnosis(questionnaire.getTextDiagnosis()));
     }
     private void loadQuestionnaireInformation(){
         DatabaseModule databaseModule = DatabaseModule.getInstance();

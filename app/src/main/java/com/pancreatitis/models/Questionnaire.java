@@ -1,5 +1,6 @@
 package com.pancreatitis.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,7 +24,7 @@ public class Questionnaire {
         this.idPatient = questionnaire.getIdPatient();
         this.idDoctor = questionnaire.getIdDoctor();
         this.idExpert = questionnaire.getIdExpert();
-        this.diagnosis = questionnaire.getCodeDiagnosis();
+        this.diagnosis = questionnaire.getDiagnosis();
         this.dateOfCompletion = questionnaire.getDateOfCompletion();
         this.admittedFrom = questionnaire.getAdmittedFrom();
         this.lastModified = questionnaire.getLastModified();
@@ -82,8 +83,9 @@ public class Questionnaire {
     public Integer getIdExpert() { return idExpert; }
     public void setIdExpert(Integer idExpert) { this.idExpert = idExpert; }
 
-    public String getDiagnosis() { return codeToDiagnosis(diagnosis); }
-    public String getCodeDiagnosis() { return diagnosis; }
+    @JsonIgnore
+    public String getTextDiagnosis() { return codeToDiagnosis(diagnosis); }
+    public String getDiagnosis() { return diagnosis; }
     public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
 
     public String getDateOfCompletion() { return dateOfCompletion; }

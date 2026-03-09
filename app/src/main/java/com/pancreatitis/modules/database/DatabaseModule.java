@@ -206,7 +206,7 @@ public class DatabaseModule {
         values.put("id_patient", questionnaire.getIdPatient());
         values.put("id_doctor", questionnaire.getIdDoctor());
         values.put("id_expert", questionnaire.getIdExpert());
-        values.put("diagnosis", questionnaire.getCodeDiagnosis());
+        values.put("diagnosis", questionnaire.getDiagnosis());
         values.put("admitted_from", questionnaire.getAdmittedFrom());
         values.put("date_of_completion", LocalDateTime.now().format(formatter));
         values.put("last_modified", LocalDateTime.now().format(formatter));
@@ -215,7 +215,7 @@ public class DatabaseModule {
     }
     public long updateQuestionnaire(Questionnaire questionnaire) {
         ContentValues values = new ContentValues();
-        values.put("diagnosis", questionnaire.getCodeDiagnosis());
+        values.put("diagnosis", questionnaire.getDiagnosis());
         values.put("admitted_from", questionnaire.getAdmittedFrom());
         values.put("last_modified", LocalDateTime.now().format(formatter));
 

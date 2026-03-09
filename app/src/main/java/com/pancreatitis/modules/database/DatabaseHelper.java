@@ -13,7 +13,7 @@ import java.io.OutputStream;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static String DB_PATH;
-    private static String DB_NAME = "pancreatitis_v6.db";
+    private static String DB_NAME = "pancreatitis_v6.5.db";
     private static final int SCHEMA = 1;
     private Context myContext;
 

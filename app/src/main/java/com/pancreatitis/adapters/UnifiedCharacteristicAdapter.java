@@ -394,7 +394,7 @@ public class UnifiedCharacteristicAdapter extends RecyclerView.Adapter<UnifiedCh
             if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
                 List<String> options = ((CharacteristicItemNonNumeric) characteristic).getOptions();
                 if (options != null && !options.isEmpty()) {
-                    message.append("\n\nДоступные варианты:\n• Нет данных");
+                    message.append("\n\nДоступные варианты:\n");
                     for (String option : options) {
                         if (!option.isEmpty()) {
                             message.append("\n• ").append(option);

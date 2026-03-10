@@ -1,12 +1,14 @@
 package com.pancreatitis.models;
 
+import android.util.Pair;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
 public class QuestionnaireDTO extends Questionnaire {
-    private List<CharasteristicDTO> characteristicValues;
+    private List<Pair<Characteristic, CharacterizationAnketPatient>> characteristicValues;
 
     public QuestionnaireDTO() {
         super();
@@ -15,11 +17,11 @@ public class QuestionnaireDTO extends Questionnaire {
         super(questionnaire);
     }
 
-    public List<CharasteristicDTO> getCharacteristicValues() {
+    public List<Pair<Characteristic, CharacterizationAnketPatient>> getCharacteristicValues() {
         return characteristicValues;
     }
 
-    public void setCharacteristicValues(List<CharasteristicDTO> characteristicValues) {
+    public void setCharacteristicValues(List<Pair<Characteristic, CharacterizationAnketPatient>> characteristicValues) {
         this.characteristicValues = characteristicValues;
     }
     public String toJson() throws JsonProcessingException {

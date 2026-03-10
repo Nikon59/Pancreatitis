@@ -1,7 +1,9 @@
 package com.pancreatitis.modules.questionnairemanager;
 
+import android.util.Pair;
+import android.widget.Toast;
+
 import com.pancreatitis.models.CharacterizationAnketPatient;
-import com.pancreatitis.models.CharasteristicDTO;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
@@ -109,21 +111,19 @@ public class QuestionnaireManagerModule {
 
     private QuestionnaireDTO buildQuestionnaireDTO(Questionnaire questionnaire){
         QuestionnaireDTO questionnaireDTO = new QuestionnaireDTO(questionnaire);
-        List<CharasteristicDTO> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
+        List<Pair<Characteristic, CharacterizationAnketPatient>> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
         questionnaireDTO.setCharacteristicValues(charasteristicDTOS);
         return questionnaireDTO;
     }
 
-    private List<CharasteristicDTO> buildCharacterusticDTO(long idQuestionnaire){
-        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
+    private List<Pair<Characteristic, CharacterizationAnketPatient>> buildCharacterusticDTO(long idQuestionnaire){
+        List<Pair<Characteristic, CharacterizationAnketPatient>> charasteristicDTOS = new ArrayList<>();
         List<Characteristic> charasteristics = databaseModule.getAllCharacteristics();
 
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
         for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
             Characteristic characteristic = charasteristics.get(characterizationAnketPatient.getIdCharacteristic() - 1);
-            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristic);
-            charasteristicDTO.setValue(characterizationAnketPatient.getIdValue());
-            charasteristicDTOS.add(charasteristicDTO);
+            charasteristicDTOS.add(new Pair<>(characteristic, characterizationAnketPatient));
         }
         return charasteristicDTOS;
     }

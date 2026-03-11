@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CharacterizationAnketPatient {
-    private long idAnket = -1;
+    private int idAnket = -1;
     private int idCharacteristic = -1;
     private int idValue = 0;
     private float value = -1;
@@ -13,8 +13,8 @@ public class CharacterizationAnketPatient {
 
     public CharacterizationAnketPatient() {}
 
-    public long getIdAnket() { return idAnket; }
-    public void setIdAnket(long idAnket) { this.idAnket = idAnket; }
+    public int getIdAnket() { return idAnket; }
+    public void setIdAnket(int idAnket) { this.idAnket = idAnket; }
 
     public int getIdValue() { return idValue; }
     public void setIdValue(int id_value) { this.idValue = id_value; }

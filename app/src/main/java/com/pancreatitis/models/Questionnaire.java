@@ -7,8 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 
 public class Questionnaire {
-    private long id = -1;
-    private long idPatient = -1;
+    private int id = -1;
+    private int idPatient = -1;
     private int idDoctor = -1;
     private int idExpert = -1;
     private String diagnosis;
@@ -57,14 +57,14 @@ public class Questionnaire {
     }
 
     // Геттеры и сеттеры
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public long getIdPatient() {
+    public int getIdPatient() {
         return idPatient;
     }
 
-    public void setIdPatient(long idPatient) {
+    public void setIdPatient(int idPatient) {
         this.idPatient = idPatient;
     }
 

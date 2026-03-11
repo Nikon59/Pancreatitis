@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Patient {
-    private long id = -1;
+    private int id = -1;
     private String fio;
     private String lastModified;
 
@@ -18,8 +18,8 @@ public class Patient {
     }
 
     // Геттеры и сеттеры
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getFio() { return fio; }
     public void setFio(String fio) { this.fio = fio; }

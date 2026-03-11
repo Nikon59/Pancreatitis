@@ -136,13 +136,13 @@ public class DatabaseModule {
 
         return doctor;
     }
-    public long insertDoctor(Doctor doctor) {
+    public int insertDoctor(Doctor doctor) {
         ContentValues values = new ContentValues();
         values.put("fio", doctor.getFio());
         values.put("status", doctor.getStatus() != null ? (doctor.getStatus() ? 1 : 0) : 0);
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
-        return database.insert("doctors", null, values);
+        return Math.toIntExact(database.insert("doctors", null, values));
     }
     public Doctor getDoctorByFio(String fio) {
         Cursor cursor = null;
@@ -192,16 +192,22 @@ public class DatabaseModule {
 
         return patient;
     }
-    public long insertPatient(Patient patient) {
+    public int insertPatient(Patient patient) {
         ContentValues values = new ContentValues();
         values.put("fio", patient.getFio());
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
-        return database.insert("patients", null, values);
+        return Math.toIntExact(database.insert("patients", null, values));
     }
 
     // ========== Questionnaire ==========
-    public long insertQuestionnaire(Questionnaire questionnaire){
+    public int deleteQuestionnaire(int questionnaireId) {
+        String whereClause = "id = ?";
+        String[] whereArgs = new String[] { String.valueOf(questionnaireId) };
+
+        return database.delete("ankets", whereClause, whereArgs);
+    }
+    public int insertQuestionnaire(Questionnaire questionnaire){
         ContentValues values = new ContentValues();
         values.put("id_patient", questionnaire.getIdPatient());
         values.put("id_doctor", questionnaire.getIdDoctor());
@@ -211,9 +217,9 @@ public class DatabaseModule {
         values.put("date_of_completion", LocalDateTime.now().format(formatter));
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
-        return database.insert("ankets", null, values);
+        return Math.toIntExact(database.insert("ankets", null, values));
     }
-    public long updateQuestionnaire(Questionnaire questionnaire) {
+    public int updateQuestionnaire(Questionnaire questionnaire) {
         ContentValues values = new ContentValues();
         values.put("diagnosis", questionnaire.getDiagnosis());
         values.put("admitted_from", questionnaire.getAdmittedFrom());
@@ -287,7 +293,7 @@ public class DatabaseModule {
             insertCharacterizationAnketPatient(cap);
         }
     }
-    public long insertCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
+    public int insertCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
         ContentValues values = new ContentValues();
         values.put("id_characteristic", characterization.getIdCharacteristic());
         values.put("id_anket", characterization.getIdAnket());
@@ -296,7 +302,7 @@ public class DatabaseModule {
         values.put("created_at", characterization.getCreatedAt());
         values.put("last_modified", LocalDateTime.now().format(formatter));
 
-        return database.insert("characterization_anket_patient", null, values);
+        return Math.toIntExact(database.insert("characterization_anket_patient", null, values));
     }
     // не будет использоваться
     public void updateAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){

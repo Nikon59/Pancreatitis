@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CharacterizationValue {
-    private long id = -1;
+    private int id = -1;
     private int idCharacteristic = -1;
     private int idValue = -1;
     private String value;
@@ -12,8 +12,8 @@ public class CharacterizationValue {
 
     public CharacterizationValue() {}
 
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public int getIdCharacteristic() { return idCharacteristic; }
     public void setIdCharacteristic(int idCharacteristic) { this.idCharacteristic = idCharacteristic; }

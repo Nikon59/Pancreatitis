@@ -29,6 +29,7 @@ import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.CharacterizationValue;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -252,7 +253,12 @@ public class CharacteristicFragment extends Fragment {
             if (newItem instanceof CharacteristicItemNonNumeric) ch.setIdValue(((CharacteristicItemNonNumeric) newItem).getValue());
 
             if (checkValidNewItem(ch)) {
-                databaseModule.insertCharacterizationAnketPatient(ch);
+                QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                if (questionnaireManagerModule.getIdQuestionnaire() != -1) {
+                    databaseModule.insertCharacterizationAnketPatient(ch);
+                } else {
+                    questionnaireManagerModule.getCharacterizationAnketPatients().add(ch);
+                }
                 newItem.setNewItem(false);
                 adapter.disableLastItem();
                 hasUnsavedChanges = false;
@@ -263,11 +269,6 @@ public class CharacteristicFragment extends Fragment {
     }
 
     private boolean checkValidNewItem(CharacterizationAnketPatient ch) {
-        if (idQuestionnaire == -1) {
-            showMessage("Сначала сохраните анкету");
-            return false;
-        }
-
         if (ch.getIdValue() == 0 && ch.getValue() == -1) {
             showMessage("Нельзя сохранять отсутствие данных");
             return false;

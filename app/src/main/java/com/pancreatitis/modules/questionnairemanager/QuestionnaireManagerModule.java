@@ -92,8 +92,10 @@ public class QuestionnaireManagerModule {
         try {
             databaseModule.beginTransaction();
 
-            int d1 = databaseModule.deleteQuestionnaire(idQuestionnaire);
-            int d2 = databaseModule.deleteCharacterizationAnketPatients(idQuestionnaire);
+            if (idQuestionnaire != -1) {
+                int d1 = databaseModule.deleteQuestionnaire(idQuestionnaire);
+                int d2 = databaseModule.deleteCharacterizationAnketPatients(idQuestionnaire);
+            }
 
             databaseModule.setTransactionSuccessful();
             return "Успешно";

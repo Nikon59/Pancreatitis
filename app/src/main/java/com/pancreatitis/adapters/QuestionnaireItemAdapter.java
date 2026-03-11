@@ -17,6 +17,7 @@ import com.pancreatitis.R;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.models.User;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +108,7 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
             User user = User.getInstance();
             if (user.getKey() == null){
-                //isChecked.setVisibility(View.GONE);
+                isChecked.setVisibility(View.GONE);
             }
 
             isChecked.setChecked(questionnaire.isSelected());
@@ -141,8 +142,12 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
                 NavController navController = Navigation.findNavController(view);
 
                 Bundle args = new Bundle();
-                args.putInt("idQuestionnaire", (int)questionnaire.getIdQuestionnaire());
+                args.putInt("idQuestionnaire", questionnaire.getIdQuestionnaire());
                 args.putInt("idPatient", questionnaire.getIdPatient());
+
+                QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                questionnaireManagerModule.setIdQuestionnaire(-1);
+                questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
 
                 navController.navigate(R.id.action_questionnaires_to_anket, args);
             } catch (Exception e) {

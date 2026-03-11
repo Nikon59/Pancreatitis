@@ -55,6 +55,8 @@ public class PatientInformationFragment extends Fragment {
         if (args != null) {
             idQuestionnaire = args.getInt("idQuestionnaire", -1);
             idPatient = args.getInt("idPatient", -1);
+            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            questionnaireManagerModule.setIdQuestionnaire(idQuestionnaire);
         }
     }
     private void initViews(View view) {
@@ -129,9 +131,13 @@ public class PatientInformationFragment extends Fragment {
 
         if (checkValidForSave(patient, questionnaire)) {
             String result = questionnaireManagerModule.saveQuestionnaire(questionnaire, patient);
-            idQuestionnaire = (int)questionnaire.getId();
-            idPatient = (int)questionnaire.getIdPatient();
-            reloadFragmentWithNewIds(idQuestionnaire, idPatient);
+            idQuestionnaire = questionnaire.getId();
+            idPatient = questionnaire.getIdPatient();
+            if (Objects.equals(result, "Успешно")) {
+                reloadFragmentWithNewIds(idQuestionnaire, idPatient);
+                questionnaireManagerModule.setIdQuestionnaire(questionnaire.getId());
+                questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+            }
             showMessage(result);
         }
     }
@@ -262,7 +268,12 @@ public class PatientInformationFragment extends Fragment {
     private CharacteristicItem loadValueCharacteristicItems(Characteristic characteristic) {
         CharacteristicItem characteristicItems = null;
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+        List<CharacterizationAnketPatient> characterizationAnketPatients = questionnaireManagerModule.getCharacterizationAnketPatients();
+        if (questionnaireManagerModule.getIdQuestionnaire() != -1) {
+            characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        }
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatients) {
             if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
@@ -347,24 +358,11 @@ public class PatientInformationFragment extends Fragment {
 
     private void loadDataQuestionnaire(){
         if (idQuestionnaire != -1){
-            //loadCharacteristicValues();
             loadQuestionnaireInformation();
             loadQuestionnaireDiagnosis();
         }
         if (idPatient != -1){
             loadPatient();
-        }
-    }
-    private void loadCharacteristicValues(){
-        DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<CharacteristicItem> characteristicItems = characteristicItemTitleAdapter.getCharacteristics();
-
-        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
-        for(int i = 0; i < characterizationAnketPatients.size(); i++){
-            CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
-            CharacteristicItem characteristicItem = characteristicItems.get(i);
-
-            //characteristicItem.setValue(characterizationAnketPatient.getIdValue());
         }
     }
     private void loadQuestionnaireDiagnosis(){

@@ -265,8 +265,8 @@ public class DatabaseModule {
         Cursor cursor = null;
 
         try {
-            String query = "select ankets.id as idQuestionnaire,patients.id as idPatient,patients.fio as fioPatient,ankets.diagnosis as diagnosis from ankets join patients on ankets.id_patient = patients.id order by patients.fio";
-            cursor = database.rawQuery(query, new String[]{});
+            String query = "select ankets.id as idQuestionnaire,patients.id as idPatient,patients.fio as fioPatient,ankets.diagnosis as diagnosis from ankets join patients on ankets.id_patient = patients.id where ankets.id_doctor = ? order by patients.fio";
+            cursor = database.rawQuery(query, new String[]{String.valueOf(idDoctor)});
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {

@@ -80,7 +80,21 @@ public class PatientInformationFragment extends Fragment {
 
     // ========== PREDICTION HANDLING ==========
     private void handleDelete() {
+        QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+        String result = questionnaireManagerModule.deleteQuestionnaire(idQuestionnaire);
+        if (Objects.equals(result, "Успешно")) {
+            returnFragmentAllAnkets();
+            questionnaireManagerModule.setIdQuestionnaire(-1);
+            questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+        }
+        showMessage(result);
+    }
+    private void returnFragmentAllAnkets() {
+        NavController navController = Navigation.findNavController(requireView());
 
+        navController.navigate(
+                R.id.navigation_questionnaires
+        );
     }
 
     // ========== PREDICTION HANDLING ==========

@@ -2,10 +2,12 @@ package com.pancreatitis.ui.questionnaire;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -34,7 +36,7 @@ import java.util.stream.Collectors;
 public class PatientInformationFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private Button btnPredict, btnSave;
+    private Button btnPredict, btnSave, btnDelete;
     private UnifiedCharacteristicAdapter characteristicItemTitleAdapter;
     private QuestionnaireInformationItemAdapter questionnaireInformationItemAdapter;
     private DiagnosisItemAdapter diagnosisItemAdapter;
@@ -60,6 +62,7 @@ public class PatientInformationFragment extends Fragment {
             recyclerView = view.findViewById(R.id.recycler_view_characteristics);
             btnSave = view.findViewById(R.id.btn_save);
             btnPredict = view.findViewById(R.id.btn_predict);
+            btnDelete = view.findViewById(R.id.btn_delete);
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             loadDisplayData();
             loadDataQuestionnaire();
@@ -70,6 +73,12 @@ public class PatientInformationFragment extends Fragment {
     private void setupClickListeners() {
         btnPredict.setOnClickListener(v -> handlePrediction());
         btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
+        btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog());
+    }
+
+    // ========== PREDICTION HANDLING ==========
+    private void handleDelete() {
+
     }
 
     // ========== PREDICTION HANDLING ==========
@@ -433,6 +442,57 @@ public class PatientInformationFragment extends Fragment {
                 })
                 .setNegativeButton("Отмена", null)
                 .show();
+    }
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Подтверждение удаления")
+                .setMessage("Вы уверены, что хотите удалить анкету?")
+                .setPositiveButton("Да", (dialog, which) -> {
+                    showUndoCountdownDialog();
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
+    }
+
+    private void showUndoCountdownDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        View dialogView = inflater.inflate(R.layout.dialog_undo_countdown, null);
+
+        TextView timerText = dialogView.findViewById(R.id.timerText);
+        Button undoButton = dialogView.findViewById(R.id.undoButton);
+
+        AlertDialog countdownDialog = builder.setView(dialogView)
+                .setCancelable(false)  // Запрещаем закрытие по нажатию вне диалога
+                .create();
+
+        // Таймер обратного отсчета
+        CountDownTimer timer = new CountDownTimer(10000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerText.setText("Отмена доступна: " + millisUntilFinished / 1000 + "с");
+            }
+
+            @Override
+            public void onFinish() {
+                countdownDialog.dismiss();
+                handleDelete();  // Запускаем после 10 секунд
+            }
+        };
+
+        // Кнопка отмены
+        undoButton.setOnClickListener(v -> {
+            timer.cancel();
+            countdownDialog.dismiss();
+            // Ничего не делаем - просто закрываем диалог
+        });
+
+        countdownDialog.setOnDismissListener(dialog -> {
+            timer.cancel();  // Отменяем таймер, если диалог закрыт другим способом
+        });
+
+        countdownDialog.show();
+        timer.start();
     }
     private void showHelpDialog(String title, String message) {
         new AlertDialog.Builder(getContext())

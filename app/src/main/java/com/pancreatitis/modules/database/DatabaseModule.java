@@ -304,27 +304,6 @@ public class DatabaseModule {
 
         return Math.toIntExact(database.insert("characterization_anket_patient", null, values));
     }
-    // не будет использоваться
-    public void updateAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){
-        for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
-            updateCharacterizationAnketPatient(cap);
-        }
-    }
-    // не будет использоваться
-    public int updateCharacterizationAnketPatient(CharacterizationAnketPatient characterization) {
-        ContentValues values = new ContentValues();
-        values.put("value", characterization.getIdValue());
-        values.put("last_modified", LocalDateTime.now().format(formatter));
-
-        // Указание условия для обновления
-        String where = "id_anket = ? AND id_characteristic = ?";
-        String[] whereArgs = new String[]{
-                String.valueOf(characterization.getIdAnket()),
-                String.valueOf(characterization.getIdCharacteristic())
-        };
-
-        return database.update("characterization_anket_patient", values, where, whereArgs);
-    }
     public List<CharacterizationAnketPatient> getCharacterizationsForAnket(long anketId) {
         List<CharacterizationAnketPatient> characterizations = new ArrayList<>();
         Cursor cursor = null;

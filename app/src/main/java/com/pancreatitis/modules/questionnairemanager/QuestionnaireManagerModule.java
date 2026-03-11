@@ -24,6 +24,8 @@ public class QuestionnaireManagerModule {
     private static SafetyModule safetyModule;
     private static CloudStorageModule cloudStorageModule;
     private static QuestionnaireManagerModule instance;
+    private int idQuestionnaire = -1;
+    private List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
     private QuestionnaireManagerModule(){
         cloudStorageModule = CloudStorageModule.getInstance();
         safetyModule = SafetyModule.getInstance();
@@ -35,6 +37,23 @@ public class QuestionnaireManagerModule {
         }
         return instance;
     }
+
+    public List<CharacterizationAnketPatient> getCharacterizationAnketPatients() {
+        return characterizationAnketPatients;
+    }
+
+    public void setCharacterizationAnketPatients(List<CharacterizationAnketPatient> characterizationAnketPatients) {
+        this.characterizationAnketPatients = characterizationAnketPatients;
+    }
+
+    public int getIdQuestionnaire() {
+        return idQuestionnaire;
+    }
+
+    public void setIdQuestionnaire(int idQuestionnaire) {
+        this.idQuestionnaire = idQuestionnaire;
+    }
+
     public String saveQuestionnaire(Questionnaire questionnaire, Patient patient){
         try {
             databaseModule.beginTransaction();
@@ -50,6 +69,12 @@ public class QuestionnaireManagerModule {
             if (idQuestionnaire == -1){
                 idQuestionnaire = databaseModule.insertQuestionnaire(questionnaire);
                 questionnaire.setId(idQuestionnaire);
+                if (!characterizationAnketPatients.isEmpty()) {
+                    for(CharacterizationAnketPatient ch: characterizationAnketPatients){
+                        ch.setIdAnket(idQuestionnaire);
+                    }
+                    databaseModule.insertAllCharacterizationAnketPatient(characterizationAnketPatients);
+                }
             } else {
                 databaseModule.updateQuestionnaire(questionnaire);
             }

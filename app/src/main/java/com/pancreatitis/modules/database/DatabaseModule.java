@@ -288,6 +288,12 @@ public class DatabaseModule {
     }
 
     // ========== CharacterizationAnketPatient ==========
+    public int deleteCharacterizationAnketPatients(int questionnaireId) {
+        String whereClause = "id_anket = ?";
+        String[] whereArgs = new String[] { String.valueOf(questionnaireId) };
+
+        return database.delete("characterization_anket_patient", whereClause, whereArgs);
+    }
     public void insertAllCharacterizationAnketPatient(List<CharacterizationAnketPatient> characterizationAnketPatients){
         for (CharacterizationAnketPatient cap : characterizationAnketPatients) {
             insertCharacterizationAnketPatient(cap);

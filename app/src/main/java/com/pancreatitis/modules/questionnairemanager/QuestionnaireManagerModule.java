@@ -83,11 +83,27 @@ public class QuestionnaireManagerModule {
 
             return "Успешно";
         } catch (Exception e){
-            return e.toString();
+            return e.getMessage();
         } finally {
             databaseModule.endTransaction();
         }
     }
+    public String deleteQuestionnaire(int idQuestionnaire){
+        try {
+            databaseModule.beginTransaction();
+
+            int d1 = databaseModule.deleteQuestionnaire(idQuestionnaire);
+            int d2 = databaseModule.deleteCharacterizationAnketPatients(idQuestionnaire);
+
+            databaseModule.setTransactionSuccessful();
+            return "Успешно";
+        } catch (Exception e) {
+            return e.getMessage();
+        } finally {
+            databaseModule.endTransaction();
+        }
+    }
+
     public String submitQuestionnaire(List<Questionnaire> questionnaires, List<Patient> patients) {
         try {
             User user = User.getInstance();

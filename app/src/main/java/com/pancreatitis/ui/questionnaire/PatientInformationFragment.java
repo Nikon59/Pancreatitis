@@ -148,9 +148,9 @@ public class PatientInformationFragment extends Fragment {
             idQuestionnaire = questionnaire.getId();
             idPatient = questionnaire.getIdPatient();
             if (Objects.equals(result, "Успешно")) {
-                reloadFragmentWithNewIds(idQuestionnaire, idPatient);
                 questionnaireManagerModule.setIdQuestionnaire(questionnaire.getId());
                 questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+                reloadFragmentWithNewIds(idQuestionnaire, idPatient);
             }
             showMessage(result);
         }

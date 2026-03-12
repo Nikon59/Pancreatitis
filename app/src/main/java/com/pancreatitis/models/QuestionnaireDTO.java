@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 public class QuestionnaireDTO extends Questionnaire {
-    private List<Pair<Characteristic, CharacterizationAnketPatient>> characteristicValues;
+    private List<CharacterizationAnketPatient> characteristicValues;
 
     public QuestionnaireDTO() {
         super();
@@ -17,11 +17,11 @@ public class QuestionnaireDTO extends Questionnaire {
         super(questionnaire);
     }
 
-    public List<Pair<Characteristic, CharacterizationAnketPatient>> getCharacteristicValues() {
+    public List<CharacterizationAnketPatient> getCharacteristicValues() {
         return characteristicValues;
     }
 
-    public void setCharacteristicValues(List<Pair<Characteristic, CharacterizationAnketPatient>> characteristicValues) {
+    public void setCharacteristicValues(List<CharacterizationAnketPatient> characteristicValues) {
         this.characteristicValues = characteristicValues;
     }
     public String toJson() throws JsonProcessingException {

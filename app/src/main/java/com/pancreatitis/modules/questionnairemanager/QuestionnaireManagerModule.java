@@ -154,20 +154,8 @@ public class QuestionnaireManagerModule {
 
     private QuestionnaireDTO buildQuestionnaireDTO(Questionnaire questionnaire){
         QuestionnaireDTO questionnaireDTO = new QuestionnaireDTO(questionnaire);
-        List<Pair<Characteristic, CharacterizationAnketPatient>> charasteristicDTOS = buildCharacterusticDTO(questionnaire.getId());
-        questionnaireDTO.setCharacteristicValues(charasteristicDTOS);
+        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(questionnaireDTO.getId());
+        questionnaireDTO.setCharacteristicValues(characterizationAnketPatients);
         return questionnaireDTO;
-    }
-
-    private List<Pair<Characteristic, CharacterizationAnketPatient>> buildCharacterusticDTO(long idQuestionnaire){
-        List<Pair<Characteristic, CharacterizationAnketPatient>> charasteristicDTOS = new ArrayList<>();
-        List<Characteristic> charasteristics = databaseModule.getAllCharacteristics();
-
-        List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
-        for(CharacterizationAnketPatient characterizationAnketPatient: characterizationAnketPatients){
-            Characteristic characteristic = charasteristics.get(characterizationAnketPatient.getIdCharacteristic() - 1);
-            charasteristicDTOS.add(new Pair<>(characteristic, characterizationAnketPatient));
-        }
-        return charasteristicDTOS;
     }
 }

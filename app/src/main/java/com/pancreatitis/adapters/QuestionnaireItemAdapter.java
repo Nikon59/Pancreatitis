@@ -147,12 +147,10 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
                 DatabaseModule databaseModule = DatabaseModule.getInstance();
                 Patient patient = databaseModule.getPatientById(questionnaireItem.getIdPatient());
                 Questionnaire questionnaire = databaseModule.getQuestionnaireById(questionnaireItem.getIdQuestionnaire());
-                List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(questionnaireItem.getIdQuestionnaire());
 
                 QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
                 questionnaireManagerModule.setQuestionnaire(questionnaire);
                 questionnaireManagerModule.setPatient(patient);
-                questionnaireManagerModule.setCharacterizationAnketPatients(characterizationAnketPatients);
 
                 navController.navigate(R.id.action_questionnaires_to_anket);
             } catch (Exception e) {

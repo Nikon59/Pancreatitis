@@ -71,7 +71,7 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         this.questionnaireList.clear();
         this.questionnaireList.addAll(newQuestionnaires);
         this.filtered_questionnaireList.clear();
-        this.filtered_questionnaireList.addAll(newQuestionnaires); // Обновляем оба списка
+        this.filtered_questionnaireList.addAll(newQuestionnaires);
         notifyDataSetChanged();
     }
 

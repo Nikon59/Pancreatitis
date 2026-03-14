@@ -14,9 +14,12 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
+import com.pancreatitis.models.CharacterizationAnketPatient;
+import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
 import com.pancreatitis.models.User;
+import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.util.ArrayList;
@@ -137,19 +140,21 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
             });
         }
 
-        private void navigateToAnketFragment(View view, QuestionnaireItem questionnaire) {
+        private void navigateToAnketFragment(View view, QuestionnaireItem questionnaireItem) {
             try {
                 NavController navController = Navigation.findNavController(view);
 
-                Bundle args = new Bundle();
-                args.putInt("idQuestionnaire", questionnaire.getIdQuestionnaire());
-                args.putInt("idPatient", questionnaire.getIdPatient());
+                DatabaseModule databaseModule = DatabaseModule.getInstance();
+                Patient patient = databaseModule.getPatientById(questionnaireItem.getIdPatient());
+                Questionnaire questionnaire = databaseModule.getQuestionnaireById(questionnaireItem.getIdQuestionnaire());
+                List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(questionnaireItem.getIdQuestionnaire());
 
                 QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-                questionnaireManagerModule.setIdQuestionnaire(-1);
-                questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+                questionnaireManagerModule.setQuestionnaire(questionnaire);
+                questionnaireManagerModule.setPatient(patient);
+                questionnaireManagerModule.setCharacterizationAnketPatients(characterizationAnketPatients);
 
-                navController.navigate(R.id.action_questionnaires_to_anket, args);
+                navController.navigate(R.id.action_questionnaires_to_anket);
             } catch (Exception e) {
                 Toast.makeText(itemView.getContext(), e.toString(), Toast.LENGTH_LONG).show();
             }

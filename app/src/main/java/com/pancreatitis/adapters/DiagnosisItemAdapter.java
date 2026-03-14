@@ -17,6 +17,8 @@ import com.pancreatitis.R;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
 import com.pancreatitis.models.DiagnosisItem;
+import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,8 @@ public class DiagnosisItemAdapter extends RecyclerView.Adapter<DiagnosisItemAdap
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     diagnosisItem.setValue(position);
+                    QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                    questionnaireManagerModule.getQuestionnaire().setDiagnosis(diagnosisItem.getCodeDiagnosis());
                 }
 
                 @Override

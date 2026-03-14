@@ -21,7 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pancreatitis.R;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharacteristicItem;
+import com.pancreatitis.models.Patient;
+import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireInformationItem;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,6 +107,21 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String title = questionnaireInformationItem.getName();
+                    boolean isPatientName = "Имя пациента".equals(title);
+                    boolean isAdmittedFrom = "Откуда поступил".equals(title);
+
+                    QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                    Questionnaire questionnaire = questionnaireManagerModule.getQuestionnaire();
+                    Patient patient = questionnaireManagerModule.getPatient();
+
+                    if (isPatientName) {
+                        patient.setFio(s.toString());
+                    }
+                    if (isAdmittedFrom) {
+                        questionnaire.setAdmittedFrom(s.toString());
+                    }
+
                     questionnaireInformationItem.setValue(s.toString());
                 }
 

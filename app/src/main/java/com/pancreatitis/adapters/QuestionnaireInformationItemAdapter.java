@@ -90,7 +90,10 @@ public class QuestionnaireInformationItemAdapter extends RecyclerView.Adapter<Qu
             boolean isPatientName = "Имя пациента".equals(title);
             boolean isCreationDate = "Дата создания".equals(title);
 
-            if ((isPatientName && !questionnaireInformationItem.getValue().isEmpty()) || isCreationDate) {
+            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+            Questionnaire questionnaire = questionnaireManagerModule.getQuestionnaire();
+
+            if ((isPatientName && !questionnaireInformationItem.getValue().isEmpty()) && questionnaire.getId() != -1 || isCreationDate) {
                 editValue.setEnabled(false);
             } else {
                 editValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT);

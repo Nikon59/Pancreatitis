@@ -40,25 +40,15 @@ public class PatientInformationFragment extends Fragment {
     private UnifiedCharacteristicAdapter characteristicItemTitleAdapter;
     private QuestionnaireInformationItemAdapter questionnaireInformationItemAdapter;
     private DiagnosisItemAdapter diagnosisItemAdapter;
-    private int idQuestionnaire, idPatient;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_questionnaire, container, false);
-        receiveArguments();
         initViews(view);
         setupClickListeners();
         return view;
     }
-    private void receiveArguments() {
-        Bundle args = getArguments();
-        if (args != null) {
-            idQuestionnaire = args.getInt("idQuestionnaire", -1);
-            idPatient = args.getInt("idPatient", -1);
-            QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-            questionnaireManagerModule.setIdQuestionnaire(idQuestionnaire);
-        }
-    }
+
     private void initViews(View view) {
         try {
             recyclerView = view.findViewById(R.id.recycler_view_characteristics);
@@ -81,11 +71,12 @@ public class PatientInformationFragment extends Fragment {
     // ========== PREDICTION HANDLING ==========
     private void handleDelete() {
         QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-        String result = questionnaireManagerModule.deleteQuestionnaire(idQuestionnaire);
+        String result = questionnaireManagerModule.deleteQuestionnaire();
         if (Objects.equals(result, "Успешно")) {
-            returnFragmentAllAnkets();
-            questionnaireManagerModule.setIdQuestionnaire(-1);
+            questionnaireManagerModule.setQuestionnaire(new Questionnaire());
+            questionnaireManagerModule.setPatient(new Patient());
             questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+            returnFragmentAllAnkets();
         }
         showMessage(result);
     }

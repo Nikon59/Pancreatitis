@@ -82,11 +82,13 @@ public class AllQuestionnaireFragment extends Fragment {
         btn_anket.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                questionnaireManagerModule.setQuestionnaire(new Questionnaire());
+                questionnaireManagerModule.setPatient(new Patient());
+                questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+
                 NavController navController = Navigation.findNavController(v);
-
-                Bundle args = new Bundle();
-
-                navController.navigate(R.id.action_questionnaires_to_anket, args);
+                navController.navigate(R.id.action_questionnaires_to_anket);
             }
         });
 

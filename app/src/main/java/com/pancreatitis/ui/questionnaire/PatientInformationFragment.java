@@ -63,7 +63,7 @@ public class PatientInformationFragment extends Fragment {
         }
     }
     private void setupClickListeners() {
-        //btnPredict.setOnClickListener(v -> handlePrediction());
+        btnPredict.setOnClickListener(v -> handlePrediction());
         btnSave.setOnClickListener(v -> showSaveConfirmationDialog());
         btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog());
     }
@@ -87,29 +87,48 @@ public class PatientInformationFragment extends Fragment {
 
     // ========== PREDICTION HANDLING ==========
 
-//    private void handlePrediction() {
-//        try {
-//            PredictionModule predictionModule = PredictionModule.getInstance();
-//            predictionModule.setContext(getContext());
-//            List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
-//            PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
-//            displayPredictionResults(predictionResult.getProbabilities(), charasteristicDTOS.size(), loadAllCharacteristic().size());
-//        } catch (Exception e) {
-//            showMessage(e.getMessage());
-//        }
-//    }
-//
-//    private List<CharasteristicDTO> getAllCharasteristicDTO(){
-//        List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
-//        List<Characteristic> characteristics = loadAllCharacteristic();
-//        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
-//        for (int i = 0; i < characteristics.size(); i++) {
-//            CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
-//            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getIdValue());
-//            if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
-//        }
-//        return charasteristicDTOS;
-//    }
+    private void handlePrediction() {
+        try {
+            PredictionModule predictionModule = PredictionModule.getInstance();
+            predictionModule.setContext(getContext());
+            List<CharasteristicDTO> charasteristicDTOS = getAllCharasteristicDTO();
+            PredictionResult predictionResult = predictionModule.predict(charasteristicDTOS);
+            displayPredictionResults(predictionResult.getProbabilities(), charasteristicDTOS.size(), loadAllCharacteristic().size());
+        } catch (Exception e) {
+            showMessage(e.getMessage());
+        }
+    }
+
+    private List<CharasteristicDTO> getAllCharasteristicDTO(){
+        List<CharacterizationAnketPatient> characterizationAnketPatients = createCharacterizationAnketPatients();
+        List<Characteristic> characteristics = loadAllCharacteristic();
+        List<CharasteristicDTO> charasteristicDTOS = new ArrayList<>();
+        for (int i = 0; i < characteristics.size(); i++) {
+            CharacterizationAnketPatient characterizationAnketPatient = characterizationAnketPatients.get(i);
+            CharasteristicDTO charasteristicDTO = new CharasteristicDTO(characteristics.get(i), characterizationAnketPatient.getIdValue());
+            if (charasteristicDTO.getIntValue() != 0) charasteristicDTOS.add(charasteristicDTO);
+        }
+        return charasteristicDTOS;
+    }
+
+    private List<CharacterizationAnketPatient> createCharacterizationAnketPatients(){
+        List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
+        List<CharacteristicItem> characteristicItems = characteristicItemTitleAdapter.getCharacteristics();
+        for(int i = 0; i < characteristicItems.size(); i++){
+            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
+            CharacteristicItem characteristicItem = characteristicItems.get(i);
+
+            characterizationAnketPatient.setIdCharacteristic(i + 1);
+            if (characteristicItem instanceof CharacteristicItemNonNumeric) {
+                characterizationAnketPatient.setIdValue(((CharacteristicItemNonNumeric) characteristicItem).getValue());
+            } else if (characteristicItem instanceof CharacteristicItemNumeric) {
+                characterizationAnketPatient.setValue(((CharacteristicItemNumeric) characteristicItem).getValue());
+            }
+
+            characterizationAnketPatients.add(characterizationAnketPatient);
+        }
+        return characterizationAnketPatients;
+    }
     private List<Characteristic> loadAllCharacteristic(){
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         return databaseModule.getAllCharacteristics();
@@ -141,7 +160,7 @@ public class PatientInformationFragment extends Fragment {
     }
     private void reloadFragmentWithNewIds() {
         NavController navController = Navigation.findNavController(requireView());
-        navController.navigate(R.id.action_questionnaires_to_anket);
+        navController.navigate(R.id.navigation_anket);
     }
     private boolean checkValidForSave(Patient patient, Questionnaire questionnaire) {
         if (patient.getFio() == null || Objects.equals(patient.getFio(), "")) {
@@ -156,54 +175,6 @@ public class PatientInformationFragment extends Fragment {
 
         return true;
     }
-//    private Patient createPatient(){
-//        Patient patient = new Patient();
-//        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
-//
-//        QuestionnaireInformationItem fioPatient = questionnaireInformationItems.get(0);
-//        patient.setFio(fioPatient.getValue());
-//
-//        patient.setId(idPatient);
-//
-//        return patient;
-//    }
-//    private Questionnaire createQuetionnaire(){
-//        Questionnaire questionnaire = new Questionnaire();
-//        List<QuestionnaireInformationItem> questionnaireInformationItems = questionnaireInformationItemAdapter.getCharacteristics();
-//        List<DiagnosisItem> diagnosisItems = diagnosisItemAdapter.getDiagnosisItems();
-//
-//        QuestionnaireInformationItem admittedFrom = questionnaireInformationItems.get(1);
-//        questionnaire.setAdmittedFrom(admittedFrom.getValue());
-//
-//        DiagnosisItem diagnosisItem = diagnosisItems.get(0);
-//        questionnaire.setDiagnosis(diagnosisItem.getCodeDiagnosis());
-//
-//        questionnaire.setId(idQuestionnaire);
-//        questionnaire.setIdPatient(idPatient);
-//        questionnaire.setIdDoctor(User.getInstance().getIdDoctor());
-//
-//        return questionnaire;
-//    }
-//
-//    private List<CharacterizationAnketPatient> createCharacterizationAnketPatients(){
-//        List<CharacterizationAnketPatient> characterizationAnketPatients = new ArrayList<>();
-//        List<CharacteristicItem> characteristicItems = characteristicItemTitleAdapter.getCharacteristics();
-//        for(int i = 0; i < characteristicItems.size(); i++){
-//            CharacterizationAnketPatient characterizationAnketPatient = new CharacterizationAnketPatient();
-//            CharacteristicItem characteristicItem = characteristicItems.get(i);
-//
-//            characterizationAnketPatient.setIdCharacteristic(i + 1);
-//            if (characteristicItem instanceof CharacteristicItemNonNumeric) {
-//                characterizationAnketPatient.setIdValue(((CharacteristicItemNonNumeric) characteristicItem).getValue());
-//            } else if (characteristicItem instanceof CharacteristicItemNumeric) {
-//                characterizationAnketPatient.setValue(((CharacteristicItemNumeric) characteristicItem).getValue());
-//            }
-//            characterizationAnketPatient.setIdAnket(idQuestionnaire);
-//
-//            characterizationAnketPatients.add(characterizationAnketPatient);
-//        }
-//        return characterizationAnketPatients;
-//    }
 
     // ========== DATA LOADING ==========
 

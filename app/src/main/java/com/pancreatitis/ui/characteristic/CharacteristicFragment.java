@@ -254,7 +254,7 @@ public class CharacteristicFragment extends Fragment {
 
             if (checkValidNewItem(ch)) {
                 QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-                if (questionnaireManagerModule.getIdQuestionnaire() != -1) {
+                if (questionnaireManagerModule.getQuestionnaire().getId() != -1) {
                     databaseModule.insertCharacterizationAnketPatient(ch);
                 } else {
                     questionnaireManagerModule.getCharacterizationAnketPatients().add(ch);

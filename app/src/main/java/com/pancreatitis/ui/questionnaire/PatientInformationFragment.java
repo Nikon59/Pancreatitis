@@ -147,6 +147,7 @@ public class PatientInformationFragment extends Fragment {
     private void handleSave() {
         QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
         Questionnaire questionnaire = questionnaireManagerModule.getQuestionnaire();
+        questionnaire.setIdDoctor(User.getInstance().getIdDoctor());
         Patient patient = questionnaireManagerModule.getPatient();
 
         if (checkValidForSave(patient, questionnaire)) {

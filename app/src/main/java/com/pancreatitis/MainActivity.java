@@ -9,10 +9,13 @@ import android.widget.Toast;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.pancreatitis.models.Patient;
+import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +29,7 @@ import androidx.navigation.ui.NavigationUI;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -91,10 +95,25 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (navController.getCurrentDestination() != null &&
-                        navController.getCurrentDestination().getId() != R.id.navigation_home &&
-                        navController.getCurrentDestination().getId() != R.id.navigation_auth &&
-                        navController.getCurrentDestination().getId() != R.id.navigation_helps) {
+                int currentDestId = navController.getCurrentDestination().getId();
+
+                // Проверяем, нужно ли обработать нажатие особым образом
+                if (currentDestId == R.id.navigation_anket) {
+                    QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
+                    questionnaireManagerModule.setPatient(new Patient());
+                    questionnaireManagerModule.setQuestionnaire(new Questionnaire());
+                    questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
+                    return;  // не продолжаем стандартную обработку
+                }
+
+                // Для других экранов — стандартная логика
+                Set<Integer> mainScreens = new HashSet<>(Arrays.asList(
+                        R.id.navigation_home,
+                        R.id.navigation_auth,
+                        R.id.navigation_helps
+                ));
+
+                if (!mainScreens.contains(currentDestId)) {
                     navController.navigateUp();
                 } else {
                     finish();

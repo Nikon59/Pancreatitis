@@ -17,6 +17,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -119,11 +120,16 @@ public class CloudStorageModule {
 
     public boolean uploadQuestionnaire(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
-            String jsonData = encryptUpdate(update);
             String datetime = LocalDateTime.now().format(formatter);
-            String fileName = login + "_update_" + datetime + ".json";
+            String fileName = UUID.randomUUID().toString() + ".json";
             String filePath = "/update/" + fileName;
 
+            update.setLogin(login);
+            update.setDateUpload(datetime);
+            String hashSum = safetyModule.encodeToSha256(update.toJson());
+            update.setHashSum(hashSum);
+
+            String jsonData = encryptUpdate(update);
             String uploadUrl = getUploadUrl(filePath, true);
             if (uploadUrl == null) {
                 System.err.println("Не удалось получить URL для загрузки файла: " + filePath);

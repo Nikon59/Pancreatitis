@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Update {
     private Patient patient;
     private QuestionnaireDTO questionnaireDTO;
+    private String login;
+    private String dateUpload;
+    private String hashSum;
 
     public Patient getPatient() {
         return patient;
@@ -13,6 +16,30 @@ public class Update {
 
     public void setPatient(Patient patient) {
         this.patient = patient;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public String getDateUpload() {
+        return dateUpload;
+    }
+
+    public void setDateUpload(String dateUpload) {
+        this.dateUpload = dateUpload;
+    }
+
+    public String getHashSum() {
+        return hashSum;
+    }
+
+    public void setHashSum(String hashSum) {
+        this.hashSum = hashSum;
     }
 
     public QuestionnaireDTO getQuestionnaireDTO() {

@@ -135,9 +135,6 @@ public class QuestionnaireManagerModule {
                 Patient patient = patients.get(i);
                 Questionnaire questionnaire = questionnaires.get(i);
 
-                // Шифруем данные пациента
-                encryptPatient(patient);
-
                 // Создаем DTO для опросника
                 QuestionnaireDTO questionnaireDTO = buildQuestionnaireDTO(questionnaire);
 
@@ -158,12 +155,6 @@ public class QuestionnaireManagerModule {
         } catch (Exception e) {
             return e.getMessage();
         }
-    }
-
-    private void encryptPatient(Patient patient) throws Exception {
-        SecretKey key = User.getInstance().getKey();
-        String encyprtFio = safetyModule.encryptString(patient.getFio(), key);
-        patient.setFio(encyprtFio);
     }
 
     private QuestionnaireDTO buildQuestionnaireDTO(Questionnaire questionnaire){

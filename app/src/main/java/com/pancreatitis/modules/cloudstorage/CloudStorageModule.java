@@ -3,10 +3,12 @@ package com.pancreatitis.modules.cloudstorage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
+import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.Update;
 import com.pancreatitis.models.User;
+import com.pancreatitis.modules.safety.SafetyModule;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -20,10 +22,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.crypto.SecretKey;
+
 public class CloudStorageModule {
     private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
+    private static SafetyModule safetyModule;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 
@@ -34,6 +39,7 @@ public class CloudStorageModule {
             createFolder("/update/");
             createFolder("/registration_requests/");
         });
+        safetyModule = SafetyModule.getInstance();
     }
 
     public static CloudStorageModule getInstance() {
@@ -113,7 +119,7 @@ public class CloudStorageModule {
 
     public boolean uploadQuestionnaire(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
-            String jsonData = update.toJson();
+            String jsonData = encryptUpdate(update);
             String datetime = LocalDateTime.now().format(formatter);
             String fileName = login + "_update_" + datetime + ".json";
             String filePath = "/update/" + fileName;
@@ -128,6 +134,12 @@ public class CloudStorageModule {
         };
 
         return executorService.submit(task).get();
+    }
+
+    private String encryptUpdate(Update update) throws Exception {
+        SecretKey key = User.getInstance().getKey();
+        String jsonData = safetyModule.encryptString(update.toJson(), key);
+        return jsonData;
     }
 
     public boolean uploadRegistrationRequest(RegistrationForm registrationForm) throws Exception {

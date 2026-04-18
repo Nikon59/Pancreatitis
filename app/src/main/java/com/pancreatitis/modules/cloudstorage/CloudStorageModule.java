@@ -121,13 +121,11 @@ public class CloudStorageModule {
     public boolean uploadQuestionnaire(Update update, String login) throws Exception {
         Callable<Boolean> task = () -> {
             String datetime = LocalDateTime.now().format(formatter);
-            String fileName = UUID.randomUUID().toString() + ".json";
+            String fileName = login + "_" + UUID.randomUUID().toString() + ".json";
             String filePath = "/update/" + fileName;
 
             update.setLogin(login);
             update.setDateUpload(datetime);
-            String hashSum = safetyModule.encodeToSha256(update.toJson());
-            update.setHashSum(hashSum);
 
             String jsonData = encryptUpdate(update);
             String uploadUrl = getUploadUrl(filePath, true);

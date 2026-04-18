@@ -8,7 +8,6 @@ public class Update {
     private QuestionnaireDTO questionnaireDTO;
     private String login;
     private String dateUpload;
-    private String hashSum;
 
     public Patient getPatient() {
         return patient;
@@ -32,14 +31,6 @@ public class Update {
 
     public void setDateUpload(String dateUpload) {
         this.dateUpload = dateUpload;
-    }
-
-    public String getHashSum() {
-        return hashSum;
-    }
-
-    public void setHashSum(String hashSum) {
-        this.hashSum = hashSum;
     }
 
     public QuestionnaireDTO getQuestionnaireDTO() {

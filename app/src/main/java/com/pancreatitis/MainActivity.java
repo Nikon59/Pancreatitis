@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         databaseModule.setContext(getApplicationContext());
         databaseModule.initWork();
 
-        checkAndDownloadAlgorithmFile();
+        copyFromAsstesAlgorithmFile();
 
         // Убираем ActionBar
         if (getSupportActionBar() != null) {
@@ -63,32 +63,14 @@ public class MainActivity extends AppCompatActivity {
         setupBackPressedCallback();
     }
 
-    private void checkAndDownloadAlgorithmFile() {
+    private void copyFromAsstesAlgorithmFile() {
         new Thread(() -> {
             try {
-                downloadAlgorithmFileToAssets();
+                LocalStorageModule.getInstance().copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
             } catch (Exception e) {
                 Log.e("MainActivity", "Error checking algorithm file", e);
             }
         }).start();
-    }
-
-    private void downloadAlgorithmFileToAssets() {
-        try {
-            LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
-            localStorageModule.setContext(getBaseContext());
-            if (!localStorageModule.isTrainingData()){
-                CloudStorageModule cloudStorageModule = CloudStorageModule.getInstance();
-
-                byte[] fileData = cloudStorageModule.downloadTrainingData();
-
-                localStorageModule.downloadAlgorithmFile(fileData);
-            }
-
-            Log.d("MainActivity", "algorithm.txt downloaded and saved successfully");
-        } catch (Exception e) {
-            Log.e("MainActivity", "Failed to download algorithm.txt", e);
-        }
     }
 
     private void setupBackPressedCallback() {

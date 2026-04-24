@@ -18,8 +18,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.Signature;
-import java.security.interfaces.EdECPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -272,7 +272,7 @@ public class CloudStorageModule {
             if (algoFileName == null) {
                 throw new FileNotFoundException("Algorithm file not found, cannot determine signature file name");
             }
-            String sigFileName = algoFileName.replace(ALGORITHM_FILE_SUFFIX, SIGNATURE_SUFFIX);
+            String sigFileName = algoFileName + SIGNATURE_SUFFIX;
             String filePath = "/" + sigFileName;
             String downloadUrl = getDownloadUrl(filePath);
             if (downloadUrl == null) {
@@ -292,7 +292,7 @@ public class CloudStorageModule {
             throw new IllegalStateException("Context is not set. Call setContext() before verifying signature.");
         }
         // Загружаем публичный ключ из assets
-        EdECPublicKey publicKey = loadPublicKeyFromAssets(PUBLIC_KEY_ASSET);
+        PublicKey publicKey = loadPublicKeyFromAssets(PUBLIC_KEY_ASSET);
 
         Signature sig = Signature.getInstance("Ed25519");
         sig.initVerify(publicKey);
@@ -369,12 +369,12 @@ public class CloudStorageModule {
     /**
      * Загружает публичный ключ Ed25519 из assets приложения.
      */
-    private EdECPublicKey loadPublicKeyFromAssets(String assetFileName) throws Exception {
+    private PublicKey loadPublicKeyFromAssets(String assetFileName) throws Exception {
         try (InputStream is = context.getAssets().open(assetFileName)) {
             byte[] keyBytes = readAllBytes(is);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
             KeyFactory kf = KeyFactory.getInstance("Ed25519");
-            return (EdECPublicKey) kf.generatePublic(spec);
+            return kf.generatePublic(spec);
         }
     }
 

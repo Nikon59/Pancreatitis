@@ -1,5 +1,7 @@
 package com.pancreatitis.modules.cloudstorage;
 
+import android.content.Context;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
@@ -15,6 +17,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.Signature;
+import java.security.interfaces.EdECPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -32,6 +38,12 @@ public class CloudStorageModule {
     private static SafetyModule safetyModule;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+    // Константы для работы с алгоритмом и подписью
+    private static final String ALGORITHM_FILE_PREFIX = "algorithm_";
+    private static final String ALGORITHM_FILE_SUFFIX = ".txt";
+    private static final String SIGNATURE_SUFFIX = ".sig";
+    private static final String PUBLIC_KEY_ASSET = "ed25519_public.key";
+    private Context context;
 
     private CloudStorageModule() {
         // Инициализация папок в фоне
@@ -52,6 +64,15 @@ public class CloudStorageModule {
             }
         }
         return instance;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    // Регистрация контекста для использования публичного ключа
+    public Context getContext() {
+        return context;
     }
 
     private boolean createFolder(String path) {
@@ -219,19 +240,152 @@ public class CloudStorageModule {
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // Методы для работы с алгоритмом и подписью
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Загружает содержимое текущего файла алгоритма из облака.
+     */
     public byte[] downloadTrainingData() throws Exception {
         Callable<byte[]> task = () -> {
-            String filePath = "/algorithm.txt";
-            String downloadUrl = getDownloadUrl(filePath);
-
-            if (downloadUrl == null) {
-                throw new FileNotFoundException("File not found: " + filePath);
+            String fileName = findAlgorithmFileNameInCloud();
+            if (fileName == null) {
+                throw new FileNotFoundException("Algorithm file not found in cloud root");
             }
-
+            String filePath = "/" + fileName;
+            String downloadUrl = getDownloadUrl(filePath);
+            if (downloadUrl == null) {
+                throw new IOException("Failed to obtain download URL for algorithm file");
+            }
             return downloadFileAsBytes(downloadUrl);
         };
-
         return executorService.submit(task).get();
+    }
+
+    /**
+     * Загружает подпись для текущего файла алгоритма.
+     */
+    public byte[] downloadTrainingDataSignature() throws Exception {
+        Callable<byte[]> task = () -> {
+            String algoFileName = findAlgorithmFileNameInCloud();
+            if (algoFileName == null) {
+                throw new FileNotFoundException("Algorithm file not found, cannot determine signature file name");
+            }
+            String sigFileName = algoFileName.replace(ALGORITHM_FILE_SUFFIX, SIGNATURE_SUFFIX);
+            String filePath = "/" + sigFileName;
+            String downloadUrl = getDownloadUrl(filePath);
+            if (downloadUrl == null) {
+                throw new FileNotFoundException("Signature file not found: " + sigFileName);
+            }
+            return downloadFileAsBytes(downloadUrl);
+        };
+        return executorService.submit(task).get();
+    }
+
+    /**
+     * Проверяет Ed25519-подпись данных алгоритма.
+     * Публичный ключ загружается из assets приложения (файл с именем PUBLIC_KEY_ASSET).
+     */
+    public boolean verifyTrainingDataSignature(byte[] trainingData, byte[] signatureBytes) throws Exception {
+        if (context == null) {
+            throw new IllegalStateException("Context is not set. Call setContext() before verifying signature.");
+        }
+        // Загружаем публичный ключ из assets
+        EdECPublicKey publicKey = loadPublicKeyFromAssets(PUBLIC_KEY_ASSET);
+
+        Signature sig = Signature.getInstance("Ed25519");
+        sig.initVerify(publicKey);
+        sig.update(trainingData);
+        return sig.verify(signatureBytes);
+    }
+
+    /**
+     * Извлекает временную метку из имени текущего файла алгоритма в облаке.
+     */
+    public LocalDateTime getTrainingDataTimestamp() throws Exception {
+        String fileName = findAlgorithmFileNameInCloud();
+        if (fileName == null) {
+            throw new FileNotFoundException("Algorithm file not found in cloud");
+        }
+        return parseDateTimeFromAlgorithmFileName(fileName);
+    }
+
+    // Вспомогательные методы для поиска и парсинга
+
+    /**
+     * Ищет в корне облачного диска файл, начинающийся с algorithm_ и заканчивающийся .txt.
+     */
+    private String findAlgorithmFileNameInCloud() throws Exception {
+        // Получаем список файлов в корневой папке
+        String url = API_URL + "?path=%2F&limit=100"; // path=/ закодирован
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Authorization", "OAuth " + authToken);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    // Парсим JSON ответа: ищем элементы с "name", начинающиеся с algorithm_ и заканчивающиеся .txt
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode root = mapper.readTree(response.toString());
+                    JsonNode items = root.path("_embedded").path("items");
+                    if (items.isArray()) {
+                        for (JsonNode item : items) {
+                            String name = item.path("name").asText();
+                            if (name != null && name.startsWith(ALGORITHM_FILE_PREFIX) && name.endsWith(ALGORITHM_FILE_SUFFIX)) {
+                                return name;
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    /**
+     * Извлекает дату и время из имени файла алгоритма (например, "algorithm_2026_04_24_12_30_00.txt").
+     */
+    private LocalDateTime parseDateTimeFromAlgorithmFileName(String fileName) {
+        if (fileName == null || !fileName.startsWith(ALGORITHM_FILE_PREFIX) || !fileName.endsWith(ALGORITHM_FILE_SUFFIX)) {
+            throw new IllegalArgumentException("Invalid algorithm file name: " + fileName);
+        }
+        String dateTimeStr = fileName.substring(ALGORITHM_FILE_PREFIX.length(), fileName.length() - ALGORITHM_FILE_SUFFIX.length());
+        return LocalDateTime.parse(dateTimeStr, formatter);
+    }
+
+    /**
+     * Загружает публичный ключ Ed25519 из assets приложения.
+     */
+    private EdECPublicKey loadPublicKeyFromAssets(String assetFileName) throws Exception {
+        try (InputStream is = context.getAssets().open(assetFileName)) {
+            byte[] keyBytes = readAllBytes(is);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("Ed25519");
+            return (EdECPublicKey) kf.generatePublic(spec);
+        }
+    }
+
+    private byte[] readAllBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[4096];
+        int n;
+        while ((n = is.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, n);
+        }
+        return buffer.toByteArray();
     }
 
     // Вспомогательные методы (остаются теми же)

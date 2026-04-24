@@ -66,7 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private void copyFromAsstesAlgorithmFile() {
         new Thread(() -> {
             try {
-                LocalStorageModule.getInstance().copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
+                LocalStorageModule localStorage = LocalStorageModule.getInstance();
+                localStorage.setContext(getBaseContext());
+                localStorage.copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
             } catch (Exception e) {
                 Log.e("MainActivity", "Error checking algorithm file", e);
             }

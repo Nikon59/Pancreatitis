@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.pancreatitis.MainActivity;
 import com.pancreatitis.R;
 import com.pancreatitis.databinding.FragmentProfileBinding;
 import com.pancreatitis.models.Doctor;
@@ -24,6 +25,8 @@ import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 
@@ -37,6 +40,7 @@ public class ProfileFragment extends Fragment {
     private EditText phoneValue;
     private EditText loginValue;
     private EditText passwordValue;
+    private View loadingOverlay;
     private OnBackPressedCallback onBackPressedCallback;
 
     @Override
@@ -64,6 +68,7 @@ public class ProfileFragment extends Fragment {
         phoneValue = view.findViewById(R.id.phoneValue);
         loginValue = view.findViewById(R.id.loginValue);
         passwordValue = view.findViewById(R.id.passwordValue);
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
     }
 
     private void setupProfile(){
@@ -97,6 +102,10 @@ public class ProfileFragment extends Fragment {
         });
 
         btn_update_training_data.setOnClickListener(v -> {
+            // --- Показываем оверлей и блокируем UI ---
+            loadingOverlay.setVisibility(View.VISIBLE);
+            ((MainActivity) requireActivity()).lockNavigation();
+
             Executors.newSingleThreadExecutor().execute(() -> {
                 try {
                     CloudStorageModule cloud = CloudStorageModule.getInstance();
@@ -108,78 +117,104 @@ public class ProfileFragment extends Fragment {
                     LocalDateTime localTimestamp = local.getAlgorithmFileDateTime();
 
                     if (cloudTimestamp == null || localTimestamp == null) {
-                        requireActivity().runOnUiThread(() ->
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle("Ошибка")
-                                        .setMessage("Не удалось получить временные метки.")
-                                        .setPositiveButton("OK", null)
-                                        .show()
-                        );
+                        requireActivity().runOnUiThread(() -> {
+                            // --- Скрываем оверлей и разблокируем ---
+                            loadingOverlay.setVisibility(View.GONE);
+                            ((MainActivity) requireActivity()).unlockNavigation();
+
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Ошибка")
+                                    .setMessage("Не удалось получить временные метки.")
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        });
                         return;
                     }
 
                     if (cloudTimestamp.equals(localTimestamp)) {
-                        requireActivity().runOnUiThread(() ->
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle("Проверка данных")
-                                        .setMessage("Версия актуальна.\n" + localTimestamp)
-                                        .setPositiveButton("OK", null)
-                                        .show()
-                        );
+                        requireActivity().runOnUiThread(() -> {
+                            // --- Скрываем оверлей и разблокируем ---
+                            loadingOverlay.setVisibility(View.GONE);
+                            ((MainActivity) requireActivity()).unlockNavigation();
+
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Проверка данных")
+                                    .setMessage("Версия актуальна.\n" + localTimestamp)
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                        });
                     } else {
                         requireActivity().runOnUiThread(() -> {
+                            // Диалог с предложением загрузки – оверлей остаётся видимым,
+                            // так как пользователь может начать скачивание
                             new AlertDialog.Builder(requireContext())
                                     .setTitle("Доступна новая версия")
                                     .setMessage("Облако: " + cloudTimestamp + "\nЛокально: " + localTimestamp + "\n\nЗагрузить обновление?")
                                     .setPositiveButton("Загрузить", (dialog, which) -> {
+                                        // Запускаем загрузку (оверлей уже видим)
                                         Executors.newSingleThreadExecutor().execute(() -> {
                                             try {
                                                 byte[] algoData = cloud.downloadTrainingData();
                                                 byte[] signature = cloud.downloadTrainingDataSignature();
                                                 boolean isValid = cloud.verifyTrainingDataSignature(algoData, signature);
                                                 if (!isValid) {
-                                                    requireActivity().runOnUiThread(() ->
-                                                            new AlertDialog.Builder(requireContext())
-                                                                    .setTitle("Ошибка")
-                                                                    .setMessage("Неверная цифровая подпись. Обновление отменено.")
-                                                                    .setPositiveButton("OK", null)
-                                                                    .show()
-                                                    );
+                                                    requireActivity().runOnUiThread(() -> {
+                                                        loadingOverlay.setVisibility(View.GONE);
+                                                        ((MainActivity) requireActivity()).unlockNavigation();
+
+                                                        new AlertDialog.Builder(requireContext())
+                                                                .setTitle("Ошибка")
+                                                                .setMessage("Неверная цифровая подпись. Обновление отменено.")
+                                                                .setPositiveButton("OK", null)
+                                                                .show();
+                                                    });
                                                     return;
                                                 }
-                                                // Сохраняем только алгоритм (старые алгоритмы и подписи удаляются внутри)
                                                 String fileName = String.format("algorithm_%s.txt", cloudTimestamp);
                                                 local.downloadAlgorithmFile(algoData, fileName);
-                                                requireActivity().runOnUiThread(() ->
-                                                        new AlertDialog.Builder(requireContext())
-                                                                .setTitle("Успех")
-                                                                .setMessage("Данные обучения успешно обновлены.")
-                                                                .setPositiveButton("OK", null)
-                                                                .show()
-                                                );
+                                                requireActivity().runOnUiThread(() -> {
+                                                    loadingOverlay.setVisibility(View.GONE);
+                                                    ((MainActivity) requireActivity()).unlockNavigation();
+
+                                                    new AlertDialog.Builder(requireContext())
+                                                            .setTitle("Успех")
+                                                            .setMessage("Данные обучения успешно обновлены.")
+                                                            .setPositiveButton("OK", null)
+                                                            .show();
+                                                });
                                             } catch (Exception e) {
-                                                requireActivity().runOnUiThread(() ->
-                                                        new AlertDialog.Builder(requireContext())
-                                                                .setTitle("Ошибка загрузки")
-                                                                .setMessage(e.getMessage())
-                                                                .setPositiveButton("OK", null)
-                                                                .show()
-                                                );
+                                                requireActivity().runOnUiThread(() -> {
+                                                    loadingOverlay.setVisibility(View.GONE);
+                                                    ((MainActivity) requireActivity()).unlockNavigation();
+
+                                                    new AlertDialog.Builder(requireContext())
+                                                            .setTitle("Ошибка загрузки")
+                                                            .setMessage(e.getMessage())
+                                                            .setPositiveButton("OK", null)
+                                                            .show();
+                                                });
                                             }
                                         });
                                     })
-                                    .setNegativeButton("Отмена", null)
+                                    .setNegativeButton("Отмена", (dialog, which) -> {
+                                        // Пользователь отказался от загрузки – убираем оверлей
+                                        loadingOverlay.setVisibility(View.GONE);
+                                        ((MainActivity) requireActivity()).unlockNavigation();
+                                    })
                                     .show();
                         });
                     }
                 } catch (Exception e) {
-                    requireActivity().runOnUiThread(() ->
-                            new AlertDialog.Builder(requireContext())
-                                    .setTitle("Ошибка")
-                                    .setMessage(e.getMessage())
-                                    .setPositiveButton("OK", null)
-                                    .show()
-                    );
+                    requireActivity().runOnUiThread(() -> {
+                        loadingOverlay.setVisibility(View.GONE);
+                        ((MainActivity) requireActivity()).unlockNavigation();
+
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Ошибка")
+                                .setMessage(e.getMessage())
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
                 }
             });
         });

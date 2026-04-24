@@ -1,5 +1,6 @@
 package com.pancreatitis.ui.profile;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -21,6 +22,10 @@ import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.Executors;
 
 public class ProfileFragment extends Fragment {
 
@@ -89,6 +94,94 @@ public class ProfileFragment extends Fragment {
         btn_logout.setOnClickListener(v -> {
             User.setInstance();
             Navigation.findNavController(v).navigate(R.id.action_profile_to_auth);
+        });
+
+        btn_update_training_data.setOnClickListener(v -> {
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    CloudStorageModule cloud = CloudStorageModule.getInstance();
+                    LocalStorageModule local = LocalStorageModule.getInstance();
+                    local.setContext(getContext());
+                    cloud.setContext(getContext());
+
+                    LocalDateTime cloudTimestamp = cloud.getTrainingDataTimestamp();
+                    LocalDateTime localTimestamp = local.getAlgorithmFileDateTime();
+
+                    if (cloudTimestamp == null || localTimestamp == null) {
+                        requireActivity().runOnUiThread(() ->
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle("Ошибка")
+                                        .setMessage("Не удалось получить временные метки.")
+                                        .setPositiveButton("OK", null)
+                                        .show()
+                        );
+                        return;
+                    }
+
+                    if (cloudTimestamp.equals(localTimestamp)) {
+                        requireActivity().runOnUiThread(() ->
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle("Проверка данных")
+                                        .setMessage("Версия актуальна.\n" + localTimestamp)
+                                        .setPositiveButton("OK", null)
+                                        .show()
+                        );
+                    } else {
+                        requireActivity().runOnUiThread(() -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Доступна новая версия")
+                                    .setMessage("Облако: " + cloudTimestamp + "\nЛокально: " + localTimestamp + "\n\nЗагрузить обновление?")
+                                    .setPositiveButton("Загрузить", (dialog, which) -> {
+                                        Executors.newSingleThreadExecutor().execute(() -> {
+                                            try {
+                                                byte[] algoData = cloud.downloadTrainingData();
+                                                byte[] signature = cloud.downloadTrainingDataSignature();
+                                                boolean isValid = cloud.verifyTrainingDataSignature(algoData, signature);
+                                                if (!isValid) {
+                                                    requireActivity().runOnUiThread(() ->
+                                                            new AlertDialog.Builder(requireContext())
+                                                                    .setTitle("Ошибка")
+                                                                    .setMessage("Неверная цифровая подпись. Обновление отменено.")
+                                                                    .setPositiveButton("OK", null)
+                                                                    .show()
+                                                    );
+                                                    return;
+                                                }
+                                                // Сохраняем только алгоритм (старые алгоритмы и подписи удаляются внутри)
+                                                String fileName = String.format("algorithm_%s.txt", cloudTimestamp);
+                                                local.downloadAlgorithmFile(algoData, fileName);
+                                                requireActivity().runOnUiThread(() ->
+                                                        new AlertDialog.Builder(requireContext())
+                                                                .setTitle("Успех")
+                                                                .setMessage("Данные обучения успешно обновлены.")
+                                                                .setPositiveButton("OK", null)
+                                                                .show()
+                                                );
+                                            } catch (Exception e) {
+                                                requireActivity().runOnUiThread(() ->
+                                                        new AlertDialog.Builder(requireContext())
+                                                                .setTitle("Ошибка загрузки")
+                                                                .setMessage(e.getMessage())
+                                                                .setPositiveButton("OK", null)
+                                                                .show()
+                                                );
+                                            }
+                                        });
+                                    })
+                                    .setNegativeButton("Отмена", null)
+                                    .show();
+                        });
+                    }
+                } catch (Exception e) {
+                    requireActivity().runOnUiThread(() ->
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Ошибка")
+                                    .setMessage(e.getMessage())
+                                    .setPositiveButton("OK", null)
+                                    .show()
+                    );
+                }
+            });
         });
     }
 

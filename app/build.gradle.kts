@@ -36,6 +36,7 @@ android {
 
 dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

@@ -28,6 +28,7 @@ import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
 
 public class ProfileFragment extends Fragment {
@@ -145,13 +146,14 @@ public class ProfileFragment extends Fragment {
                         });
                     } else {
                         requireActivity().runOnUiThread(() -> {
-                            // Диалог с предложением загрузки – оверлей остаётся видимым,
-                            // так как пользователь может начать скачивание
+                            loadingOverlay.setVisibility(View.GONE);
+                            ((MainActivity) requireActivity()).unlockNavigation();
                             new AlertDialog.Builder(requireContext())
                                     .setTitle("Доступна новая версия")
                                     .setMessage("Облако: " + cloudTimestamp + "\nЛокально: " + localTimestamp + "\n\nЗагрузить обновление?")
                                     .setPositiveButton("Загрузить", (dialog, which) -> {
-                                        // Запускаем загрузку (оверлей уже видим)
+                                        loadingOverlay.setVisibility(View.VISIBLE);
+                                        ((MainActivity) requireActivity()).lockNavigation();
                                         Executors.newSingleThreadExecutor().execute(() -> {
                                             try {
                                                 byte[] algoData = cloud.downloadTrainingData();
@@ -170,7 +172,8 @@ public class ProfileFragment extends Fragment {
                                                     });
                                                     return;
                                                 }
-                                                String fileName = String.format("algorithm_%s.txt", cloudTimestamp);
+                                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+                                                String fileName = String.format("algorithm_%s.txt", cloudTimestamp.format(formatter));
                                                 local.downloadAlgorithmFile(algoData, fileName);
                                                 requireActivity().runOnUiThread(() -> {
                                                     loadingOverlay.setVisibility(View.GONE);

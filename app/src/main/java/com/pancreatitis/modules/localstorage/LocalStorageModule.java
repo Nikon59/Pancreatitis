@@ -253,39 +253,97 @@ public class LocalStorageModule {
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // Методы для работы с алгоритмом
+    // ---------------------------------------------------------------------------
     public byte[] getTrainingData() throws Exception {
         Callable<byte[]> task = () -> {
-            File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
-
-            if (!algorithmFile.exists()) {
-                throw new FileNotFoundException("File not found: " + algorithmFile.getAbsolutePath());
+            File algorithmFile = findAlgorithmFile();
+            if (algorithmFile == null) {
+                throw new FileNotFoundException("Algorithm file not found");
             }
-
             return readFileAsBytes(algorithmFile);
         };
-
         return executorService.submit(task).get();
     }
 
     public boolean isTrainingData() throws Exception {
-        Callable<Boolean> task = () -> {
-            File keyFile = new File(getStorageBaseDir(), "algorithm.txt");
-            return keyFile.exists();
-        };
-
+        Callable<Boolean> task = () -> findAlgorithmFile() != null;
         return executorService.submit(task).get();
     }
 
-    public void downloadAlgorithmFile(byte[] algorithmData) throws Exception {
+    public void downloadAlgorithmFile(byte[] algorithmData, String fileName) throws Exception {
         Callable<Boolean> task = () -> {
-            File algorithmFile = new File(getStorageBaseDir(), "algorithm.txt");
+            deleteAllAlgorithmFiles();
+            File algorithmFile = new File(getStorageBaseDir(), fileName);
             return writeFile(algorithmFile, algorithmData);
         };
-
         executorService.submit(task).get();
     }
 
+    private File findAlgorithmFile() {
+        File[] files = getStorageBaseDir().listFiles((dir, name) -> name.startsWith("algorithm_") && name.endsWith(".txt"));
+        if (files == null || files.length == 0) {
+            return null;
+        }
+        // Если больше одного, можно вернуть первый или выбросить ошибку. Возьмем первый, т.к. по идее должен быть один.
+        return files[0];
+    }
+
+    private void deleteAllAlgorithmFiles() {
+        File[] files = getStorageBaseDir().listFiles((dir, name) -> name.startsWith("algorithm") && name.endsWith(".txt"));
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
+            }
+        }
+    }
+
+    public void copyAlgorithmFromAssets(String assetFileName) throws Exception {
+        // Проверить, что context не null
+        if (context == null) throw new IllegalStateException("Context is not set");
+
+        executorService.submit(() -> {
+            // Удалить старые файлы алгоритма
+            deleteAllAlgorithmFiles();
+
+            // Скопировать из assets
+            File destFile = new File(getStorageBaseDir(), assetFileName);
+            try (InputStream is = context.getAssets().open(assetFileName);
+                 FileOutputStream fos = new FileOutputStream(destFile)) {
+                byte[] buffer = new byte[4096];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+                fos.flush();
+            }
+            return true;
+        }).get();
+    }
+
+    public LocalDateTime getAlgorithmFileDateTime() throws Exception {
+        File algoFile = findAlgorithmFile();
+        if (algoFile == null) {
+            throw new FileNotFoundException("Algorithm file not found");
+        }
+        return parseDateTimeFromFilename(algoFile.getName());
+    }
+
+    private LocalDateTime parseDateTimeFromFilename(String filename) {
+        String prefix = "algorithm_";
+        String suffix = ".txt";
+        if (!filename.startsWith(prefix) || !filename.endsWith(suffix)) {
+            throw new IllegalArgumentException("Invalid algorithm filename: " + filename);
+        }
+        String dateTimeStr = filename.substring(prefix.length(), filename.length() - suffix.length());
+        DateTimeFormatter fileFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+        return LocalDateTime.parse(dateTimeStr, fileFormatter);
+    }
+
+    // ---------------------------------------------------------------------------
     // Вспомогательные методы для работы с файлами
+    // ---------------------------------------------------------------------------
     private byte[] readFileAsBytes(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream bos = new ByteArrayOutputStream()) {

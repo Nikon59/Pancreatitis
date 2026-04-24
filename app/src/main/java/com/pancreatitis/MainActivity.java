@@ -68,7 +68,9 @@ public class MainActivity extends AppCompatActivity {
             try {
                 LocalStorageModule localStorage = LocalStorageModule.getInstance();
                 localStorage.setContext(getBaseContext());
-                localStorage.copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
+                if (!localStorage.isTrainingData()) {
+                    localStorage.copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
+                }
             } catch (Exception e) {
                 Log.e("MainActivity", "Error checking algorithm file", e);
             }

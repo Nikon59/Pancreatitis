@@ -290,25 +290,11 @@ public class LocalStorageModule {
         return files[0];
     }
 
-    // LocalStorageModule.java (только изменённый метод deleteAllAlgorithmFiles)
     private void deleteAllAlgorithmFiles() {
-        File baseDir = getStorageBaseDir();
-        if (baseDir != null && baseDir.exists()) {
-            // Удаляем файлы алгоритма (.txt)
-            File[] txtFiles = baseDir.listFiles((dir, name) ->
-                    name.startsWith("algorithm_") && name.endsWith(".txt"));
-            if (txtFiles != null) {
-                for (File f : txtFiles) {
-                    f.delete();
-                }
-            }
-            // Удаляем файлы подписей (.sig) с тем же префиксом
-            File[] sigFiles = baseDir.listFiles((dir, name) ->
-                    name.startsWith("algorithm_") && name.endsWith(".sig"));
-            if (sigFiles != null) {
-                for (File f : sigFiles) {
-                    f.delete();
-                }
+        File[] files = getStorageBaseDir().listFiles((dir, name) -> name.startsWith("algorithm") && name.endsWith(".txt"));
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
             }
         }
     }

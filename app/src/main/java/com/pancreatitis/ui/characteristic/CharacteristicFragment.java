@@ -27,7 +27,6 @@ import com.pancreatitis.models.CharacteristicItemNonNumeric;
 import com.pancreatitis.models.CharacteristicItemNumeric;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.CharacterizationValue;
-import com.pancreatitis.models.User;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
 

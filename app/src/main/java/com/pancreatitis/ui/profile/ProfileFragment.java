@@ -73,12 +73,12 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupProfile(){
-        User user = User.getInstance();
-        fioValue.setText(user.getFullName());
-        emailValue.setText(user.getEmail());
-        phoneValue.setText(user.getPhone());
+        User user = User.getInstance(); // Создать user с ключом
         loginValue.setText(user.getLogin());
-        passwordValue.setText(user.getPassword());
+//        fioValue.setText(user.getFio());
+//        emailValue.setText(user.getEmail());
+//        phoneValue.setText(user.getPhone());
+//        passwordValue.setText(user.getPassword());
     }
 
     private void setupBackButtonHandling() {
@@ -98,7 +98,7 @@ public class ProfileFragment extends Fragment {
 
         // Кнопка регистрации (всегда доступна)
         btn_logout.setOnClickListener(v -> {
-            User.setInstance();
+            User.resetInstance();
             Navigation.findNavController(v).navigate(R.id.action_profile_to_auth);
         });
 

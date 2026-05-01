@@ -109,8 +109,7 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         }
 
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
-            User user = User.getInstance();
-            if (user.getKey() == null){
+            if (User.getInstance() == null){
                 isChecked.setVisibility(View.GONE);
             }
 

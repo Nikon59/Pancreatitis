@@ -94,16 +94,19 @@ public class AuthFragment extends Fragment {
                                 SecretKey key = authorizationModule.authenticateUser(login, password);
                                 if (key != null) {
 
-//                                    Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-//                                    if (doctor == null) {
-//                                        doctor = new Doctor(user_info.getFullName());
-//                                        databaseModule.insertDoctor(doctor);
-//                                        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-//                                    }
+                                    Doctor doctor = databaseModule.getDoctorByLogin(login);
+                                    if (doctor == null) {
+                                        doctor = new Doctor();
+                                        doctor.setLogin(login);
+                                        databaseModule.insertDoctor(doctor);
+                                        doctor = databaseModule.getDoctorByLogin(login);
+                                    }
 
-                                    User user = User.getInstance();
+                                    User user = User.getInstance(); // Создать user с ключом
                                     user.setLogin(login);
-                                    user.setPassword(password);
+                                    user.setKey(key);
+                                    user.setCreatedAt(doctor.getCreatedAt());
+                                    user.setId(doctor.getId());
 
                                     message = "OK"; // специальный маркер успеха
                                 } else {

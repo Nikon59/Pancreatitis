@@ -2,7 +2,6 @@ package com.pancreatitis.modules.authorization;
 
 import android.content.Context;
 
-import com.pancreatitis.models.User;
 import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.safety.SafetyModule;

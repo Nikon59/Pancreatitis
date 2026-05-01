@@ -101,7 +101,7 @@ public class AllQuestionnaireFragment extends Fragment {
                     return;
                 }
 
-                if (User.getInstance().getKey() == null) {
+                if (User.getInstance() == null) { // Создать user с ключом
                     Toast.makeText(getContext(), "Авторизуйтесь для отправки анкет", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -155,7 +155,7 @@ public class AllQuestionnaireFragment extends Fragment {
 
     private void loadQuestionnaires() {
         DatabaseModule databaseModule = DatabaseModule.getInstance();
-        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems(User.getInstance().getIdDoctor());
+        List<QuestionnaireItem> tempData = databaseModule.getAllQuestionnaireItems(User.getInstance().getId());
         questionnaireList.clear();
         questionnaireList.addAll(tempData);
         adapter.updateData(questionnaireList);

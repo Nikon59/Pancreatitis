@@ -1,16 +1,6 @@
 package com.pancreatitis.modules.localstorage;
 
 import android.content.Context;
-import android.os.Environment;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.pancreatitis.models.Doctor;
-import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.models.RegistrationForm;
-import com.pancreatitis.models.Update;
-import com.pancreatitis.models.User;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -162,97 +152,6 @@ public class LocalStorageModule {
         };
 
         return executorService.submit(task).get();
-    }
-
-    public User downloadUserInfo(String login) throws Exception {
-        Callable<User> task = () -> {
-            File userInfoFile = new File(new File(getFolder(USERS_DIR), login), "user_info.json");
-
-            if (!userInfoFile.exists()) {
-                throw new FileNotFoundException("User info not found: " + userInfoFile.getAbsolutePath());
-            }
-
-            byte[] jsonBytes = readFileAsBytes(userInfoFile);
-            String json = new String(jsonBytes, StandardCharsets.UTF_8);
-
-            return parseUserFromJson(json, login);
-        };
-
-        return executorService.submit(task).get();
-    }
-
-    public boolean saveUserInfo(User user) throws Exception {
-        Callable<Boolean> task = () -> {
-            if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
-                throw new IllegalArgumentException("User or login cannot be null or empty");
-            }
-
-            // Создаем папку пользователя, если её нет
-            File userFolder = new File(getFolder(USERS_DIR), user.getLogin());
-            if (!userFolder.exists()) {
-                if (!userFolder.mkdirs()) {
-                    throw new IOException("Failed to create user folder: " + user.getLogin());
-                }
-            }
-
-            // Создаем объект для сериализации в JSON
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectNode userJson = mapper.createObjectNode();
-
-            // Заполняем JSON данными из объекта User
-            if (user.getEmail() != null) {
-                userJson.put("email", user.getEmail());
-            }
-
-            if (user.getDoctor() != null && user.getDoctor().getFio() != null) {
-                userJson.put("fullName", user.getDoctor().getFio());
-            }
-
-            if (user.getPhone() != null) {
-                userJson.put("phone", user.getPhone());
-            }
-
-            userJson.put("login", user.getLogin());
-            userJson.put("updatedAt", LocalDateTime.now().format(formatter));
-
-            // Конвертируем в JSON строку
-            String jsonData = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(userJson);
-
-            // Сохраняем в файл
-            File userInfoFile = new File(userFolder, "user_info.json");
-            return writeFile(userInfoFile, jsonData.getBytes(StandardCharsets.UTF_8));
-        };
-
-        return executorService.submit(task).get();
-    }
-
-    private User parseUserFromJson(String json, String login) throws Exception {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode rootNode = mapper.readTree(json);
-
-            User user = User.getInstance();
-
-            if (rootNode.has("email")) {
-                user.setEmail(rootNode.get("email").asText());
-            }
-
-            if (rootNode.has("fullName")) {
-                Doctor doctor = new Doctor();
-                doctor.setFio(rootNode.get("fullName").asText());
-                user.setDoctor(doctor);
-            }
-
-            if (rootNode.has("phone")) {
-                user.setPhone(rootNode.get("phone").asText());
-            }
-
-            user.setLogin(login);
-
-            return user;
-        } catch (Exception e) {
-            throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
-        }
     }
 
     /**

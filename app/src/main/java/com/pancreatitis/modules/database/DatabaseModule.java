@@ -119,12 +119,12 @@ public class DatabaseModule {
             if (cursor != null && cursor.moveToFirst()) {
                 doctor = new Doctor();
                 doctor.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                doctor.setLogin(cursor.getString(cursor.getColumnIndexOrThrow("login")));
                 doctor.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
-
-                int statusInt = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
-                doctor.setStatus(statusInt == 1);
-
-                doctor.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
+                doctor.setPhone(cursor.getString(cursor.getColumnIndexOrThrow("phone")));
+                doctor.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+                doctor.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow("status")) == 1);
+                doctor.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
             }
         } catch (Exception e) {
             Log.e("DatabaseModule", "Error getting doctor by id: " + id_doctor, e);
@@ -138,9 +138,13 @@ public class DatabaseModule {
     }
     public int insertDoctor(Doctor doctor) {
         ContentValues values = new ContentValues();
+        values.put("id", doctor.getId());
+        values.put("login", doctor.getLogin());
         values.put("fio", doctor.getFio());
-        values.put("status", doctor.getStatus() != null ? (doctor.getStatus() ? 1 : 0) : 0);
-        values.put("last_modified", LocalDateTime.now().format(formatter));
+        values.put("phone", doctor.getPhone());
+        values.put("email", doctor.getEmail());
+        values.put("status", doctor.getStatus() ? 1 : 0);
+        values.put("created_at", LocalDateTime.now().format(formatter));
 
         return Math.toIntExact(database.insert("doctors", null, values));
     }
@@ -154,9 +158,37 @@ public class DatabaseModule {
             if (cursor != null && cursor.moveToFirst()) {
                 doctor = new Doctor();
                 doctor.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                doctor.setLogin(cursor.getString(cursor.getColumnIndexOrThrow("login")));
                 doctor.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
-                int statusInt = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
-                doctor.setStatus(statusInt == 1);
+                doctor.setPhone(cursor.getString(cursor.getColumnIndexOrThrow("phone")));
+                doctor.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+                doctor.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow("status")) == 1);
+                doctor.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return doctor;
+    }
+
+    public Doctor getDoctorByLogin(String login) {
+        Cursor cursor = null;
+        Doctor doctor = null;
+
+        try {
+            cursor = database.query("doctors", null, "login = ?",
+                    new String[]{String.valueOf(login)}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                doctor = new Doctor();
+                doctor.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                doctor.setLogin(cursor.getString(cursor.getColumnIndexOrThrow("login")));
+                doctor.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
+                doctor.setPhone(cursor.getString(cursor.getColumnIndexOrThrow("phone")));
+                doctor.setEmail(cursor.getString(cursor.getColumnIndexOrThrow("email")));
+                doctor.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow("status")) == 1);
+                doctor.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow("created_at")));
             }
         } finally {
             if (cursor != null) {

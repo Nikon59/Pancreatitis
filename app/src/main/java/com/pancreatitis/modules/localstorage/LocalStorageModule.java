@@ -16,6 +16,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -251,6 +253,30 @@ public class LocalStorageModule {
         } catch (Exception e) {
             throw new IOException("Failed to parse user JSON: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Загружает словарь BIP39 из assets приложения (файл wordlist_en.txt).
+     * Возвращает список из 2048 слов.
+     */
+    public List<String> loadBip39WordList() throws Exception {
+        if (context == null) throw new IllegalStateException("Context is not set");
+        Callable<List<String>> task = () -> {
+            List<String> words = new ArrayList<>(2048);
+            try (InputStream is = context.getAssets().open("wordlist_en.txt");
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String word = line.trim();
+                    if (!word.isEmpty()) words.add(word);
+                }
+            }
+            if (words.size() != 2048) {
+                throw new IllegalArgumentException("Invalid BIP39 word list size: " + words.size() + ", expected 2048");
+            }
+            return words;
+        };
+        return executorService.submit(task).get();
     }
 
     // ---------------------------------------------------------------------------

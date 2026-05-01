@@ -178,6 +178,10 @@ public class MainActivity extends AppCompatActivity {
             return "Менеджер анкет";
         } else if (destinationId == R.id.navigation_anket) {
             return "Анкета";
+        } else if (destinationId == R.id.navigation_register) {
+            return "Регистрация";
+        } else if (destinationId == R.id.navigation_activate) {
+            return "Активация";
         } else {
             return "";
         }

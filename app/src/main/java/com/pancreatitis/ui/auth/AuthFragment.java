@@ -18,7 +18,7 @@ import androidx.navigation.Navigation;
 
 import com.pancreatitis.MainActivity;
 import com.pancreatitis.R;
-import com.pancreatitis.databinding.FragmentProfileBinding;
+import com.pancreatitis.databinding.FragmentAuthBinding;
 import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.RegistrationForm;
 import com.pancreatitis.models.User;
@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
 import javax.crypto.SecretKey;
 
 public class AuthFragment extends Fragment {
-    private FragmentProfileBinding binding;
+    private FragmentAuthBinding binding;
     private EditText loginEditText;
     private EditText passwordEditText;
     private View loading_overlay;
@@ -65,8 +65,8 @@ public class AuthFragment extends Fragment {
 
         // Кнопка регистрации (всегда доступна)
         TextView goToButton = view.findViewById(R.id.btn_activate);
-        goToNestedButton.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.action_auth_to_register);
+        goToButton.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_auth_to_activate);
         });
 
         // Кнопка входа (только при успешной авторизации)

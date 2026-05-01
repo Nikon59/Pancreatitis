@@ -23,6 +23,12 @@
         tools:layout="@layout/fragment_helps" />
 
     <fragment
+        android:id="@+id/navigation_activate"
+        android:name="com.pancreatitis.ui.activate.ActivateFragment"
+        android:label="@string/title_activate"
+        tools:layout="@layout/fragment_activate" />
+
+    <fragment
         android:id="@+id/navigation_profile"
         android:name="com.pancreatitis.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
@@ -68,6 +74,10 @@
         <action
             android:id="@+id/action_auth_to_profile"
             app:destination="@id/navigation_profile" />
+
+        <action
+            android:id="@+id/action_auth_to_activate"
+            app:destination="@id/navigation_activate" />
     </fragment>
 
     <fragment

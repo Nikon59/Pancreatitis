@@ -63,6 +63,12 @@ public class AuthFragment extends Fragment {
             Navigation.findNavController(v).navigate(R.id.action_auth_to_register);
         });
 
+        // Кнопка регистрации (всегда доступна)
+        TextView goToButton = view.findViewById(R.id.btn_activate);
+        goToNestedButton.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_auth_to_register);
+        });
+
         // Кнопка входа (только при успешной авторизации)
         Button btn_login = view.findViewById(R.id.btn_login);
         btn_login.setOnClickListener(new View.OnClickListener() {

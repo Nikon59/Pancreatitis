@@ -278,7 +278,7 @@ public class CloudStorageModule {
             String filePath = "/" + sigFileName;
             String downloadUrl = getDownloadUrl(filePath);
             if (downloadUrl == null) {
-                throw new FileNotFoundException("Signature file not found: " + sigFileName);
+                throw new FileNotFoundException("Отсутствует цифровая подпись: " + sigFileName);
             }
             return downloadFileAsBytes(downloadUrl);
         };
@@ -308,7 +308,7 @@ public class CloudStorageModule {
     public LocalDateTime getTrainingDataTimestamp() throws Exception {
         String fileName = findAlgorithmFileNameInCloud();
         if (fileName == null) {
-            throw new FileNotFoundException("Algorithm file not found in cloud");
+            throw new FileNotFoundException("Файл алгоритм отсутствует в облаке");
         }
         return parseDateTimeFromAlgorithmFileName(fileName);
     }
@@ -362,7 +362,7 @@ public class CloudStorageModule {
      */
     private LocalDateTime parseDateTimeFromAlgorithmFileName(String fileName) {
         if (fileName == null || !fileName.startsWith(ALGORITHM_FILE_PREFIX) || !fileName.endsWith(ALGORITHM_FILE_SUFFIX)) {
-            throw new IllegalArgumentException("Invalid algorithm file name: " + fileName);
+            throw new IllegalArgumentException("Некорректное имя файла алгоритма: " + fileName);
         }
         String dateTimeStr = fileName.substring(ALGORITHM_FILE_PREFIX.length(), fileName.length() - ALGORITHM_FILE_SUFFIX.length());
         return LocalDateTime.parse(dateTimeStr, formatter);

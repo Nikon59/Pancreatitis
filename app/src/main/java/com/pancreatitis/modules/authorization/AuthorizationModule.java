@@ -42,7 +42,7 @@ public class AuthorizationModule {
     public SecretKey authenticateUser(String login, String password) throws Exception {
         localStorageModule.setContext(context);
 
-        if (!cloudStorageModule.isUserFolderExists(login) && !localStorageModule.isUserFolderExists(login)){
+        if (!localStorageModule.isUserFolderExists(login)){
             return null;
         }
 

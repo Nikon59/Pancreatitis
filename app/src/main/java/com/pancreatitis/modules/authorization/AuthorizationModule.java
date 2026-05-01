@@ -15,13 +15,11 @@ import java.io.FileOutputStream;
 import javax.crypto.SecretKey;
 
 public class AuthorizationModule {
-    private static CloudStorageModule cloudStorageModule;
     private static LocalStorageModule localStorageModule;
     private static SafetyModule safetyModule;
     private static AuthorizationModule instance;
     private Context context;
     private AuthorizationModule(){
-        cloudStorageModule = CloudStorageModule.getInstance();
         localStorageModule = LocalStorageModule.getInstance();
         safetyModule = SafetyModule.getInstance();
     }
@@ -51,17 +49,11 @@ public class AuthorizationModule {
         return key;
     }
 
-    private byte[] getKey(String login) throws Exception {
-        if (!localStorageModule.isUserKeyExists(login)) {
-            byte[] key = cloudStorageModule.downloadUserKey(login);
-            User user_info = cloudStorageModule.downloadUserInfo(login);
-            localStorageModule.createUserFolder(login);
-            localStorageModule.saveLocalUserKey(login, key);
-            localStorageModule.saveUserInfo(user_info);
-            return key;
-        } else {
-            byte[] key = localStorageModule.downloadUserKey(login);
-            return key;
+    private byte[] getKey(String login) {
+        try {
+            return localStorageModule.downloadUserKey(login);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

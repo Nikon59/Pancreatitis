@@ -93,20 +93,15 @@ public class AuthFragment extends Fragment {
                             } else {
                                 SecretKey key = authorizationModule.authenticateUser(login, password);
                                 if (key != null) {
-                                    // Загрузка данных пользователя и DB-операции (синхронно)
-                                    User user_info = localStorageModule.downloadUserInfo(login);
-                                    Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-                                    if (doctor == null) {
-                                        doctor = new Doctor(user_info.getFullName());
-                                        databaseModule.insertDoctor(doctor);
-                                        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
-                                    }
+
+//                                    Doctor doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+//                                    if (doctor == null) {
+//                                        doctor = new Doctor(user_info.getFullName());
+//                                        databaseModule.insertDoctor(doctor);
+//                                        doctor = databaseModule.getDoctorByFio(user_info.getFullName());
+//                                    }
 
                                     User user = User.getInstance();
-                                    user.setKey(key);
-                                    user.setEmail(user_info.getEmail());
-                                    user.setPhone(user_info.getPhone());
-                                    user.setDoctor(doctor);
                                     user.setLogin(login);
                                     user.setPassword(password);
 

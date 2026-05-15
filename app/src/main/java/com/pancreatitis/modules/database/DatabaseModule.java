@@ -415,14 +415,14 @@ public class DatabaseModule {
     }
 
     // ========== Вспомогательные методы ==========
-    public void close() {
-        if (database != null && database.isOpen()) {
-            database.close();
-        }
-        if (dbHelper != null) {
-            dbHelper.close();
-        }
-    }
+//    public void close() {
+//        if (database != null && database.isOpen()) {
+//            database.close();
+//        }
+//        if (dbHelper != null) {
+//            dbHelper.close();
+//        }
+//    }
 
     public void beginTransaction() {
         database.beginTransaction();

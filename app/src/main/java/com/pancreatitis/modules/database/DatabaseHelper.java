@@ -15,8 +15,8 @@ import java.util.List;
 
 public class DatabaseHelper {
 
-    private static final String OLD_DB_NAME = "mobile_v6.5.db";
-    private static final String NEW_DB_NAME = "mobile_v7.db";
+    private static final String OLD_DB_NAME = "pancreatitis_v6.6.db";
+    private static final String NEW_DB_NAME = "mobile.db";
 
     private final Context context;
     private final String oldDbPath;

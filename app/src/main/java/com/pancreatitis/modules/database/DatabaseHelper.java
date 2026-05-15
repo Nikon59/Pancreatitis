@@ -14,7 +14,7 @@ import java.io.OutputStream;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final String OLD_DB_NAME = "pancreatitis_v6.5.db";   // существующая БД на устройстве
+    private static final String OLD_DB_NAME = "pancreatitis_v6.6.db";   // существующая БД на устройстве
     private static final String NEW_DB_NAME = "mobile.db";     // имя БД в assets
     private static final int SCHEMA = 7;
 

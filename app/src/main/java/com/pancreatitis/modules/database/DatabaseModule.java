@@ -138,7 +138,6 @@ public class DatabaseModule {
     }
     public int insertDoctor(Doctor doctor) {
         ContentValues values = new ContentValues();
-        values.put("id", doctor.getId());
         values.put("login", doctor.getLogin());
         values.put("fio", doctor.getFio());
         values.put("phone", doctor.getPhone());

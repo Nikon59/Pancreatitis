@@ -1,10 +1,13 @@
 package com.pancreatitis.modules.questionnairemanager;
 
+import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Characteristic;
+import com.pancreatitis.models.Doctor;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireDTO;
@@ -14,10 +17,18 @@ import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.crypto.SecretKey;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class QuestionnaireManagerModule {
     private static DatabaseModule databaseModule;
@@ -154,6 +165,67 @@ public class QuestionnaireManagerModule {
 
         } catch (Exception e) {
             return e.getMessage();
+        }
+    }
+
+    /**
+     * Создаёт ZIP-архив (в памяти) с файлом questionnaires.json внутри.
+     * @return байты ZIP-архива
+     */
+    private byte[] createZipArchive(String jsonContent) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            ZipEntry entry = new ZipEntry("questionnaires.json");
+            zos.putNextEntry(entry);
+            zos.write(jsonContent.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        return baos.toByteArray();
+    }
+
+    private String buildArchiveJson(List<QuestionnaireDTO> questionnaires) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(questionnaires);
+    }
+
+    public String uploadAllQuestionnairesAsArchive() {
+        User user = User.getInstance();
+        if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
+            return "Пользователь не авторизован";
+        }
+
+        Doctor doctor = databaseModule.getDoctorByLogin(user.getLogin());
+        if (doctor == null) {
+            return "Врач не найден в БД";
+        }
+
+        List<QuestionnaireDTO> questionnaires = databaseModule.getAllFullQuestionnairesForDoctor(doctor.getId());
+        if (questionnaires.isEmpty()) {
+            return "Нет анкет для выгрузки";
+        }
+
+        try {
+            // 1. Преобразуем в JSON
+            String jsonData = buildArchiveJson(questionnaires);
+
+            // 2. Упаковываем в ZIP
+            byte[] zipData = createZipArchive(jsonData);
+
+            // 3. Шифруем ZIP-данные (общий ключ пользователя)
+            SecretKey key = user.getKey();
+            byte[] encryptedData = safetyModule.encryptData(zipData, key);
+
+            // 4. Формируем имя файла с текущей датой
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+            String fileName = "archive_" + timestamp + ".zip.enc";
+
+            // 5. Загружаем в облако (папка fetch/upload)
+            boolean success = cloudStorageModule.uploadArchive(encryptedData, fileName);
+            return success ? "Архив успешно отправлен" : "Ошибка при загрузке архива";
+
+        } catch (Exception e) {
+            Log.e("QuestionnaireManager", "Archive upload error", e);
+            return "Ошибка: " + e.getMessage();
         }
     }
 

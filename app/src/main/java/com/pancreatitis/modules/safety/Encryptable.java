@@ -30,4 +30,10 @@ public interface Encryptable {
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes("UTF-8"));
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
+
+    static byte[] encryptData(byte[] data, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        return cipher.doFinal(data);
+    }
 }

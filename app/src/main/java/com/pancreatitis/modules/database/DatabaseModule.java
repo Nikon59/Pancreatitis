@@ -319,6 +319,25 @@ public class DatabaseModule {
         return questionnaires;
     }
 
+    /**
+     * Возвращает список полных DTO анкет для указанного врача.
+     */
+    public List<QuestionnaireDTO> getAllFullQuestionnairesForDoctor(int doctorId) {
+        List<QuestionnaireDTO> result = new ArrayList<>();
+        List<QuestionnaireItem> items = getAllQuestionnaireItems(doctorId);
+        for (QuestionnaireItem item : items) {
+            Questionnaire q = getQuestionnaireById(item.getIdQuestionnaire());
+            if (q != null) {
+                QuestionnaireDTO dto = new QuestionnaireDTO(q);
+                // Подгружаем ответы на характеристики
+                List<CharacterizationAnketPatient> answers = getCharacterizationsForAnket(q.getId());
+                dto.setCharacteristicValues(answers);
+                result.add(dto);
+            }
+        }
+        return result;
+    }
+
     // ========== CharacterizationAnketPatient ==========
     public int deleteCharacterizationAnketPatients(int questionnaireId) {
         String whereClause = "id_anket = ?";

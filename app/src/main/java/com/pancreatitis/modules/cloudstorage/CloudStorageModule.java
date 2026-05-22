@@ -337,6 +337,22 @@ public class CloudStorageModule {
         return buffer.toByteArray();
     }
 
+    /**
+     * Загружает зашифрованный архив в папку fetch/upload.
+     * @param encryptedData зашифрованные байты архива
+     * @param fileName имя файла (например, "archive_2025_04_05_10_30_00.zip.enc")
+     * @return true при успехе
+     */
+    public boolean uploadArchive(byte[] encryptedData, String fileName) throws Exception {
+        String folderPath = "/fetch/upload";
+        String filePath = folderPath + "/" + fileName;
+        String uploadUrl = getUploadUrl(filePath, true);
+        if (uploadUrl == null) {
+            throw new IOException("Не удалось получить URL для загрузки архива");
+        }
+        return uploadFile(uploadUrl, encryptedData);
+    }
+
     // Вспомогательные методы (остаются теми же)
     private byte[] downloadFileAsBytes(String downloadUrl) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(downloadUrl).openConnection();

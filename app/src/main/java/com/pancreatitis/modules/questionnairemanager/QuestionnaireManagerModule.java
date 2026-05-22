@@ -217,7 +217,7 @@ public class QuestionnaireManagerModule {
 
             // 4. Формируем имя файла с текущей датой
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-            String fileName = "archive_" + timestamp + ".zip.enc";
+            String fileName = "archive_" + user.getLogin() + "_" + timestamp + ".zip.enc";
 
             // 5. Загружаем в облако (папка fetch/upload)
             boolean success = cloudStorageModule.uploadArchive(encryptedData, fileName);

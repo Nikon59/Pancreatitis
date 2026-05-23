@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -30,14 +31,25 @@ import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 import com.pancreatitis.modules.prediction.PredictionModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
+import com.pancreatitis.modules.safety.SafetyModule;
+import com.pancreatitis.ui.profile.ProfileFragment;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import javax.crypto.SecretKey;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -96,7 +108,10 @@ public class MainActivity extends AppCompatActivity {
         }
         periodicTask = () -> {
             // Запускаем проверку в фоновом потоке
-            new Thread(this::checkAndUploadArchive).start();
+            new Thread(() -> {
+                checkAndUploadArchive();   // существующая отправка
+                forceCheckAndDownloadData(); // проверка входящих
+            }).start();
             // Планируем следующий запуск
             periodicHandler.postDelayed(periodicTask, CHECK_INTERVAL_MS);
         };
@@ -124,12 +139,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-//        // Проверка интернета
-//        if (!isNetworkAvailable()) {
-//            Log.d("MainActivity", "No network connection, skip archive upload");
-//            return;
-//        }
-
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         long lastUpload = prefs.getLong(PREF_LAST_ARCHIVE_UPLOAD, 0);
         long now = System.currentTimeMillis();
@@ -151,11 +160,76 @@ public class MainActivity extends AppCompatActivity {
         new Thread(this::checkAndUploadArchive).start();
     }
 
-//    private boolean isNetworkAvailable() {
-//        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-//        return activeNetwork != null && activeNetwork.isConnected();
-//    }
+    /**
+     * Проверяет наличие файлов ответов для текущего пользователя и загружает их
+     */
+    public void forceCheckAndDownloadData() {
+        new Thread(() -> {
+            User user = User.getInstance();
+            if (user == null || user.getLogin() == null) return;
+
+            try {
+                CloudStorageModule cloud = CloudStorageModule.getInstance();
+                cloud.setContext(this);
+                // Ищем файлы в папке fetch/download, содержащие логин
+                List<String> files = cloud.listDownloadFilesForUser(user.getLogin());
+
+                SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                Set<String> processedFiles = prefs.getStringSet("processed_download_files", new HashSet<>());
+                boolean anyImported = false;
+
+                SecretKey key = user.getKey();
+                for (String filePath : files) {
+                    String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+                    if (processedFiles.contains(fileName)) continue;
+
+                    byte[] encryptedData = cloud.downloadFile(filePath);
+                    int count = QuestionnaireManagerModule.getInstance().importQuestionnairesFromArchive(encryptedData, key);
+                    if (count > 0) {
+                        anyImported = true;
+                        processedFiles.add(fileName);
+                        // Удаляем файл из облака после успешного импорта
+                        cloud.deleteFile(filePath);
+                    }
+                }
+
+                if (anyImported) {
+                    prefs.edit()
+                            .putBoolean("data_request_sent", false)
+                            .putStringSet("processed_download_files", processedFiles)
+                            .apply();
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Импортированы новые анкет", Toast.LENGTH_LONG).show();
+                        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                        if (fragment instanceof ProfileFragment) {
+                            ((ProfileFragment) fragment).refreshRequestButton();
+                        }
+                    });
+                } else {
+                    prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
+                }
+            } catch (Exception e) {
+                Log.e("MainActivity", "Download check error", e);
+            }
+        }).start();
+    }
+
+    // Вспомогательный метод разархивации
+    private String unzipToString(byte[] zipData) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
+            ZipEntry entry = zis.getNextEntry();
+            if (entry != null && entry.getName().equals("questionnaires.json")) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    baos.write(buffer, 0, len);
+                }
+                return baos.toString(StandardCharsets.UTF_8.name());
+            }
+            throw new IOException("Invalid archive: questionnaires.json not found");
+        }
+    }
 
     private void copyFromAsstesAlgorithmFile() {
         new Thread(() -> {
@@ -198,6 +272,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+
     }
 
     private void initViews() {

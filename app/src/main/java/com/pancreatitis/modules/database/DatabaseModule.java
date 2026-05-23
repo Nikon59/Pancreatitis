@@ -224,6 +224,22 @@ public class DatabaseModule {
 
         return patient;
     }
+    public Patient getPatientByFio(String fio) {
+        Cursor cursor = null;
+        Patient patient = null;
+        try {
+            cursor = database.query("patients", null, "fio = ?", new String[]{fio}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                patient = new Patient();
+                patient.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                patient.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
+                patient.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return patient;
+    }
     public int insertPatient(Patient patient) {
         ContentValues values = new ContentValues();
         values.put("fio", patient.getFio());

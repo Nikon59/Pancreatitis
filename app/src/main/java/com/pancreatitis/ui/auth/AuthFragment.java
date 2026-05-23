@@ -132,6 +132,7 @@ public class AuthFragment extends Fragment {
                                     Activity activity = getActivity();
                                     if (activity instanceof MainActivity) {
                                         ((MainActivity) activity).forceCheckAndUploadArchive();
+                                        ((MainActivity) activity).forceCheckAndDownloadData();
                                     }
 
                                     // Навигация только в UI-потоке

@@ -17,6 +17,7 @@ import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.safety.SafetyModule;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import javax.crypto.SecretKey;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -175,7 +177,7 @@ public class QuestionnaireManagerModule {
     private byte[] createZipArchive(String jsonContent) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            ZipEntry entry = new ZipEntry("questionnaires.json");
+            ZipEntry entry = new ZipEntry("updates.json");
             zos.putNextEntry(entry);
             zos.write(jsonContent.getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
@@ -188,6 +190,26 @@ public class QuestionnaireManagerModule {
         return mapper.writeValueAsString(questionnaires);
     }
 
+    /**
+     * Формирует список Update из всех анкет текущего врача
+     */
+    private List<Update> getAllUpdatesForDoctor(Doctor doctor) {
+        List<Update> updates = new ArrayList<>();
+        List<QuestionnaireDTO> questionnaires = databaseModule.getAllFullQuestionnairesForDoctor(doctor.getId());
+        for (QuestionnaireDTO dto : questionnaires) {
+            Update update = new Update();
+            // Получаем пациента по id из анкеты
+            Patient patient = databaseModule.getPatientById(dto.getIdPatient());
+            update.setPatient(patient);
+            update.setQuestionnaireDTO(dto);
+            updates.add(update);
+        }
+        return updates;
+    }
+
+    /**
+     * Создаёт ZIP-архив со списком Update и загружает в облако
+     */
     public String uploadAllQuestionnairesAsArchive() {
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
@@ -199,33 +221,121 @@ public class QuestionnaireManagerModule {
             return "Врач не найден в БД";
         }
 
-        List<QuestionnaireDTO> questionnaires = databaseModule.getAllFullQuestionnairesForDoctor(doctor.getId());
-        if (questionnaires.isEmpty()) {
+        List<Update> updates = getAllUpdatesForDoctor(doctor);
+        if (updates.isEmpty()) {
             return "Нет анкет для выгрузки";
         }
 
         try {
-            // 1. Преобразуем в JSON
-            String jsonData = buildArchiveJson(questionnaires);
+            // Преобразуем список Update в JSON
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonData = mapper.writeValueAsString(updates);
 
-            // 2. Упаковываем в ZIP
+            // Упаковываем в ZIP
             byte[] zipData = createZipArchive(jsonData);
 
-            // 3. Шифруем ZIP-данные (общий ключ пользователя)
+            // Шифруем ZIP-данные
             SecretKey key = user.getKey();
             byte[] encryptedData = safetyModule.encryptData(zipData, key);
 
-            // 4. Формируем имя файла с текущей датой
+            // Имя файла с логином
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
             String fileName = "archive_" + user.getLogin() + "_" + timestamp + ".zip.enc";
 
-            // 5. Загружаем в облако (папка fetch/upload)
             boolean success = cloudStorageModule.uploadArchive(encryptedData, fileName);
             return success ? "Архив успешно отправлен" : "Ошибка при загрузке архива";
 
         } catch (Exception e) {
             Log.e("QuestionnaireManager", "Archive upload error", e);
             return "Ошибка: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Импортирует анкеты из ZIP-архива (список Update)
+     * @param encryptedZipData байты зашифрованного ZIP-архива
+     * @param key ключ для расшифровки
+     * @return количество успешно импортированных анкет
+     */
+    public int importQuestionnairesFromArchive(byte[] encryptedZipData, SecretKey key) {
+        try {
+            // Расшифровываем
+            byte[] zipData = safetyModule.decryptData(encryptedZipData, key);
+            // Разархивируем
+            String jsonData = unzipToString(zipData, "updates.json");
+            // Парсим список Update
+            ObjectMapper mapper = new ObjectMapper();
+            List<Update> updates = mapper.readValue(jsonData,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<Update>>() {});
+
+            int imported = 0;
+            databaseModule.beginTransaction();
+            try {
+                for (Update update : updates) {
+                    QuestionnaireDTO dto = update.getQuestionnaireDTO();
+                    Patient patient = update.getPatient();
+
+                    // Проверяем, существует ли анкета с таким id
+                    Questionnaire existing = databaseModule.getQuestionnaireById(dto.getId());
+                    if (existing == null || existing.getId() == -1) {
+                        // Сохраняем пациента (если нет – по id или по ФИО)
+                        if (patient != null && patient.getId() == -1) {
+                            // Проверяем, нет ли пациента с таким же ФИО
+                            Patient existingPatient = databaseModule.getPatientByFio(patient.getFio()); // нужно добавить метод
+                            if (existingPatient != null) {
+                                patient.setId(existingPatient.getId());
+                            } else {
+                                int newPatientId = databaseModule.insertPatient(patient);
+                                patient.setId(newPatientId);
+                            }
+                        }
+                        dto.setIdPatient(patient.getId());
+
+                        // Сохраняем анкету
+                        int newId = databaseModule.insertQuestionnaire(dto);
+                        if (newId != -1) {
+                            dto.setId(newId);
+                            // Сохраняем ответы
+                            List<CharacterizationAnketPatient> answers = dto.getCharacteristicValues();
+                            if (answers != null) {
+                                for (CharacterizationAnketPatient ans : answers) {
+                                    ans.setIdAnket(newId);
+                                    databaseModule.insertCharacterizationAnketPatient(ans);
+                                }
+                            }
+                            imported++;
+                        }
+                    } else {
+                        // Обновляем существующую, если нужно
+                        // Можно реализовать обновление, но для простоты пропускаем
+                    }
+                }
+                databaseModule.setTransactionSuccessful();
+            } finally {
+                databaseModule.endTransaction();
+            }
+            return imported;
+        } catch (Exception e) {
+            Log.e("QuestionnaireManager", "Import error", e);
+            return 0;
+        }
+    }
+
+    private String unzipToString(byte[] zipData, String entryName) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().equals(entryName)) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[4096];
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        baos.write(buffer, 0, len);
+                    }
+                    return baos.toString(StandardCharsets.UTF_8.name());
+                }
+            }
+            throw new IOException("Entry " + entryName + " not found in archive");
         }
     }
 

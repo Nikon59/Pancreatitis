@@ -36,11 +36,7 @@ public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
     private Button btn_logout;
     private Button btn_update_training_data;
-    private EditText fioValue;
-    private EditText emailValue;
-    private EditText phoneValue;
     private EditText loginValue;
-    private EditText passwordValue;
     private View loadingOverlay;
     private OnBackPressedCallback onBackPressedCallback;
 
@@ -64,21 +60,13 @@ public class ProfileFragment extends Fragment {
     private void initViews(View view){
         btn_logout = view.findViewById(R.id.btn_logout);
         btn_update_training_data = view.findViewById(R.id.btn_update_training_data);
-        fioValue = view.findViewById(R.id.fioValue);
-        emailValue = view.findViewById(R.id.emailValue);
-        phoneValue = view.findViewById(R.id.phoneValue);
         loginValue = view.findViewById(R.id.loginValue);
-        passwordValue = view.findViewById(R.id.passwordValue);
         loadingOverlay = view.findViewById(R.id.loading_overlay);
     }
 
     private void setupProfile(){
         User user = User.getInstance(); // Создать user с ключом
         loginValue.setText(user.getLogin());
-//        fioValue.setText(user.getFio());
-//        emailValue.setText(user.getEmail());
-//        phoneValue.setText(user.getPhone());
-//        passwordValue.setText(user.getPassword());
     }
 
     private void setupBackButtonHandling() {

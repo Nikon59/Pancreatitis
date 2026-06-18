@@ -1,5 +1,6 @@
 package com.pancreatitis.modules.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,6 +18,7 @@ public class DatabaseHelper {
 
     private static final String OLD_DB_NAME = "pancreatitis_v6.6.db";
     private static final String NEW_DB_NAME = "mobile.db";
+    private static final String TARGET_DOCTOR_FIO = "Роман Святославович"; // замените на нужное ФИО
 
     private final Context context;
     private final String oldDbPath;
@@ -88,34 +90,95 @@ public class DatabaseHelper {
         try {
             oldDb = SQLiteDatabase.openDatabase(oldDbPath, null, SQLiteDatabase.OPEN_READONLY);
             newDb = SQLiteDatabase.openDatabase(newDbPath, null, SQLiteDatabase.OPEN_READWRITE);
+
             newDb.execSQL("PRAGMA foreign_keys=OFF;");
             newDb.beginTransaction();
 
-            // 1. Очищаем все таблицы в новой БД
-            clearAllTables(newDb);
+            // 1. Найти старого доктора по fio
+            Cursor doctorCursor = oldDb.rawQuery(
+                    "SELECT id, fio, status, last_modified FROM doctors WHERE fio = ?",
+                    new String[]{TARGET_DOCTOR_FIO});
+            if (!doctorCursor.moveToFirst()) {
+                Log.w("Migration", "Doctor with fio=" + TARGET_DOCTOR_FIO + " not found in old DB");
+                doctorCursor.close();
+                newDb.setTransactionSuccessful();
+                return;
+            }
+            long oldDoctorId = doctorCursor.getLong(0);
+            String fio = doctorCursor.getString(1);
+            String status = doctorCursor.getString(2);
+            String lastModified = doctorCursor.getString(3);
+            doctorCursor.close();
 
-            // 2. Копируем независимые таблицы (не ссылающиеся на doctors)
-            copyTableWithLog(oldDb, newDb, "characteristic_type");
-            copyTableWithLog(oldDb, newDb, "characteristic");
-            copyTableWithLog(oldDb, newDb, "ankets_values");
-            copyTableWithLog(oldDb, newDb, "patients");
+            // 2. Создать нового доктора в новой БД
+            ContentValues cvDoctor = new ContentValues();
+            cvDoctor.put("login", fio);
+            cvDoctor.put("fio", fio);
+            cvDoctor.putNull("phone");
+            cvDoctor.putNull("email");
+            cvDoctor.put("status", status);
+            cvDoctor.put("created_at", lastModified);
+            long newDoctorId = newDb.insert("doctors", null, cvDoctor);
+            Log.d("Migration", "Created new doctor with id=" + newDoctorId + " for fio=" + fio);
 
-            // 3. Создаём временную таблицу для старых doctors (чтобы ankets могла ссылаться)
-            newDb.execSQL("CREATE TEMP TABLE temp_doctors (id INTEGER PRIMARY KEY, fio TEXT, status, last_modified TEXT)");
-            copyDoctorsIntoTemp(oldDb, newDb);
+            // 3. Найти всех пациентов, на которых ссылаются анкеты этого доктора
+            Cursor patientCursor = oldDb.rawQuery(
+                    "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor = ?",
+                    new String[]{String.valueOf(oldDoctorId)});
+            while (patientCursor.moveToNext()) {
+                long patientId = patientCursor.getLong(0);
+                // Получить данные пациента
+                Cursor pData = oldDb.rawQuery(
+                        "SELECT fio, last_modified FROM patients WHERE id = ?",
+                        new String[]{String.valueOf(patientId)});
+                if (pData.moveToFirst()) {
+                    String patientFio = pData.getString(0);
+                    String patientLastModified = pData.getString(1);
+                    ContentValues cvPatient = new ContentValues();
+                    cvPatient.put("id", patientId);       // сохраняем тот же id, чтобы ссылки в анкетах работали
+                    cvPatient.put("fio", patientFio);
+                    cvPatient.put("last_modified", patientLastModified);
+                    // Вставляем или заменяем, если пациент с таким id уже существует
+                    newDb.insertWithOnConflict("patients", null, cvPatient, SQLiteDatabase.CONFLICT_REPLACE);
+                    Log.d("Migration", "Copied patient id=" + patientId);
+                }
+                pData.close();
+            }
+            patientCursor.close();
 
-            // 4. Копируем ankets (ссылается на doctors)
-            copyTableWithLog(oldDb, newDb, "ankets");
-            copyTableWithLog(oldDb, newDb, "characterization_anket_patient");
+            // 4. Перенести все анкеты этого доктора
+            Cursor ankCursor = oldDb.rawQuery(
+                    "SELECT id, id_patient, id_doctor, id_expert, diagnosis, date_of_completion, admitted_from, last_modified " +
+                            "FROM ankets WHERE id_doctor = ?",
+                    new String[]{String.valueOf(oldDoctorId)});
+            int ankCount = 0;
+            while (ankCursor.moveToNext()) {
+                long oldAnkId = ankCursor.getLong(0);
+                long idPatient = ankCursor.getLong(1);
+                long idExpertOld = ankCursor.getLong(3);  // id_doctor на позиции 2, id_expert на 3
+                String diagnosis = ankCursor.getString(4);
+                String dateOfCompletion = ankCursor.getString(5);
+                String admittedFrom = ankCursor.getString(6);
+                String lastModifiedAnk = ankCursor.getString(7);
 
-            // 5. Преобразуем temp_doctors в новую таблицу doctors (с добавленными полями)
-            convertTempDoctorsToNewDoctors(newDb);
-
-            // 6. Удаляем временную таблицу
-            newDb.execSQL("DROP TABLE temp_doctors");
+                ContentValues cvAnk = new ContentValues();
+                cvAnk.put("id_patient", idPatient);
+                cvAnk.put("id_doctor", newDoctorId);
+                cvAnk.putNull("id_expert");
+                cvAnk.put("diagnosis", diagnosis);
+                cvAnk.put("date_of_completion", dateOfCompletion);
+                cvAnk.put("admitted_from", admittedFrom);
+                cvAnk.put("last_modified", lastModifiedAnk);
+                // Не указываем id явно, чтобы генерировался автоматически
+                newDb.insert("ankets", null, cvAnk);
+                ankCount++;
+            }
+            ankCursor.close();
+            Log.d("Migration", "Migrated " + ankCount + " ankets for doctor " + fio);
 
             newDb.setTransactionSuccessful();
-            Log.d("Migration", "All data migrated successfully");
+            newDb.execSQL("PRAGMA user_version = 7;");
+            Log.d("Migration", "Migration for single doctor completed successfully");
         } catch (Exception e) {
             Log.e("Migration", "Migration failed", e);
         } finally {
@@ -126,149 +189,5 @@ public class DatabaseHelper {
             }
             if (oldDb != null) oldDb.close();
         }
-    }
-
-    private void clearAllTables(SQLiteDatabase db) {
-        String[] tables = {"characteristic_type", "characteristic", "ankets_values",
-                "doctors", "patients", "ankets", "characterization_anket_patient"};
-        for (String table : tables) {
-            try {
-                db.execSQL("DELETE FROM " + table);
-            } catch (Exception e) {
-                Log.w("Migration", "Could not clear table " + table + ": " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Универсальное копирование таблицы, учитывая разные типы данных (в т.ч. BLOB/INTEGER).
-     */
-    private void copyTableWithLog(SQLiteDatabase oldDb, SQLiteDatabase newDb, String tableName) {
-        try {
-            // Проверяем существование таблицы в старой БД
-            Cursor check = oldDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", new String[]{tableName});
-            boolean exists = check.moveToFirst();
-            check.close();
-            if (!exists) {
-                Log.w("Migration", "Table " + tableName + " does not exist in old DB, skipping");
-                return;
-            }
-
-            // Получаем колонки из старой таблицы
-            Cursor colCursor = oldDb.rawQuery("SELECT * FROM " + tableName + " LIMIT 0", null);
-            String[] oldColumns = colCursor.getColumnNames();
-            colCursor.close();
-            if (oldColumns.length == 0) return;
-
-            // Получаем колонки из новой таблицы
-            Cursor newColCursor = newDb.rawQuery("SELECT * FROM " + tableName + " LIMIT 0", null);
-            String[] newColumns = newColCursor.getColumnNames();
-            newColCursor.close();
-
-            // Находим пересечение колонок
-            List<String> commonColumns = new ArrayList<>();
-            for (String col : oldColumns) {
-                for (String newCol : newColumns) {
-                    if (col.equals(newCol)) {
-                        commonColumns.add(col);
-                        break;
-                    }
-                }
-            }
-            if (commonColumns.isEmpty()) {
-                Log.w("Migration", "No common columns for table " + tableName);
-                return;
-            }
-
-            // Строим INSERT
-            StringBuilder insertSql = new StringBuilder("INSERT INTO " + tableName + " (");
-            StringBuilder placeholders = new StringBuilder();
-            for (int i = 0; i < commonColumns.size(); i++) {
-                if (i > 0) {
-                    insertSql.append(",");
-                    placeholders.append(",");
-                }
-                insertSql.append(commonColumns.get(i));
-                placeholders.append("?");
-            }
-            insertSql.append(") VALUES (").append(placeholders).append(")");
-
-            Cursor dataCursor = oldDb.rawQuery("SELECT * FROM " + tableName, null);
-            int count = 0;
-            while (dataCursor.moveToNext()) {
-                Object[] values = new Object[commonColumns.size()];
-                for (int i = 0; i < commonColumns.size(); i++) {
-                    String columnName = commonColumns.get(i);
-                    int index = dataCursor.getColumnIndex(columnName);
-                    if (index == -1) {
-                        values[i] = null;
-                        continue;
-                    }
-                    // Универсальное чтение значения любого типа
-                    values[i] = getValueFromCursor(dataCursor, index);
-                }
-                newDb.execSQL(insertSql.toString(), values);
-                count++;
-            }
-            dataCursor.close();
-            Log.d("Migration", "Copied " + count + " rows into " + tableName);
-        } catch (Exception e) {
-            Log.e("Migration", "Error copying table " + tableName, e);
-        }
-    }
-
-    /**
-     * Безопасно читает значение из курсора, не вызывая исключений при несоответствии типов.
-     */
-    private Object getValueFromCursor(Cursor cursor, int columnIndex) {
-        switch (cursor.getType(columnIndex)) {
-            case Cursor.FIELD_TYPE_NULL:
-                return null;
-            case Cursor.FIELD_TYPE_INTEGER:
-                return cursor.getLong(columnIndex);
-            case Cursor.FIELD_TYPE_FLOAT:
-                return cursor.getDouble(columnIndex);
-            case Cursor.FIELD_TYPE_STRING:
-                return cursor.getString(columnIndex);
-            case Cursor.FIELD_TYPE_BLOB:
-                return cursor.getBlob(columnIndex);
-            default:
-                return null;
-        }
-    }
-
-    private void copyDoctorsIntoTemp(SQLiteDatabase oldDb, SQLiteDatabase newDb) {
-        Cursor c = oldDb.rawQuery("SELECT id, fio, status, last_modified FROM doctors", null);
-        int count = 0;
-        while (c.moveToNext()) {
-            long id = c.getLong(0);
-            String fio = c.getString(1);
-            Object status = getValueFromCursor(c, 2);  // безопасное чтение (BLOB или INTEGER)
-            String lastModified = c.getString(3);
-            newDb.execSQL("INSERT INTO temp_doctors (id, fio, status, last_modified) VALUES (?,?,?,?)",
-                    new Object[]{id, fio, status, lastModified});
-            count++;
-        }
-        c.close();
-        Log.d("Migration", "Copied " + count + " doctors into temp_doctors");
-    }
-
-    private void convertTempDoctorsToNewDoctors(SQLiteDatabase newDb) {
-        Cursor c = newDb.rawQuery("SELECT id, fio, status, last_modified FROM temp_doctors", null);
-        int count = 0;
-        while (c.moveToNext()) {
-            long id = c.getLong(0);
-            String fio = c.getString(1);
-            Object status = getValueFromCursor(c, 2);  // может быть Long или byte[] или другое
-            String lastModified = c.getString(3);
-
-            // status в старой БД хранился как BLOB или INTEGER. В новой БД тип BLOB,
-            // но SQLite позволяет положить туда любой тип, так что оставляем как есть.
-            newDb.execSQL("INSERT INTO doctors (id, login, fio, phone, email, status, created_at) VALUES (?,?,?,?,?,?,?)",
-                    new Object[]{id, fio, fio, null, null, status, lastModified});
-            count++;
-        }
-        c.close();
-        Log.d("Migration", "Inserted " + count + " doctors into final doctors table");
     }
 }

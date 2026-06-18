@@ -1,0 +1,142 @@
+Index: app/src/main/java/com/pancreatitis/modules/localstorage/LocalStorageModule.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.pancreatitis.modules.localstorage;\r\n\r\nimport android.content.Context;\r\n\r\nimport java.io.*;\r\nimport java.nio.charset.StandardCharsets;\r\nimport java.time.LocalDateTime;\r\nimport java.time.format.DateTimeFormatter;\r\nimport java.util.ArrayList;\r\nimport java.util.List;\r\nimport java.util.concurrent.Callable;\r\nimport java.util.concurrent.ExecutorService;\r\nimport java.util.concurrent.Executors;\r\nimport java.util.concurrent.Future;\r\n\r\npublic class LocalStorageModule {\r\n    private Context context;\r\n    private static LocalStorageModule instance;\r\n    private final ExecutorService executorService = Executors.newCachedThreadPool();\r\n    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(\"yyyy-MM-dd HH:mm:ss\");\r\n\r\n    // Базовый путь для хранения данных\r\n    private File storageBaseDir;\r\n    private static final String APP_DIR_NAME = \"PancreatitisApp\";\r\n    private static final String USERS_DIR = \"users\";\r\n\r\n    private LocalStorageModule() {\r\n        initializeStorage();\r\n    }\r\n\r\n    public static LocalStorageModule getInstance() {\r\n        if (instance == null) {\r\n            synchronized (LocalStorageModule.class) {\r\n                if (instance == null) {\r\n                    instance = new LocalStorageModule();\r\n                }\r\n            }\r\n        }\r\n        return instance;\r\n    }\r\n\r\n    public Context getContext() {\r\n        return context;\r\n    }\r\n\r\n    public void setContext(Context context) {\r\n        this.context = context;\r\n    }\r\n\r\n    private void initializeStorage() {\r\n        // Инициализация папок в фоне\r\n        executorService.execute(() -> {\r\n            createFolder(USERS_DIR);\r\n        });\r\n    }\r\n\r\n    private File getStorageBaseDir() {\r\n        if (storageBaseDir == null) {\r\n            storageBaseDir = new File(context.getFilesDir(), APP_DIR_NAME);\r\n        }\r\n        return storageBaseDir;\r\n    }\r\n\r\n    private boolean createFolder(String folderName) {\r\n        File folder = new File(getStorageBaseDir(), folderName);\r\n        if (!folder.exists()) {\r\n            return folder.mkdirs();\r\n        }\r\n        return true;\r\n    }\r\n\r\n    public boolean createUserFolder(String login) {\r\n        try {\r\n            Future<Boolean> future = executorService.submit(() -> {\r\n                File userFolder = new File(getFolder(USERS_DIR), login);\r\n\r\n                if (userFolder.exists()) {\r\n                    return true;\r\n                }\r\n\r\n                boolean created = userFolder.mkdirs();\r\n\r\n                if (created) {\r\n                    System.out.println(\"Папка пользователя создана: \" + userFolder.getAbsolutePath());\r\n                } else {\r\n                    System.out.println(\"Не удалось создать папку пользователя: \" + login);\r\n                }\r\n\r\n                return created;\r\n            });\r\n\r\n            return future.get();\r\n        } catch (Exception e) {\r\n            return false;\r\n        }\r\n    }\r\n\r\n    private File getFolder(String folderName) {\r\n        return new File(getStorageBaseDir(), folderName);\r\n    }\r\n\r\n    public boolean isUserFolderExists(String login) {\r\n        try {\r\n            Future<Boolean> future = executorService.submit(() -> {\r\n                File userFolder = new File(getFolder(USERS_DIR), login);\r\n                return userFolder.exists() && userFolder.isDirectory();\r\n            });\r\n            return future.get();\r\n        } catch (Exception e) {\r\n            return false;\r\n        }\r\n    }\r\n\r\n    public byte[] downloadUserKey(String login) throws Exception {\r\n        Callable<byte[]> task = () -> {\r\n            File keyFile = new File(new File(getFolder(USERS_DIR), login), \"key_user.enc\");\r\n\r\n            if (!keyFile.exists()) {\r\n                throw new FileNotFoundException(\"File not found: \" + keyFile.getAbsolutePath());\r\n            }\r\n\r\n            return readFileAsBytes(keyFile);\r\n        };\r\n\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    public boolean saveLocalUserKey(String login, byte[] keyData) throws Exception {\r\n        File userFolder = new File(getFolder(USERS_DIR), login);\r\n\r\n        if (!userFolder.exists()) {\r\n            if (!userFolder.mkdirs()) {\r\n                throw new IOException(\"Не удалось создать папку пользователя: \" + login);\r\n            }\r\n        }\r\n\r\n        File keyFile = new File(userFolder, \"key_user.enc\");\r\n\r\n        try (FileOutputStream fos = new FileOutputStream(keyFile)) {\r\n            fos.write(keyData);\r\n            fos.flush();\r\n            return true;\r\n        } catch (IOException e) {\r\n            throw new IOException(\"Ошибка при сохранении ключа: \" + e.getMessage(), e);\r\n        }\r\n    }\r\n\r\n    public boolean isUserKeyExists(String login) throws Exception {\r\n        Callable<Boolean> task = () -> {\r\n            File keyFile = new File(new File(getFolder(USERS_DIR), login), \"key_user.enc\");\r\n            return keyFile.exists();\r\n        };\r\n\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    /**\r\n     * Загружает словарь BIP39 из assets приложения (файл wordlist_en.txt).\r\n     * Возвращает список из 2048 слов.\r\n     */\r\n    public List<String> loadBip39WordList() throws Exception {\r\n        if (context == null) throw new IllegalStateException(\"Context is not set\");\r\n        Callable<List<String>> task = () -> {\r\n            List<String> words = new ArrayList<>(2048);\r\n            try (InputStream is = context.getAssets().open(\"wordlist_en.txt\");\r\n                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {\r\n                String line;\r\n                while ((line = reader.readLine()) != null) {\r\n                    String word = line.trim();\r\n                    if (!word.isEmpty()) words.add(word);\r\n                }\r\n            }\r\n            if (words.size() != 2048) {\r\n                throw new IllegalArgumentException(\"Invalid BIP39 word list size: \" + words.size() + \", expected 2048\");\r\n            }\r\n            return words;\r\n        };\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    // ---------------------------------------------------------------------------\r\n    // Методы для работы с алгоритмом\r\n    // ---------------------------------------------------------------------------\r\n    public byte[] getTrainingData() throws Exception {\r\n        Callable<byte[]> task = () -> {\r\n            File algorithmFile = findAlgorithmFile();\r\n            if (algorithmFile == null) {\r\n                throw new FileNotFoundException(\"Algorithm file not found\");\r\n            }\r\n            return readFileAsBytes(algorithmFile);\r\n        };\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    public boolean isTrainingData() throws Exception {\r\n        Callable<Boolean> task = () -> findAlgorithmFile() != null;\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    public void downloadAlgorithmFile(byte[] algorithmData, String fileName) throws Exception {\r\n        Callable<Boolean> task = () -> {\r\n            deleteAllAlgorithmFiles();\r\n            File algorithmFile = new File(getStorageBaseDir(), fileName);\r\n            return writeFile(algorithmFile, algorithmData);\r\n        };\r\n        executorService.submit(task).get();\r\n    }\r\n\r\n    private File findAlgorithmFile() {\r\n        File[] files = getStorageBaseDir().listFiles((dir, name) -> name.startsWith(\"algorithm_\") && name.endsWith(\".txt\"));\r\n        if (files == null || files.length == 0) {\r\n            return null;\r\n        }\r\n        // Если больше одного, можно вернуть первый или выбросить ошибку. Возьмем первый, т.к. по идее должен быть один.\r\n        return files[0];\r\n    }\r\n\r\n    private void deleteAllAlgorithmFiles() {\r\n        File[] files = getStorageBaseDir().listFiles((dir, name) -> name.startsWith(\"algorithm\") && name.endsWith(\".txt\"));\r\n        if (files != null) {\r\n            for (File f : files) {\r\n                f.delete();\r\n            }\r\n        }\r\n    }\r\n\r\n    public void copyAlgorithmFromAssets(String assetFileName) throws Exception {\r\n        // Проверить, что context не null\r\n        if (context == null) throw new IllegalStateException(\"Context is not set\");\r\n\r\n        executorService.submit(() -> {\r\n            // Удалить старые файлы алгоритма\r\n            deleteAllAlgorithmFiles();\r\n\r\n            // Скопировать из assets\r\n            File destFile = new File(getStorageBaseDir(), assetFileName);\r\n            try (InputStream is = context.getAssets().open(assetFileName);\r\n                 FileOutputStream fos = new FileOutputStream(destFile)) {\r\n                byte[] buffer = new byte[4096];\r\n                int length;\r\n                while ((length = is.read(buffer)) > 0) {\r\n                    fos.write(buffer, 0, length);\r\n                }\r\n                fos.flush();\r\n            }\r\n            return true;\r\n        }).get();\r\n    }\r\n\r\n    public LocalDateTime getAlgorithmFileDateTime() throws Exception {\r\n        File algoFile = findAlgorithmFile();\r\n        if (algoFile == null) {\r\n            throw new FileNotFoundException(\"Algorithm file not found\");\r\n        }\r\n        return parseDateTimeFromFilename(algoFile.getName());\r\n    }\r\n\r\n    private LocalDateTime parseDateTimeFromFilename(String filename) {\r\n        String prefix = \"algorithm_\";\r\n        String suffix = \".txt\";\r\n        if (!filename.startsWith(prefix) || !filename.endsWith(suffix)) {\r\n            throw new IllegalArgumentException(\"Invalid algorithm filename: \" + filename);\r\n        }\r\n        String dateTimeStr = filename.substring(prefix.length(), filename.length() - suffix.length());\r\n        DateTimeFormatter fileFormatter = DateTimeFormatter.ofPattern(\"yyyy_MM_dd_HH_mm_ss\");\r\n        return LocalDateTime.parse(dateTimeStr, fileFormatter);\r\n    }\r\n\r\n    // ---------------------------------------------------------------------------\r\n    // Вспомогательные методы для работы с файлами\r\n    // ---------------------------------------------------------------------------\r\n    private byte[] readFileAsBytes(File file) throws IOException {\r\n        try (FileInputStream fis = new FileInputStream(file);\r\n             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {\r\n\r\n            byte[] buffer = new byte[4096];\r\n            int bytesRead;\r\n            while ((bytesRead = fis.read(buffer)) != -1) {\r\n                bos.write(buffer, 0, bytesRead);\r\n            }\r\n\r\n            return bos.toByteArray();\r\n        }\r\n    }\r\n\r\n    private boolean writeFile(File file, byte[] data) throws IOException {\r\n        // Создаем родительские директории, если их нет\r\n        File parentDir = file.getParentFile();\r\n        if (parentDir != null && !parentDir.exists()) {\r\n            parentDir.mkdirs();\r\n        }\r\n\r\n        try (FileOutputStream fos = new FileOutputStream(file)) {\r\n            fos.write(data);\r\n            fos.flush();\r\n            return true;\r\n        } catch (IOException e) {\r\n            e.printStackTrace();\r\n            return false;\r\n        }\r\n    }\r\n\r\n    // Метод для получения полного пути к файлу пользователя (для отладки)\r\n    public String getUserFolderPath(String login) {\r\n        File userFolder = new File(getFolder(USERS_DIR), login);\r\n        return userFolder.getAbsolutePath();\r\n    }\r\n\r\n    // Метод для проверки доступности хранилища\r\n    public boolean isStorageAvailable() {\r\n        return getStorageBaseDir() != null && getStorageBaseDir().canWrite();\r\n    }\r\n\r\n    // Метод для очистки ресурсов\r\n    public void shutdown() {\r\n        if (!executorService.isShutdown()) {\r\n            executorService.shutdown();\r\n        }\r\n    }\r\n\r\n    // Метод для удаления данных пользователя\r\n    public boolean deleteUserData(String login) throws Exception {\r\n        Callable<Boolean> task = () -> {\r\n            File userFolder = new File(getFolder(USERS_DIR), login);\r\n            return deleteRecursive(userFolder);\r\n        };\r\n\r\n        return executorService.submit(task).get();\r\n    }\r\n\r\n    private boolean deleteRecursive(File fileOrDirectory) {\r\n        if (fileOrDirectory.isDirectory()) {\r\n            File[] children = fileOrDirectory.listFiles();\r\n            if (children != null) {\r\n                for (File child : children) {\r\n                    deleteRecursive(child);\r\n                }\r\n            }\r\n        }\r\n        return fileOrDirectory.delete();\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/pancreatitis/modules/localstorage/LocalStorageModule.java b/app/src/main/java/com/pancreatitis/modules/localstorage/LocalStorageModule.java
+--- a/app/src/main/java/com/pancreatitis/modules/localstorage/LocalStorageModule.java	(revision 045e4564f0bc0e85b821b51d51c904d4c692d589)
++++ b/app/src/main/java/com/pancreatitis/modules/localstorage/LocalStorageModule.java	(date 1781771241085)
+@@ -1,6 +1,7 @@
+ package com.pancreatitis.modules.localstorage;
+ 
+ import android.content.Context;
++import android.content.SharedPreferences;
+ 
+ import java.io.*;
+ import java.nio.charset.StandardCharsets;
+@@ -23,6 +24,10 @@
+     private File storageBaseDir;
+     private static final String APP_DIR_NAME = "PancreatitisApp";
+     private static final String USERS_DIR = "users";
++    private static final String PREFS_NAME = "local_storage_prefs";
++    private static final String KEY_DATA_VERSION = "storage_data_version";
++    private static final int CURRENT_DATA_VERSION = 1; // увеличивайте при изменении структуры
++    private SharedPreferences prefs;
+ 
+     private LocalStorageModule() {
+         initializeStorage();
+@@ -45,6 +50,112 @@
+ 
+     public void setContext(Context context) {
+         this.context = context;
++        // SharedPreferences для хранения версии данных
++        if (context != null) {
++            this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
++        }
++        // Запускаем миграцию после установки контекста
++        if (context != null) {
++            migrateStorage();
++        }
++    }
++
++    private void migrateStorage() {
++        int storedVersion = prefs.getInt(KEY_DATA_VERSION, 0);
++        if (storedVersion >= CURRENT_DATA_VERSION) {
++            return; // миграция не нужна
++        }
++
++        try {
++            // Последовательное выполнение миграций с версии storedVersion до CURRENT_DATA_VERSION
++            for (int version = storedVersion + 1; version <= CURRENT_DATA_VERSION; version++) {
++                applyMigration(version);
++            }
++            // Сохраняем новую версию
++            prefs.edit().putInt(KEY_DATA_VERSION, CURRENT_DATA_VERSION).apply();
++        } catch (Exception e) {
++            // Логирование ошибки – в реальном приложении нужно предусмотреть стратегию восстановления
++            e.printStackTrace();
++        }
++    }
++
++    private void applyMigration(int targetVersion) throws Exception {
++        switch (targetVersion) {
++            case 1:
++                migrateToVersion1();
++                break;
++            default:
++                throw new UnsupportedOperationException("Unknown migration version: " + targetVersion);
++        }
++    }
++
++    private void migrateToVersion1() throws IOException {
++        File baseDir = getStorageBaseDir();
++        File legacyRoot = context.getFilesDir();  // старая корневая папка (без APP_DIR_NAME)
++
++        // === 1. Создаём папки, если их нет ===
++        if (!baseDir.exists()) {
++            baseDir.mkdirs();
++        }
++        File usersDir = new File(baseDir, USERS_DIR);
++        if (!usersDir.exists()) {
++            usersDir.mkdirs();
++        }
++
++        // === 2. Перенос данных из старого корня (context.getFilesDir()), если они там есть ===
++        // Это актуально, если раньше приложение писало всё напрямую в getFilesDir().
++        if (legacyRoot != null && legacyRoot.exists()) {
++            File[] legacyFiles = legacyRoot.listFiles();
++            if (legacyFiles != null) {
++                for (File file : legacyFiles) {
++                    // Игнорируем служебные файлы и саму новую базовую папку
++                    if (file.getName().equals(APP_DIR_NAME) || file.getName().startsWith(".")
++                            || file.getName().equals("profile_installer") || file.getName().equals("lib")) {
++                        continue;
++                    }
++                    // Перемещаем только папки пользователей и файлы алгоритмов
++                    if (file.isDirectory() && !file.getName().equals(USERS_DIR)) {
++                        // Похоже на папку пользователя – переносим в users/
++                        File dest = new File(usersDir, file.getName());
++                        if (!dest.exists()) {
++                            moveFileOrDir(file, dest);
++                        }
++                    } else if (file.isFile() && (file.getName().startsWith("algorithm") || file.getName().endsWith(".txt"))) {
++                        // Файл алгоритма – переносим в базовую директорию
++                        File dest = new File(baseDir, file.getName());
++                        if (!dest.exists()) {
++                            moveFileOrDir(file, dest);
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    private void moveFileOrDir(File source, File dest) throws IOException {
++        if (source.isDirectory()) {
++            if (!dest.exists()) {
++                dest.mkdirs();
++            }
++            File[] children = source.listFiles();
++            if (children != null) {
++                for (File child : children) {
++                    moveFileOrDir(child, new File(dest, child.getName()));
++                }
++            }
++            source.delete(); // удаляем исходную папку после перемещения
++        } else {
++            // Копируем и удаляем оригинал
++            try (InputStream in = new FileInputStream(source);
++                 OutputStream out = new FileOutputStream(dest)) {
++                byte[] buffer = new byte[4096];
++                int length;
++                while ((length = in.read(buffer)) > 0) {
++                    out.write(buffer, 0, length);
++                }
++            }
++            source.delete();
++        }
+     }
+ 
+     private void initializeStorage() {

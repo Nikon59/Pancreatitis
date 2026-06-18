@@ -112,7 +112,7 @@ public class DatabaseHelper {
 
             // 2. Создать нового доктора в новой БД
             ContentValues cvDoctor = new ContentValues();
-            cvDoctor.put("login", fio);
+            cvDoctor.put("login", "dr_roman");
             cvDoctor.put("fio", fio);
             cvDoctor.putNull("phone");
             cvDoctor.putNull("email");

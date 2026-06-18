@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
@@ -12,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseHelper {
 
@@ -127,7 +130,6 @@ public class DatabaseHelper {
                     new String[]{String.valueOf(oldDoctorId)});
             while (patientCursor.moveToNext()) {
                 long patientId = patientCursor.getLong(0);
-                // Получить данные пациента
                 Cursor pData = oldDb.rawQuery(
                         "SELECT fio, last_modified FROM patients WHERE id = ?",
                         new String[]{String.valueOf(patientId)});
@@ -138,7 +140,6 @@ public class DatabaseHelper {
                     cvPatient.put("id", patientId);       // сохраняем тот же id, чтобы ссылки в анкетах работали
                     cvPatient.put("fio", patientFio);
                     cvPatient.put("last_modified", patientLastModified);
-                    // Вставляем или заменяем, если пациент с таким id уже существует
                     newDb.insertWithOnConflict("patients", null, cvPatient, SQLiteDatabase.CONFLICT_REPLACE);
                     Log.d("Migration", "Copied patient id=" + patientId);
                 }
@@ -146,7 +147,8 @@ public class DatabaseHelper {
             }
             patientCursor.close();
 
-            // 4. Перенести все анкеты этого доктора
+            // 4. Перенести все анкеты этого доктора и сохранить маппинг старых id -> новые id
+            Map<Long, Long> anketIdMap = new HashMap<>();
             Cursor ankCursor = oldDb.rawQuery(
                     "SELECT id, id_patient, id_doctor, id_expert, diagnosis, date_of_completion, admitted_from, last_modified " +
                             "FROM ankets WHERE id_doctor = ?",
@@ -155,7 +157,7 @@ public class DatabaseHelper {
             while (ankCursor.moveToNext()) {
                 long oldAnkId = ankCursor.getLong(0);
                 long idPatient = ankCursor.getLong(1);
-                long idExpertOld = ankCursor.getLong(3);  // id_doctor на позиции 2, id_expert на 3
+                long idExpertOld = ankCursor.getLong(3);
                 String diagnosis = ankCursor.getString(4);
                 String dateOfCompletion = ankCursor.getString(5);
                 String admittedFrom = ankCursor.getString(6);
@@ -164,17 +166,65 @@ public class DatabaseHelper {
                 ContentValues cvAnk = new ContentValues();
                 cvAnk.put("id_patient", idPatient);
                 cvAnk.put("id_doctor", newDoctorId);
-                cvAnk.putNull("id_expert");
+                if (idExpertOld == oldDoctorId) {
+                    cvAnk.put("id_expert", newDoctorId);
+                } else {
+                    cvAnk.putNull("id_expert");
+                }
                 cvAnk.put("diagnosis", diagnosis);
                 cvAnk.put("date_of_completion", dateOfCompletion);
                 cvAnk.put("admitted_from", admittedFrom);
                 cvAnk.put("last_modified", lastModifiedAnk);
-                // Не указываем id явно, чтобы генерировался автоматически
-                newDb.insert("ankets", null, cvAnk);
+
+                long newAnkId = newDb.insert("ankets", null, cvAnk);
+                anketIdMap.put(oldAnkId, newAnkId);
                 ankCount++;
             }
             ankCursor.close();
             Log.d("Migration", "Migrated " + ankCount + " ankets for doctor " + fio);
+
+            // 5. Перенести characterization_anket_patient для этих анкет
+            if (!anketIdMap.isEmpty()) {
+                // Собираем старые id анкет в строку для IN
+                List<String> oldAnkIds = new ArrayList<>();
+                for (Long id : anketIdMap.keySet()) {
+                    oldAnkIds.add(String.valueOf(id));
+                }
+                String idsIn = TextUtils.join(",", oldAnkIds);
+                Cursor capCursor = oldDb.rawQuery(
+                        "SELECT id_characteristic, id_anket, id_value, value, created_at, last_modified " +
+                                "FROM characterization_anket_patient WHERE id_anket IN (" + idsIn + ")",
+                        null);
+                int capCount = 0;
+                while (capCursor.moveToNext()) {
+                    long idCharacteristic = capCursor.getLong(0);
+                    long oldAnkId = capCursor.getLong(1);
+                    long idValue = capCursor.isNull(2) ? 0 : capCursor.getLong(2);
+                    Double value = capCursor.isNull(3) ? null : capCursor.getDouble(3);
+                    String createdAt = capCursor.getString(4);
+                    String lastModifiedCap = capCursor.getString(5);
+
+                    Long newAnkId = anketIdMap.get(oldAnkId);
+                    if (newAnkId == null) continue; // на всякий случай
+
+                    ContentValues cvCap = new ContentValues();
+                    cvCap.put("id_characteristic", idCharacteristic);
+                    cvCap.put("id_anket", newAnkId);
+                    if (idValue != 0) {
+                        cvCap.put("id_value", idValue);
+                    } else {
+                        cvCap.putNull("id_value");
+                    }
+                    cvCap.put("value", value);
+                    cvCap.put("created_at", createdAt);
+                    cvCap.put("last_modified", lastModifiedCap);
+
+                    newDb.insert("characterization_anket_patient", null, cvCap);
+                    capCount++;
+                }
+                capCursor.close();
+                Log.d("Migration", "Migrated " + capCount + " characterization_anket_patient records");
+            }
 
             newDb.setTransactionSuccessful();
             newDb.execSQL("PRAGMA user_version = 7;");

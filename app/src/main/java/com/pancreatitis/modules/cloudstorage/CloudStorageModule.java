@@ -25,6 +25,8 @@ import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -335,6 +337,105 @@ public class CloudStorageModule {
             buffer.write(data, 0, n);
         }
         return buffer.toByteArray();
+    }
+
+    /**
+     * Загружает зашифрованный архив в папку fetch/upload.
+     * @param encryptedData зашифрованные байты архива
+     * @param fileName имя файла (например, "archive_2025_04_05_10_30_00.zip.enc")
+     * @return true при успехе
+     */
+    public boolean uploadArchive(byte[] encryptedData, String fileName) throws Exception {
+        String folderPath = "/fetch/upload";
+        String filePath = folderPath + "/" + fileName;
+        String uploadUrl = getUploadUrl(filePath, true);
+        if (uploadUrl == null) {
+            throw new IOException("Не удалось получить URL для загрузки архива");
+        }
+        return uploadFile(uploadUrl, encryptedData);
+    }
+
+    /**
+     * Создаёт пустой файл-триггер в папке fetch/requests
+     * @param login логин пользователя
+     * @param timestamp временная метка (формат yyyy_MM_dd_HH_mm_ss)
+     * @return true при успехе
+     */
+    public boolean createRequestTrigger(String login, String timestamp) throws Exception {
+        String folderPath = "/fetch/requests";
+        String fileName = login + "_" + timestamp + ".req";
+        String filePath = folderPath + "/" + fileName;
+        String uploadUrl = getUploadUrl(filePath, true);
+        if (uploadUrl == null) return false;
+        return uploadFile(uploadUrl, new byte[0]);
+    }
+
+    /**
+     * Получает список файлов в папке fetch/download, содержащих указанный логин
+     * @param login логин пользователя
+     * @return список имён файлов (полные пути)
+     */
+    public List<String> listDownloadFilesForUser(String login) throws Exception {
+        List<String> result = new ArrayList<>();
+        String folderPath = "/fetch/download";
+        String encodedPath = URLEncoder.encode(folderPath, StandardCharsets.UTF_8.toString());
+        String url = API_URL + "?path=" + encodedPath + "&limit=100";
+
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Authorization", "OAuth " + authToken);
+
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) response.append(line);
+
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode root = mapper.readTree(response.toString());
+                    JsonNode items = root.path("_embedded").path("items");
+                    if (items.isArray()) {
+                        for (JsonNode item : items) {
+                            String name = item.path("name").asText();
+                            if (name != null && name.contains(login) && name.endsWith(".zip.enc")) {
+                                result.add(folderPath + "/" + name);
+                            }
+                        }
+                    }
+                }
+            } else if (responseCode == 404) {
+                // Папка не существует – возвращаем пустой список
+                return result;
+            }
+        } finally {
+            connection.disconnect();
+        }
+        return result;
+    }
+
+    /**
+     * Скачивает файл по полному пути и возвращает его байты
+     */
+    public byte[] downloadFile(String filePath) throws Exception {
+        String downloadUrl = getDownloadUrl(filePath);
+        if (downloadUrl == null) throw new FileNotFoundException("Файл не найден: " + filePath);
+        return downloadFileAsBytes(downloadUrl);
+    }
+
+    /**
+     * Удаляет файл из облака (опционально)
+     */
+    public boolean deleteFile(String filePath) throws Exception {
+        String encodedPath = URLEncoder.encode(filePath, StandardCharsets.UTF_8.toString());
+        String url = API_URL + "?path=" + encodedPath;
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("DELETE");
+        connection.setRequestProperty("Authorization", "OAuth " + authToken);
+        int responseCode = connection.getResponseCode();
+        connection.disconnect();
+        return responseCode == 202 || responseCode == 204;
     }
 
     // Вспомогательные методы (остаются теми же)

@@ -1,38 +1,55 @@
 package com.pancreatitis;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.pancreatitis.models.Patient;
-import com.pancreatitis.models.Questionnaire;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
-import com.pancreatitis.modules.database.DatabaseModule;
-import com.pancreatitis.modules.localstorage.LocalStorageModule;
-import com.pancreatitis.modules.prediction.PredictionModule;
-import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
-
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.pancreatitis.models.Patient;
+import com.pancreatitis.models.Questionnaire;
+import com.pancreatitis.models.User;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
+import com.pancreatitis.modules.database.DatabaseModule;
+import com.pancreatitis.modules.localstorage.LocalStorageModule;
+import com.pancreatitis.modules.prediction.PredictionModule;
+import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
+import com.pancreatitis.modules.safety.SafetyModule;
+import com.pancreatitis.ui.profile.ProfileFragment;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import javax.crypto.SecretKey;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,6 +57,13 @@ public class MainActivity extends AppCompatActivity {
     private NavController navController;
     private ImageView backButton;
     private TextView toolbarTitle;
+
+    // Для периодической проверки
+    private Handler periodicHandler;
+    private Runnable periodicTask;
+    private static final long CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 минут
+    private static final long UPLOAD_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 часа
+    private static final String PREF_LAST_ARCHIVE_UPLOAD = "last_archive_upload";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +87,150 @@ public class MainActivity extends AppCompatActivity {
         setupBackPressedCallback();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startPeriodicUploadCheck();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopPeriodicUploadCheck();
+    }
+
+    private void startPeriodicUploadCheck() {
+        if (periodicHandler == null) {
+            periodicHandler = new Handler(Looper.getMainLooper());
+        }
+        if (periodicTask != null) {
+            periodicHandler.removeCallbacks(periodicTask);
+        }
+        periodicTask = () -> {
+            // Запускаем проверку в фоновом потоке
+            new Thread(() -> {
+                checkAndUploadArchive();   // существующая отправка
+                forceCheckAndDownloadData(); // проверка входящих
+            }).start();
+            // Планируем следующий запуск
+            periodicHandler.postDelayed(periodicTask, CHECK_INTERVAL_MS);
+        };
+        periodicHandler.post(periodicTask);
+    }
+
+    private void stopPeriodicUploadCheck() {
+        if (periodicHandler != null && periodicTask != null) {
+            periodicHandler.removeCallbacks(periodicTask);
+        }
+    }
+
+    public void resetLastUploadTime() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        prefs.edit().remove(PREF_LAST_ARCHIVE_UPLOAD).apply();
+    }
+
+    private void checkAndUploadArchive() {
+        //resetLastUploadTime();
+
+        // Проверка авторизации
+        User user = User.getInstance();
+        if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
+            Log.d("MainActivity", "User not authorized, skip archive upload");
+            return;
+        }
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        long lastUpload = prefs.getLong(PREF_LAST_ARCHIVE_UPLOAD, 0);
+        long now = System.currentTimeMillis();
+
+        if (now - lastUpload >= UPLOAD_PERIOD_MS) {
+            String result = QuestionnaireManagerModule.getInstance().uploadAllQuestionnairesAsArchive();
+            if (result != null && (result.startsWith("Успешно") || result.contains("успешно"))) {
+                prefs.edit().putLong(PREF_LAST_ARCHIVE_UPLOAD, now).apply();
+                runOnUiThread(() -> Toast.makeText(this, result, Toast.LENGTH_SHORT).show());
+            } else {
+                Log.e("MainActivity", "Archive upload failed: " + result);
+            }
+        } else {
+            Log.d("MainActivity", "Last upload was too recent, skipping");
+        }
+    }
+
+    public void forceCheckAndUploadArchive() {
+        new Thread(this::checkAndUploadArchive).start();
+    }
+
+    /**
+     * Проверяет наличие файлов ответов для текущего пользователя и загружает их
+     */
+    public void forceCheckAndDownloadData() {
+        new Thread(() -> {
+            User user = User.getInstance();
+            if (user == null || user.getLogin() == null) return;
+
+            try {
+                CloudStorageModule cloud = CloudStorageModule.getInstance();
+                cloud.setContext(this);
+                // Ищем файлы в папке fetch/download, содержащие логин
+                List<String> files = cloud.listDownloadFilesForUser(user.getLogin());
+
+                SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                Set<String> processedFiles = prefs.getStringSet("processed_download_files", new HashSet<>());
+                boolean anyImported = false;
+
+                SecretKey key = user.getKey();
+                for (String filePath : files) {
+                    String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+                    if (processedFiles.contains(fileName)) continue;
+
+                    byte[] encryptedData = cloud.downloadFile(filePath);
+                    int count = QuestionnaireManagerModule.getInstance().importQuestionnairesFromArchive(encryptedData, key);
+                    if (count > 0) {
+                        anyImported = true;
+                        processedFiles.add(fileName);
+                        // Удаляем файл из облака после успешного импорта
+                        cloud.deleteFile(filePath);
+                    }
+                }
+
+                if (anyImported) {
+                    prefs.edit()
+                            .putBoolean("data_request_sent", false)
+                            .putStringSet("processed_download_files", processedFiles)
+                            .apply();
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Импортированы новые анкет", Toast.LENGTH_LONG).show();
+                        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                        if (fragment instanceof ProfileFragment) {
+                            ((ProfileFragment) fragment).refreshRequestButton();
+                        }
+                    });
+                } else {
+                    prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
+                }
+            } catch (Exception e) {
+                Log.e("MainActivity", "Download check error", e);
+            }
+        }).start();
+    }
+
+    // Вспомогательный метод разархивации
+    private String unzipToString(byte[] zipData) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
+            ZipEntry entry = zis.getNextEntry();
+            if (entry != null && entry.getName().equals("questionnaires.json")) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    baos.write(buffer, 0, len);
+                }
+                return baos.toString(StandardCharsets.UTF_8.name());
+            }
+            throw new IOException("Invalid archive: questionnaires.json not found");
+        }
+    }
+
     private void copyFromAsstesAlgorithmFile() {
         new Thread(() -> {
             try {
@@ -83,16 +251,14 @@ public class MainActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 int currentDestId = navController.getCurrentDestination().getId();
 
-                // Проверяем, нужно ли обработать нажатие особым образом
                 if (currentDestId == R.id.navigation_anket) {
                     QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
                     questionnaireManagerModule.setPatient(new Patient());
                     questionnaireManagerModule.setQuestionnaire(new Questionnaire());
                     questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
-                    return;  // не продолжаем стандартную обработку
+                    return;
                 }
 
-                // Для других экранов — стандартная логика
                 Set<Integer> mainScreens = new HashSet<>(Arrays.asList(
                         R.id.navigation_home,
                         R.id.navigation_auth,
@@ -106,6 +272,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+
     }
 
     private void initViews() {
@@ -123,11 +291,9 @@ public class MainActivity extends AppCompatActivity {
 
                 BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
                 if (bottomNavigation != null) {
-                    // Простая настройка без сложной логики
                     NavigationUI.setupWithNavController(bottomNavigation, navController);
                 }
 
-                // Упрощенный слушатель для тулбара
                 navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
                     updateToolbar(destination.getId());
                 });
@@ -138,7 +304,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupToolbar() {
-        // Проверяем что элементы не null перед использованием
         if (backButton != null) {
             backButton.setOnClickListener(v -> {
                 if (navController != null) {

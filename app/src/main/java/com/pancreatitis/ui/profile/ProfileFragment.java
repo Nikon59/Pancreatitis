@@ -1,6 +1,8 @@
 package com.pancreatitis.ui.profile;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -35,10 +37,14 @@ public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
     private Button btn_logout;
+    private Button btnGetDump;
     private Button btn_update_training_data;
     private EditText loginValue;
     private View loadingOverlay;
     private OnBackPressedCallback onBackPressedCallback;
+    private SharedPreferences prefs;
+    private static final String PREF_REQUEST_SENT = "data_request_sent";
+    private static final String PREF_REQUEST_TIMESTAMP = "data_request_timestamp";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,6 +53,9 @@ public class ProfileFragment extends Fragment {
 
         // Настройка обработки кнопки "Назад"
         try {
+            prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+//            prefs.edit().remove(PREF_REQUEST_SENT).apply();
+//            prefs.edit().remove(PREF_REQUEST_TIMESTAMP).apply();
             initViews(view);
             setupProfile();
         } catch (Exception e) {
@@ -59,6 +68,7 @@ public class ProfileFragment extends Fragment {
 
     private void initViews(View view){
         btn_logout = view.findViewById(R.id.btn_logout);
+        btnGetDump = view.findViewById(R.id.btn_get_dump);
         btn_update_training_data = view.findViewById(R.id.btn_update_training_data);
         loginValue = view.findViewById(R.id.loginValue);
         loadingOverlay = view.findViewById(R.id.loading_overlay);
@@ -209,9 +219,79 @@ public class ProfileFragment extends Fragment {
                 }
             });
         });
+
+        updateRequestButtonState(btnGetDump); // установить текст и блокировку
+
+        btnGetDump.setOnClickListener(v -> {
+            User user = User.getInstance();
+            if (user == null || user.getLogin() == null) {
+                Toast.makeText(getContext(), "Пользователь не авторизован", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Блокируем кнопку и показываем прогресс
+            btnGetDump.setEnabled(false);
+            loadingOverlay.setVisibility(View.VISIBLE);
+
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    CloudStorageModule cloud = CloudStorageModule.getInstance();
+                    cloud.setContext(getContext());
+
+                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
+                    boolean created = cloud.createRequestTrigger(user.getLogin(), timestamp);
+
+                    requireActivity().runOnUiThread(() -> {
+                        loadingOverlay.setVisibility(View.GONE);
+                        if (created) {
+                            // Сохраняем состояние запроса
+                            prefs.edit()
+                                    .putBoolean(PREF_REQUEST_SENT, true)
+                                    .putLong(PREF_REQUEST_TIMESTAMP, System.currentTimeMillis())
+                                    .apply();
+                            btnGetDump.setText("Запрос отправлен");
+                            btnGetDump.setEnabled(false);
+                            Toast.makeText(getContext(), "Запрос отправлен", Toast.LENGTH_SHORT).show();
+
+                            // Запускаем немедленную проверку ответа
+                            if (getActivity() instanceof MainActivity) {
+                                ((MainActivity) getActivity()).forceCheckAndDownloadData();
+                            }
+                        } else {
+                            btnGetDump.setEnabled(true);
+                            Toast.makeText(getContext(), "Ошибка отправки запроса", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (Exception e) {
+                    requireActivity().runOnUiThread(() -> {
+                        loadingOverlay.setVisibility(View.GONE);
+                        btnGetDump.setEnabled(true);
+                        Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+        });
     }
 
+    public void refreshRequestButton() {
+        if (getView() != null) {
+            Button btn = getView().findViewById(R.id.btn_get_dump);
+            if (btn != null) {
+                updateRequestButtonState(btn);
+            }
+        }
+    }
 
+    private void updateRequestButtonState(Button btn) {
+        boolean requestSent = prefs.getBoolean(PREF_REQUEST_SENT, false);
+        if (requestSent) {
+            btn.setText("Запрос отправлен");
+            btn.setEnabled(false);
+        } else {
+            btn.setText("Получить анкеты");
+            btn.setEnabled(true);
+        }
+    }
 
     @Override
     public void onDestroyView() {

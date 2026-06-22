@@ -1,5 +1,6 @@
 package com.pancreatitis.ui.auth;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -128,6 +129,12 @@ public class AuthFragment extends Fragment {
                                 ((MainActivity) requireActivity()).unlockNavigation();
 
                                 if ("OK".equals(finalMessage)) {
+                                    Activity activity = getActivity();
+                                    if (activity instanceof MainActivity) {
+                                        ((MainActivity) activity).forceCheckAndUploadArchive();
+                                        ((MainActivity) activity).forceCheckAndDownloadData();
+                                    }
+
                                     // Навигация только в UI-потоке
                                     NavController navController = Navigation.findNavController(requireView());
                                     navController.navigate(R.id.action_auth_to_profile);

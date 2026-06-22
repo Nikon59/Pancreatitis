@@ -30,4 +30,10 @@ public interface Decryptable {
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         return new String(decryptedBytes, "UTF-8");
     }
+
+    static byte[] decryptData(byte[] encryptedData, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return cipher.doFinal(encryptedData);
+    }
 }

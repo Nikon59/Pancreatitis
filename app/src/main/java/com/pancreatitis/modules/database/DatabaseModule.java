@@ -223,6 +223,22 @@ public class DatabaseModule {
 
         return patient;
     }
+    public Patient getPatientByFio(String fio) {
+        Cursor cursor = null;
+        Patient patient = null;
+        try {
+            cursor = database.query("patients", null, "fio = ?", new String[]{fio}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                patient = new Patient();
+                patient.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+                patient.setFio(cursor.getString(cursor.getColumnIndexOrThrow("fio")));
+                patient.setLastModified(cursor.getString(cursor.getColumnIndexOrThrow("last_modified")));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return patient;
+    }
     public int insertPatient(Patient patient) {
         ContentValues values = new ContentValues();
         values.put("fio", patient.getFio());
@@ -316,6 +332,25 @@ public class DatabaseModule {
         }
 
         return questionnaires;
+    }
+
+    /**
+     * Возвращает список полных DTO анкет для указанного врача.
+     */
+    public List<QuestionnaireDTO> getAllFullQuestionnairesForDoctor(int doctorId) {
+        List<QuestionnaireDTO> result = new ArrayList<>();
+        List<QuestionnaireItem> items = getAllQuestionnaireItems(doctorId);
+        for (QuestionnaireItem item : items) {
+            Questionnaire q = getQuestionnaireById(item.getIdQuestionnaire());
+            if (q != null) {
+                QuestionnaireDTO dto = new QuestionnaireDTO(q);
+                // Подгружаем ответы на характеристики
+                List<CharacterizationAnketPatient> answers = getCharacterizationsForAnket(q.getId());
+                dto.setCharacteristicValues(answers);
+                result.add(dto);
+            }
+        }
+        return result;
     }
 
     // ========== CharacterizationAnketPatient ==========

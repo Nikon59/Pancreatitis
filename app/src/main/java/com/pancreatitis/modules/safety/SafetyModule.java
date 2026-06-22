@@ -33,4 +33,12 @@ public class SafetyModule {
     public byte[] encryptKey(SecretKey decrypted_key, String password) throws Exception {
         return Encryptable.encryptWithPassword(decrypted_key, password);
     }
+
+    public byte[] encryptData(byte[] data, SecretKey key) throws Exception {
+        return Encryptable.encryptData(data, key);
+    }
+
+    public byte[] decryptData(byte[] encryptedData, SecretKey key) throws Exception {
+        return Decryptable.decryptData(encryptedData, key);
+    }
 }

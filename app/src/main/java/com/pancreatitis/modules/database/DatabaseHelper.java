@@ -141,10 +141,10 @@ public class DatabaseHelper {
             long newDoctorId = newDb.insert("doctors", null, cvDoctor);
             Log.d("Migration", "Created new doctor with id=" + newDoctorId + " for fio=" + fio);
 
-            // 3. Найти всех пациентов, на которых ссылаются анкеты этого доктора
+            // 3. Найти всех пациентов, на которых ссылаются анкеты этого доктора или базовые (id_doctor = 100)
             Cursor patientCursor = oldDb.rawQuery(
-                    "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor = ?",
-                    new String[]{String.valueOf(oldDoctorId)});
+                    "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor IN (?, ?)",
+                    new String[]{String.valueOf(oldDoctorId), "100"});
             while (patientCursor.moveToNext()) {
                 long patientId = patientCursor.getLong(0);
                 Cursor pData = oldDb.rawQuery(
@@ -154,7 +154,7 @@ public class DatabaseHelper {
                     String patientFio = pData.getString(0);
                     String patientLastModified = pData.getString(1);
                     ContentValues cvPatient = new ContentValues();
-                    cvPatient.put("id", patientId);       // сохраняем тот же id, чтобы ссылки в анкетах работали
+                    cvPatient.put("id", patientId);       // сохраняем тот же id
                     cvPatient.put("fio", patientFio);
                     cvPatient.put("last_modified", patientLastModified);
                     newDb.insertWithOnConflict("patients", null, cvPatient, SQLiteDatabase.CONFLICT_REPLACE);
@@ -164,30 +164,32 @@ public class DatabaseHelper {
             }
             patientCursor.close();
 
-            // 4. Перенести все анкеты этого доктора и сохранить маппинг старых id -> новые id
+            // 4. Перенести все анкеты этого доктора И базовые анкеты (id_doctor = 100)
             Map<Long, Long> anketIdMap = new HashMap<>();
             Cursor ankCursor = oldDb.rawQuery(
                     "SELECT id, id_patient, id_doctor, id_expert, diagnosis, date_of_completion, admitted_from, last_modified " +
-                            "FROM ankets WHERE id_doctor = ?",
-                    new String[]{String.valueOf(oldDoctorId)});
+                            "FROM ankets WHERE id_doctor IN (?, ?)",
+                    new String[]{String.valueOf(oldDoctorId), "100"});
             int ankCount = 0;
             while (ankCursor.moveToNext()) {
                 long oldAnkId = ankCursor.getLong(0);
                 long idPatient = ankCursor.getLong(1);
+                long oldIdDoctor = ankCursor.getLong(2);
                 long idExpertOld = ankCursor.getLong(3);
                 String diagnosis = ankCursor.getString(4);
                 String dateOfCompletion = ankCursor.getString(5);
                 String admittedFrom = ankCursor.getString(6);
                 String lastModifiedAnk = ankCursor.getString(7);
 
+                Long newIdDoctor = 100L;
+                if (oldIdDoctor == oldDoctorId) {
+                    newIdDoctor = newDoctorId;
+                }
+
                 ContentValues cvAnk = new ContentValues();
                 cvAnk.put("id_patient", idPatient);
-                cvAnk.put("id_doctor", newDoctorId);
-                if (idExpertOld == oldDoctorId) {
-                    cvAnk.put("id_expert", newDoctorId);
-                } else {
-                    cvAnk.putNull("id_expert");
-                }
+                cvAnk.put("id_doctor", newIdDoctor);
+                cvAnk.put("id_expert", idExpertOld);
                 cvAnk.put("diagnosis", diagnosis);
                 cvAnk.put("date_of_completion", dateOfCompletion);
                 cvAnk.put("admitted_from", admittedFrom);
@@ -198,9 +200,9 @@ public class DatabaseHelper {
                 ankCount++;
             }
             ankCursor.close();
-            Log.d("Migration", "Migrated " + ankCount + " ankets for doctor " + fio);
+            Log.d("Migration", "Migrated " + ankCount + " ankets (including base ones with id_doctor=100, now set to NULL)");
 
-            // 5. Перенести characterization_anket_patient для этих анкет
+            // 5. Перенести characterization_anket_patient для всех перенесённых анкет
             if (!anketIdMap.isEmpty()) {
                 List<String> oldAnkIds = new ArrayList<>();
                 for (Long id : anketIdMap.keySet()) {

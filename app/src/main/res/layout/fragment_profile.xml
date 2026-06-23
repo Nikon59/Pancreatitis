@@ -54,6 +54,16 @@
                 android:backgroundTint="@color/white"
                 android:textColor="@color/black" />
 
+            <Button
+                android:id="@+id/btn_get_dump"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Получить данные"
+                android:textSize="16sp"
+                android:padding="14dp"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/black" />
+
         </LinearLayout>
 
         <LinearLayout

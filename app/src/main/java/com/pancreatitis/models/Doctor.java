@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Doctor {
     private int id = 100;
-    private String login;
-    private String fio;
-    private String phone;
-    private String email;
+    private String login = "";
+    private String fio = "";
+    private String phone = "";
+    private String email = "";
     private Boolean status = false;
-    private String createdAt;
+    private String createdAt = "";
 
     // Конструкторы
     public Doctor() {}

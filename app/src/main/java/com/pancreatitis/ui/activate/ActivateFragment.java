@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,20 +28,22 @@ import java.util.concurrent.TimeUnit;
 
 public class ActivateFragment extends Fragment {
 
-    private static final int TIMEOUT_SECONDS = 300;          // 5 минут
-    private static final int CHECK_INTERVAL_SECONDS = 3;    // проверка каждые 3 секунды
+    private static final int TIMEOUT_SECONDS = 30;
+    private static final int CHECK_INTERVAL_SECONDS = 3;
+
+    // Статическое состояние, общее для всех экземпляров фрагмента
+    private static boolean sIsRunning = false;
+    private static int sRemainingSeconds = TIMEOUT_SECONDS;
+    private static boolean sIsFinished = true;
+    private static String sResultMessage = null;
+    private static ScheduledExecutorService sScheduler = null;
+    private static ScheduledFuture<?> sCheckFuture = null;
 
     private EditText loginEditText;
     private Button activateButton;
-    private FrameLayout loadingOverlay;
     private TextView timerTextView;
-
-    private ScheduledExecutorService scheduler;
-    private ScheduledFuture<?> checkFuture;
-    private ScheduledFuture<?> timerUpdateFuture;
     private Handler uiHandler = new Handler(Looper.getMainLooper());
-    private int remainingSeconds = TIMEOUT_SECONDS;
-    private boolean isFinished = false; // флаг, чтобы не выполнять повторные действия
+    private boolean isTimerUpdateRunning = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,65 +52,47 @@ public class ActivateFragment extends Fragment {
 
         loginEditText = view.findViewById(R.id.loginEditText);
         activateButton = view.findViewById(R.id.btn_activate);
-        loadingOverlay = view.findViewById(R.id.loading_overlay);
-        timerTextView = loadingOverlay.findViewById(R.id.timerTextView);
+        timerTextView = view.findViewById(R.id.timerTextView);
 
         activateButton.setOnClickListener(v -> onActivate());
 
+        restoreUiState();
         return view;
     }
 
     private void onActivate() {
+        if (getContext() == null) return;
+
         String login = loginEditText.getText().toString().trim();
         if (login.isEmpty()) {
             Toast.makeText(getContext(), "Введите логин", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Блокируем UI и показываем оверлей
-        loadingOverlay.setVisibility(View.VISIBLE);
-        timerTextView.setVisibility(View.VISIBLE);
-        ((MainActivity) requireActivity()).lockNavigation();
-
-        // Сбрасываем счётчик
-        remainingSeconds = TIMEOUT_SECONDS;
-        isFinished = false;
-        updateTimerText();
-
-        // Создаём планировщик, если ещё не создан
-        if (scheduler == null || scheduler.isShutdown()) {
-            scheduler = Executors.newSingleThreadScheduledExecutor();
+        if (sIsRunning) {
+            Toast.makeText(getContext(), "Процесс уже запущен", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Задача для обновления таймера на UI (каждую секунду)
-        Runnable timerUpdateRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (isFinished) return;
-                remainingSeconds--;
-                updateTimerText();
-                if (remainingSeconds <= 0) {
-                    // Время истекло – завершаем с ошибкой
-                    finishWithError("Время ожидания истекло. Файл не появился.");
-                } else {
-                    // Планируем следующее обновление через 1 секунду
-                    uiHandler.postDelayed(this, 1000);
-                }
-            }
-        };
+        // Сброс состояния
+        sIsRunning = true;
+        sIsFinished = false;
+        sRemainingSeconds = TIMEOUT_SECONDS;
+        sResultMessage = null;
 
-        // Задача для проверки наличия файла в облаке (периодическая)
-        Runnable checkRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (isFinished) return;
+        showTimerMode();
+
+        if (sScheduler == null || sScheduler.isShutdown()) {
+            sScheduler = Executors.newSingleThreadScheduledExecutor();
+        }
+
+        if (sCheckFuture == null || sCheckFuture.isCancelled()) {
+            Runnable checkRunnable = () -> {
+                if (sIsFinished) return;
+                CloudStorageModule cloud = CloudStorageModule.getInstance();
+                String filePath = "/users/" + login + ".txt";
                 try {
-                    CloudStorageModule cloud = CloudStorageModule.getInstance();
-                    String filePath = "/users/" + login + ".txt";
-
-                    // Проверяем существование файла
                     if (cloud.fileExists(filePath)) {
-                        // Файл найден – скачиваем и обрабатываем
                         byte[] fileData = cloud.downloadFile(filePath);
                         String content = new String(fileData, StandardCharsets.UTF_8);
                         String[] words = content.trim().split("\\s+");
@@ -118,102 +101,160 @@ public class ActivateFragment extends Fragment {
                             throw new Exception("Файл должен содержать ровно 24 слова");
                         }
 
-                        // Восстанавливаем ключ из мнемонической фразы
                         String mnemonic = String.join(" ", words);
                         byte[] encryptedKey = Bip39Decoder.fromMnemonic(mnemonic);
 
-                        // Сохраняем ключ локально
                         LocalStorageModule localStorage = LocalStorageModule.getInstance();
                         localStorage.createUserFolder(login);
                         localStorage.saveLocalUserKey(login, encryptedKey);
 
-                        // Удаляем файл из облака
-                        cloud.deleteFile(filePath);
-
-                        // Успех – завершаем с положительным результатом
                         finishWithSuccess("Активация выполнена успешно!");
-                        return;
                     }
                 } catch (FileNotFoundException e) {
-                    // Файл ещё не появился – ничего не делаем, продолжим проверку
+                    // файл ещё не появился – игнорируем
                 } catch (Exception e) {
-                    // Ошибка при проверке или обработке – завершаем с ошибкой
                     finishWithError("Ошибка: " + e.getMessage());
+                } finally {
+                    cloud.deleteFile(filePath);
+                }
+            };
+            sCheckFuture = sScheduler.scheduleAtFixedRate(checkRunnable, 0,
+                    CHECK_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        }
+
+        startTimerUpdate();
+    }
+
+    private void startTimerUpdate() {
+        if (isTimerUpdateRunning) return;
+        if (!isAdded()) return; // фрагмент не прикреплён – не запускаем
+
+        isTimerUpdateRunning = true;
+        updateTimerText();
+
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (sIsFinished) {
+                    isTimerUpdateRunning = false;
+                    return;
+                }
+                sRemainingSeconds--;
+                updateTimerText();
+
+                if (sRemainingSeconds <= 0) {
+                    finishWithError("Время ожидания истекло");
+                    isTimerUpdateRunning = false;
+                } else {
+                    // планируем следующий шаг только если фрагмент всё ещё активен
+                    if (isAdded()) {
+                        uiHandler.postDelayed(this, 1000);
+                    } else {
+                        isTimerUpdateRunning = false;
+                    }
                 }
             }
-        };
-
-        // Запускаем периодическую проверку (первый запуск сразу)
-        checkFuture = scheduler.scheduleAtFixedRate(checkRunnable, 0, CHECK_INTERVAL_SECONDS, TimeUnit.SECONDS);
-
-        // Запускаем обновление таймера (первый запуск через 1 секунду)
-        uiHandler.postDelayed(timerUpdateRunnable, 1000);
+        }, 1000);
     }
 
     private void updateTimerText() {
-        int minutes = remainingSeconds / 60;
-        int seconds = remainingSeconds % 60;
+        // Проверяем, что фрагмент прикреплён и view существует
+        if (!isAdded() || timerTextView == null) return;
+
+        int minutes = sRemainingSeconds / 60;
+        int seconds = sRemainingSeconds % 60;
         String text = String.format("Осталось: %02d:%02d", minutes, seconds);
         timerTextView.setText(text);
     }
 
+    private void showTimerMode() {
+        if (activateButton != null) activateButton.setVisibility(View.GONE);
+        if (timerTextView != null) {
+            timerTextView.setVisibility(View.VISIBLE);
+            updateTimerText();
+        }
+    }
+
+    private void showButtonMode() {
+        if (activateButton != null) activateButton.setVisibility(View.VISIBLE);
+        if (timerTextView != null) timerTextView.setVisibility(View.GONE);
+    }
+
     private void finishWithSuccess(String message) {
-        if (isFinished) return;
-        isFinished = true;
-        cancelTasks();
-        showToast(message);
-        hideOverlayAndUnlock();
+        finishProcess(true, message);
     }
 
     private void finishWithError(String message) {
-        if (isFinished) return;
-        isFinished = true;
+        finishProcess(false, message);
+    }
+
+    private synchronized void finishProcess(boolean success, String message) {
+        if (sIsFinished) return;
+        sIsFinished = true;
+        sIsRunning = false;
+        sResultMessage = message;
+
         cancelTasks();
-        showToast(message);
-        hideOverlayAndUnlock();
+
+        // Обновляем UI, только если фрагмент прикреплён и активность жива
+        if (isAdded() && getActivity() != null) {
+            requireActivity().runOnUiThread(() -> {
+                showButtonMode();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                }
+                sResultMessage = null;
+            });
+        }
+        // Если фрагмент неактивен – сообщение будет показано при восстановлении
     }
 
     private void cancelTasks() {
-        if (checkFuture != null) {
-            checkFuture.cancel(false);
-            checkFuture = null;
+        if (sCheckFuture != null) {
+            sCheckFuture.cancel(false);
+            sCheckFuture = null;
         }
-        if (timerUpdateFuture != null) {
-            timerUpdateFuture.cancel(false);
-            timerUpdateFuture = null;
+        if (sScheduler != null) {
+            sScheduler.shutdownNow();
+            sScheduler = null;
         }
         uiHandler.removeCallbacksAndMessages(null);
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-            scheduler = null;
+        isTimerUpdateRunning = false;
+    }
+
+    private void restoreUiState() {
+        if (sIsFinished && sResultMessage != null) {
+            // Показываем сохранённое сообщение, если есть контекст
+            if (getContext() != null) {
+                Toast.makeText(getContext(), sResultMessage, Toast.LENGTH_LONG).show();
+            }
+            sResultMessage = null;
+            showButtonMode();
+            return;
         }
-    }
 
-    private void hideOverlayAndUnlock() {
-        requireActivity().runOnUiThread(() -> {
-            loadingOverlay.setVisibility(View.GONE);
-            timerTextView.setVisibility(View.GONE);
-            ((MainActivity) requireActivity()).unlockNavigation();
-        });
-    }
-
-    private void showToast(String message) {
-        requireActivity().runOnUiThread(() ->
-                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
-        );
+        if (sIsRunning && !sIsFinished) {
+            showTimerMode();
+            if (!isTimerUpdateRunning) {
+                startTimerUpdate();
+            }
+        } else {
+            showButtonMode();
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        // Останавливаем только обновление таймера, фоновые задачи не трогаем
+        uiHandler.removeCallbacksAndMessages(null);
+        isTimerUpdateRunning = false;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Полная остановка при уничтожении активности
         cancelTasks();
-        // Скрываем оверлей, если он виден
-        if (loadingOverlay != null) {
-            loadingOverlay.setVisibility(View.GONE);
-        }
-        if (timerTextView != null) {
-            timerTextView.setVisibility(View.GONE);
-        }
-        ((MainActivity) requireActivity()).unlockNavigation();
     }
 }

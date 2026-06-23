@@ -427,15 +427,19 @@ public class CloudStorageModule {
     /**
      * Удаляет файл из облака (опционально)
      */
-    public boolean deleteFile(String filePath) throws Exception {
-        String encodedPath = URLEncoder.encode(filePath, StandardCharsets.UTF_8.toString());
-        String url = API_URL + "?path=" + encodedPath;
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setRequestMethod("DELETE");
-        connection.setRequestProperty("Authorization", "OAuth " + authToken);
-        int responseCode = connection.getResponseCode();
-        connection.disconnect();
-        return responseCode == 202 || responseCode == 204;
+    public boolean deleteFile(String filePath) {
+        try {
+            String encodedPath = URLEncoder.encode(filePath, StandardCharsets.UTF_8.toString());
+            String url = API_URL + "?path=" + encodedPath;
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("DELETE");
+            connection.setRequestProperty("Authorization", "OAuth " + authToken);
+            int responseCode = connection.getResponseCode();
+            connection.disconnect();
+            return responseCode == 202 || responseCode == 204;
+        } catch (Exception e) {
+            return false;
+        }
     }
     public boolean fileExists(String path) throws Exception {
         String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());

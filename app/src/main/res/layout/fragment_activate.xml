@@ -32,18 +32,29 @@
             android:background="@drawable/rounded_background"
             android:layout_marginBottom="24dp" />
 
-        <Button
-            android:id="@+id/btn_activate"
+        <!-- Контейнер для кнопки и таймера -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Запустить"
-            android:backgroundTint="@color/colorActive"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textAllCaps="false" />
-    </LinearLayout>
+            android:layout_height="wrap_content">
 
-    <include
-        android:id="@+id/loading_overlay"
-        layout="@layout/loading_overlay" />
+            <Button
+                android:id="@+id/btn_activate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Запустить"
+                android:backgroundTint="@color/colorActive"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/timerTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="24sp"
+                android:textColor="@color/black"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
 </FrameLayout>

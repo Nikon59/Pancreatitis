@@ -143,8 +143,9 @@ public class DatabaseHelper {
 
             // 3. Найти всех пациентов, на которых ссылаются анкеты этого доктора
             Cursor patientCursor = oldDb.rawQuery(
-                    "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor = ?",
-                    new String[]{String.valueOf(oldDoctorId)});
+                    "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor IN (?, ?)",
+                    new String[]{ String.valueOf(oldDoctorId), "100" }
+            );
             while (patientCursor.moveToNext()) {
                 long patientId = patientCursor.getLong(0);
                 Cursor pData = oldDb.rawQuery(

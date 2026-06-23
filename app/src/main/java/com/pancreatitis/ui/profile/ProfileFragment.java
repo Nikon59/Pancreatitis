@@ -54,8 +54,8 @@ public class ProfileFragment extends Fragment {
         // Настройка обработки кнопки "Назад"
         try {
             prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-//            prefs.edit().remove(PREF_REQUEST_SENT).apply();
-//            prefs.edit().remove(PREF_REQUEST_TIMESTAMP).apply();
+//            prefs.edit().remove(getRequestSentKey()).apply();
+//            prefs.edit().remove(getRequestTimestampKey()).apply();
             initViews(view);
             setupProfile();
         } catch (Exception e) {
@@ -248,8 +248,8 @@ public class ProfileFragment extends Fragment {
                         if (created) {
                             // Сохраняем состояние запроса
                             prefs.edit()
-                                    .putBoolean(PREF_REQUEST_SENT, true)
-                                    .putLong(PREF_REQUEST_TIMESTAMP, System.currentTimeMillis())
+                                    .putBoolean(getRequestSentKey(), true)
+                                    .putLong(getRequestTimestampKey(), System.currentTimeMillis())
                                     .apply();
                             btnGetDump.setText("Запрос отправлен");
                             btnGetDump.setEnabled(false);
@@ -271,6 +271,16 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    private String getRequestSentKey() {
+        User user = User.getInstance();
+        return PREF_REQUEST_SENT + "_" + user.getLogin();
+    }
+
+    private String getRequestTimestampKey() {
+        User user = User.getInstance();
+        return PREF_REQUEST_TIMESTAMP + "_" + user.getLogin();
+    }
+
     public void refreshRequestButton() {
         if (getView() != null) {
             Button btn = getView().findViewById(R.id.btn_get_dump);
@@ -281,7 +291,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateRequestButtonState(Button btn) {
-        boolean requestSent = prefs.getBoolean(PREF_REQUEST_SENT, false);
+        boolean requestSent = prefs.getBoolean(getRequestSentKey(), false);
         if (requestSent) {
             btn.setText("Запрос отправлен");
             btn.setEnabled(false);

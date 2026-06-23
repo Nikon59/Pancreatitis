@@ -33,7 +33,7 @@ public class DatabaseModule {
     public void initWork(){
         dbHelper = new DatabaseHelper(context);
         dbHelper.create_db();
-        database = dbHelper.getReadableDatabase();
+        database = dbHelper.getWritableDatabase();
     }
 
     public void setContext(Context context) {

@@ -232,6 +232,7 @@ public class ProfileFragment extends Fragment {
             // Блокируем кнопку и показываем прогресс
             btnGetDump.setEnabled(false);
             loadingOverlay.setVisibility(View.VISIBLE);
+            ((MainActivity) requireActivity()).lockNavigation();
 
             Executors.newSingleThreadExecutor().execute(() -> {
                 try {
@@ -243,6 +244,7 @@ public class ProfileFragment extends Fragment {
 
                     requireActivity().runOnUiThread(() -> {
                         loadingOverlay.setVisibility(View.GONE);
+                        ((MainActivity) requireActivity()).unlockNavigation();
                         if (created) {
                             // Сохраняем состояние запроса
                             prefs.edit()
@@ -265,6 +267,7 @@ public class ProfileFragment extends Fragment {
                 } catch (Exception e) {
                     requireActivity().runOnUiThread(() -> {
                         loadingOverlay.setVisibility(View.GONE);
+                        ((MainActivity) requireActivity()).unlockNavigation();
                         btnGetDump.setEnabled(true);
                         Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });

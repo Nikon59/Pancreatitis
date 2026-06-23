@@ -44,7 +44,6 @@ public class ProfileFragment extends Fragment {
     private OnBackPressedCallback onBackPressedCallback;
     private SharedPreferences prefs;
     private static final String PREF_REQUEST_SENT = "data_request_sent";
-    private static final String PREF_REQUEST_TIMESTAMP = "data_request_timestamp";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -54,8 +53,6 @@ public class ProfileFragment extends Fragment {
         // Настройка обработки кнопки "Назад"
         try {
             prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-//            prefs.edit().remove(getRequestSentKey()).apply();
-//            prefs.edit().remove(getRequestTimestampKey()).apply();
             initViews(view);
             setupProfile();
         } catch (Exception e) {
@@ -249,7 +246,6 @@ public class ProfileFragment extends Fragment {
                             // Сохраняем состояние запроса
                             prefs.edit()
                                     .putBoolean(getRequestSentKey(), true)
-                                    .putLong(getRequestTimestampKey(), System.currentTimeMillis())
                                     .apply();
                             btnGetDump.setText("Запрос отправлен");
                             btnGetDump.setEnabled(false);
@@ -274,11 +270,6 @@ public class ProfileFragment extends Fragment {
     private String getRequestSentKey() {
         User user = User.getInstance();
         return PREF_REQUEST_SENT + "_" + user.getLogin();
-    }
-
-    private String getRequestTimestampKey() {
-        User user = User.getInstance();
-        return PREF_REQUEST_TIMESTAMP + "_" + user.getLogin();
     }
 
     public void refreshRequestButton() {

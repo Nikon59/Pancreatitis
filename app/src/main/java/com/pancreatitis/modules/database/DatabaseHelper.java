@@ -21,7 +21,8 @@ public class DatabaseHelper {
 
     private static final String OLD_DB_NAME = "pancreatitis_v6.6.db";
     private static final String NEW_DB_NAME = "mobile.db";
-    private static final String TARGET_DOCTOR_FIO = "Роман Святославович"; // замените на нужное ФИО
+    private static final String TARGET_DOCTOR_FIO = "Роман Святославович";
+    private static final int TARGET_VERSION = 8;
 
     private final Context context;
     private final String oldDbPath;
@@ -35,22 +36,38 @@ public class DatabaseHelper {
 
     /**
      * Вызывать в фоновом потоке.
+     * Управление миграцией:
+     * - если есть старая БД – выполняется миграция в новую (при необходимости новая копируется из assets);
+     * - если старой нет, а новой нет – копируется из assets;
+     * - если старой нет, а новая есть – ничего не делается.
      */
     public void create_db() {
-        File newDbFile = new File(newDbPath);
-        if (!newDbFile.exists()) {
-            copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
-        }
-
         File oldDbFile = new File(oldDbPath);
-        if (oldDbFile.exists()) {
-            migrateDataFromOldToNew();
+        File newDbFile = new File(newDbPath);
+        boolean oldExists = oldDbFile.exists();
+        boolean newExists = newDbFile.exists();
+
+        if (oldExists) {
+            // Если есть старая БД – мигрируем в новую
+            if (!newExists) {
+                copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
+            }
+            migrateDataFrom6To7();
+            // Удаляем старую БД после успешной миграции
             if (oldDbFile.delete()) {
                 Log.d("DatabaseHelper", "Old database deleted");
             } else {
                 Log.w("DatabaseHelper", "Could not delete old database");
             }
+        } else {
+            // Старой нет – просто копируем новую, если её ещё нет
+            if (!newExists) {
+                copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
+            }
+            // иначе новая уже существует – ничего не делаем
         }
+
+        setDatabaseVersion();
     }
 
     public SQLiteDatabase getReadableDatabase() {
@@ -87,7 +104,7 @@ public class DatabaseHelper {
 
     // ======================== МИГРАЦИЯ ========================
 
-    private void migrateDataFromOldToNew() {
+    private void migrateDataFrom6To7() {
         SQLiteDatabase oldDb = null;
         SQLiteDatabase newDb = null;
         try {
@@ -185,7 +202,6 @@ public class DatabaseHelper {
 
             // 5. Перенести characterization_anket_patient для этих анкет
             if (!anketIdMap.isEmpty()) {
-                // Собираем старые id анкет в строку для IN
                 List<String> oldAnkIds = new ArrayList<>();
                 for (Long id : anketIdMap.keySet()) {
                     oldAnkIds.add(String.valueOf(id));
@@ -205,7 +221,7 @@ public class DatabaseHelper {
                     String lastModifiedCap = capCursor.getString(5);
 
                     Long newAnkId = anketIdMap.get(oldAnkId);
-                    if (newAnkId == null) continue; // на всякий случай
+                    if (newAnkId == null) continue;
 
                     ContentValues cvCap = new ContentValues();
                     cvCap.put("id_characteristic", idCharacteristic);
@@ -238,6 +254,25 @@ public class DatabaseHelper {
                 newDb.close();
             }
             if (oldDb != null) oldDb.close();
+        }
+    }
+
+    /**
+     * Устанавливает пользовательскую версию для новой базы данных.
+     * Вызывать после успешной миграции или копирования из assets.
+     */
+    private void setDatabaseVersion() {
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase(newDbPath, null, SQLiteDatabase.OPEN_READWRITE);
+            db.execSQL("PRAGMA user_version = " + TARGET_VERSION + ";");
+            Log.d("DatabaseHelper", "Database version set to " + TARGET_VERSION);
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Failed to set database version", e);
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
     }
 }

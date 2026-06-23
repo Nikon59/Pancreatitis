@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     // Для периодической проверки
     private Handler periodicHandler;
     private Runnable periodicTask;
-    private static final long CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 минут
+    private static final long CHECK_INTERVAL_MS = 2 * 60 * 1000; // 30 минут
     private static final long UPLOAD_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 часа
     private static final String PREF_LAST_ARCHIVE_UPLOAD = "last_archive_upload";
 
@@ -188,7 +188,6 @@ public class MainActivity extends AppCompatActivity {
                     if (count > 0) {
                         anyImported = true;
                         processedFiles.add(fileName);
-                        // Удаляем файл из облака после успешного импорта
                         cloud.deleteFile(filePath);
                     }
                 }
@@ -199,36 +198,25 @@ public class MainActivity extends AppCompatActivity {
                             .putStringSet("processed_download_files", processedFiles)
                             .apply();
                     runOnUiThread(() -> {
-                        Toast.makeText(this, "Импортированы новые анкет", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getBaseContext(), "Импортированы новые анкет", Toast.LENGTH_LONG).show();
                         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
                         if (fragment instanceof ProfileFragment) {
                             ((ProfileFragment) fragment).refreshRequestButton();
                         }
                     });
                 } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(getBaseContext(), "Локальные данные актуальны", Toast.LENGTH_LONG).show();
+                    });
                     prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
                 }
             } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(getBaseContext(), "Ошибка при импортировании новых анкет", Toast.LENGTH_LONG).show();
+                });
                 Log.e("MainActivity", "Download check error", e);
             }
         }).start();
-    }
-
-    // Вспомогательный метод разархивации
-    private String unzipToString(byte[] zipData) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipData))) {
-            ZipEntry entry = zis.getNextEntry();
-            if (entry != null && entry.getName().equals("questionnaires.json")) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[4096];
-                int len;
-                while ((len = zis.read(buffer)) > 0) {
-                    baos.write(buffer, 0, len);
-                }
-                return baos.toString(StandardCharsets.UTF_8.name());
-            }
-            throw new IOException("Invalid archive: questionnaires.json not found");
-        }
     }
 
     private void copyFromAsstesAlgorithmFile() {

@@ -120,8 +120,8 @@ public class QuestionnaireManagerModule {
 
             int idQuestionnaire = questionnaire.getId();
             if (idQuestionnaire != -1) {
-                int d1 = databaseModule.deleteQuestionnaire(idQuestionnaire);
                 int d2 = databaseModule.deleteCharacterizationAnketPatients(idQuestionnaire);
+                int d1 = databaseModule.deleteQuestionnaire(idQuestionnaire);
             }
 
             databaseModule.setTransactionSuccessful();

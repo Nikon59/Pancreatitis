@@ -61,9 +61,12 @@ public class MainActivity extends AppCompatActivity {
     // Для периодической проверки
     private Handler periodicHandler;
     private Runnable periodicTask;
+    private SharedPreferences prefs;
     private static final long CHECK_INTERVAL_MS = 2 * 60 * 1000; // 30 минут
     private static final long UPLOAD_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 часа
     private static final String PREF_LAST_ARCHIVE_UPLOAD = "last_archive_upload";
+    private static final String PREF_REQUEST_SENT = "data_request_sent";
+    private static final String PREF_PROCESSED_DOWNLOAD_FILES = "processed_download_files";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,14 +127,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private String getRequestSentKey() {
+        User user = User.getInstance();
+        return PREF_REQUEST_SENT + "_" + user.getLogin();
+    }
+
+    private String getPrefProcessedDownloadFiles() {
+        User user = User.getInstance();
+        return PREF_PROCESSED_DOWNLOAD_FILES + "_" + user.getLogin();
+    }
+
     public void resetLastUploadTime() {
-        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        prefs.edit().remove(PREF_LAST_ARCHIVE_UPLOAD).apply();
+        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        prefs.edit().remove(getLastArchiveUploadKey()).apply();
     }
 
     private void checkAndUploadArchive() {
-        //resetLastUploadTime();
-
         // Проверка авторизации
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
@@ -139,14 +150,14 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        long lastUpload = prefs.getLong(PREF_LAST_ARCHIVE_UPLOAD, 0);
+        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        long lastUpload = prefs.getLong(getLastArchiveUploadKey(), 0);
         long now = System.currentTimeMillis();
 
         if (now - lastUpload >= UPLOAD_PERIOD_MS) {
             String result = QuestionnaireManagerModule.getInstance().uploadAllQuestionnairesAsArchive();
-            if (result != null && (result.startsWith("Успешно") || result.contains("успешно"))) {
-                prefs.edit().putLong(PREF_LAST_ARCHIVE_UPLOAD, now).apply();
+            if (result != null) {
+                prefs.edit().putLong(getLastArchiveUploadKey(), now).apply();
                 runOnUiThread(() -> Toast.makeText(this, result, Toast.LENGTH_SHORT).show());
             } else {
                 Log.e("MainActivity", "Archive upload failed: " + result);
@@ -164,25 +175,32 @@ public class MainActivity extends AppCompatActivity {
         new Thread(this::checkAndDownloadData).start();
     }
 
-    public void checkAndDownloadData(){
+    public void checkAndDownloadData() {
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
-            Log.d("MainActivity", "User not authorized, skip archive upload");
+            Log.d("MainActivity", "User not authorized, skip download check");
+            return;
+        }
+
+        // Проверяем, был ли отправлен запрос на получение данных для этого пользователя
+        boolean requestSent = prefs.getBoolean(getRequestSentKey(), false);
+        if (!requestSent) {
+            Log.d("MainActivity", "No data request sent for this user, skipping download check");
             return;
         }
 
         try {
             CloudStorageModule cloud = CloudStorageModule.getInstance();
             cloud.setContext(this);
-            // Ищем файлы в папке fetch/download, содержащие логин
             List<String> files = cloud.listDownloadFilesForUser(user.getLogin());
 
-            SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-            Set<String> processedFiles = prefs.getStringSet("processed_download_files", new HashSet<>());
+            Set<String> processedFiles = prefs.getStringSet(getPrefProcessedDownloadFiles(), new HashSet<>());
             boolean anyImported = false;
-
             SecretKey key = user.getKey();
+            boolean anyFile = false;
+
             for (String filePath : files) {
+                anyFile = true;
                 String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
                 if (processedFiles.contains(fileName)) continue;
 
@@ -195,28 +213,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            if (anyImported) {
-                prefs.edit()
-                        .putBoolean("data_request_sent", false)
-                        .putStringSet("processed_download_files", processedFiles)
-                        .apply();
-                runOnUiThread(() -> {
-                    Toast.makeText(getBaseContext(), "Импортированы новые анкет", Toast.LENGTH_LONG).show();
-                    Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                    if (fragment instanceof ProfileFragment) {
-                        ((ProfileFragment) fragment).refreshRequestButton();
-                    }
-                });
-            } else {
-                runOnUiThread(() -> {
-                    Toast.makeText(getBaseContext(), "Локальные данные актуальны", Toast.LENGTH_LONG).show();
-                });
-                prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
+            if (anyFile) {
+                if (anyImported) {
+                    // Сбрасываем флаг запроса, так как данные получены
+                    prefs.edit()
+                            .putBoolean(getRequestSentKey(), false)
+                            .putStringSet(getPrefProcessedDownloadFiles(), processedFiles)
+                            .apply();
+
+                    runOnUiThread(() -> {
+                        Toast.makeText(getBaseContext(), "Импортированы новые анкеты", Toast.LENGTH_LONG).show();
+                        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                        if (fragment instanceof ProfileFragment) {
+                            ((ProfileFragment) fragment).refreshRequestButton();
+                        }
+                    });
+                } else {
+                    // Данных нет – обновляем только список обработанных файлов (он не меняется)
+                    prefs.edit()
+                            .putBoolean(getRequestSentKey(), false)
+                            .putStringSet(getPrefProcessedDownloadFiles(), processedFiles)
+                            .apply();
+
+                    runOnUiThread(() -> Toast.makeText(getBaseContext(), "Локальные данные актуальны", Toast.LENGTH_LONG).show());
+                }
             }
         } catch (Exception e) {
-            runOnUiThread(() -> {
-                Toast.makeText(getBaseContext(), "Ошибка при импортировании новых анкет", Toast.LENGTH_LONG).show();
-            });
+            runOnUiThread(() -> Toast.makeText(getBaseContext(), "Ошибка при импортировании новых анкет", Toast.LENGTH_LONG).show());
             Log.e("MainActivity", "Download check error", e);
         }
     }
@@ -266,7 +289,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private String getLastArchiveUploadKey() {
+        User user = User.getInstance();
+        return PREF_LAST_ARCHIVE_UPLOAD + "_" + user.getLogin();
+    }
+
     private void initViews() {
+        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         backButton = findViewById(R.id.btn_back);
         toolbarTitle = findViewById(R.id.toolbar_title);
     }

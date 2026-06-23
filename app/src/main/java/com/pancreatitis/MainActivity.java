@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
             // Запускаем проверку в фоновом потоке
             new Thread(() -> {
                 checkAndUploadArchive();   // существующая отправка
-                forceCheckAndDownloadData(); // проверка входящих
+                checkAndDownloadData(); // проверка входящих
             }).start();
             // Планируем следующий запуск
             periodicHandler.postDelayed(periodicTask, CHECK_INTERVAL_MS);
@@ -160,63 +160,65 @@ public class MainActivity extends AppCompatActivity {
         new Thread(this::checkAndUploadArchive).start();
     }
 
-    /**
-     * Проверяет наличие файлов ответов для текущего пользователя и загружает их
-     */
     public void forceCheckAndDownloadData() {
-        new Thread(() -> {
-            User user = User.getInstance();
-            if (user == null || user.getLogin() == null) return;
+        new Thread(this::checkAndDownloadData).start();
+    }
 
-            try {
-                CloudStorageModule cloud = CloudStorageModule.getInstance();
-                cloud.setContext(this);
-                // Ищем файлы в папке fetch/download, содержащие логин
-                List<String> files = cloud.listDownloadFilesForUser(user.getLogin());
+    public void checkAndDownloadData(){
+        User user = User.getInstance();
+        if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
+            Log.d("MainActivity", "User not authorized, skip archive upload");
+            return;
+        }
 
-                SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-                Set<String> processedFiles = prefs.getStringSet("processed_download_files", new HashSet<>());
-                boolean anyImported = false;
+        try {
+            CloudStorageModule cloud = CloudStorageModule.getInstance();
+            cloud.setContext(this);
+            // Ищем файлы в папке fetch/download, содержащие логин
+            List<String> files = cloud.listDownloadFilesForUser(user.getLogin());
 
-                SecretKey key = user.getKey();
-                for (String filePath : files) {
-                    String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-                    if (processedFiles.contains(fileName)) continue;
+            SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+            Set<String> processedFiles = prefs.getStringSet("processed_download_files", new HashSet<>());
+            boolean anyImported = false;
 
-                    byte[] encryptedData = cloud.downloadFile(filePath);
-                    int count = QuestionnaireManagerModule.getInstance().importQuestionnairesFromArchive(encryptedData, key);
-                    if (count > 0) {
-                        anyImported = true;
-                        processedFiles.add(fileName);
-                        cloud.deleteFile(filePath);
-                    }
+            SecretKey key = user.getKey();
+            for (String filePath : files) {
+                String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+                if (processedFiles.contains(fileName)) continue;
+
+                byte[] encryptedData = cloud.downloadFile(filePath);
+                int count = QuestionnaireManagerModule.getInstance().importQuestionnairesFromArchive(encryptedData, key);
+                if (count > 0) {
+                    anyImported = true;
+                    processedFiles.add(fileName);
+                    cloud.deleteFile(filePath);
                 }
-
-                if (anyImported) {
-                    prefs.edit()
-                            .putBoolean("data_request_sent", false)
-                            .putStringSet("processed_download_files", processedFiles)
-                            .apply();
-                    runOnUiThread(() -> {
-                        Toast.makeText(getBaseContext(), "Импортированы новые анкет", Toast.LENGTH_LONG).show();
-                        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                        if (fragment instanceof ProfileFragment) {
-                            ((ProfileFragment) fragment).refreshRequestButton();
-                        }
-                    });
-                } else {
-                    runOnUiThread(() -> {
-                        Toast.makeText(getBaseContext(), "Локальные данные актуальны", Toast.LENGTH_LONG).show();
-                    });
-                    prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
-                }
-            } catch (Exception e) {
-                runOnUiThread(() -> {
-                    Toast.makeText(getBaseContext(), "Ошибка при импортировании новых анкет", Toast.LENGTH_LONG).show();
-                });
-                Log.e("MainActivity", "Download check error", e);
             }
-        }).start();
+
+            if (anyImported) {
+                prefs.edit()
+                        .putBoolean("data_request_sent", false)
+                        .putStringSet("processed_download_files", processedFiles)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(getBaseContext(), "Импортированы новые анкет", Toast.LENGTH_LONG).show();
+                    Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                    if (fragment instanceof ProfileFragment) {
+                        ((ProfileFragment) fragment).refreshRequestButton();
+                    }
+                });
+            } else {
+                runOnUiThread(() -> {
+                    Toast.makeText(getBaseContext(), "Локальные данные актуальны", Toast.LENGTH_LONG).show();
+                });
+                prefs.edit().putStringSet("processed_download_files", processedFiles).apply();
+            }
+        } catch (Exception e) {
+            runOnUiThread(() -> {
+                Toast.makeText(getBaseContext(), "Ошибка при импортировании новых анкет", Toast.LENGTH_LONG).show();
+            });
+            Log.e("MainActivity", "Download check error", e);
+        }
     }
 
     private void copyFromAsstesAlgorithmFile() {

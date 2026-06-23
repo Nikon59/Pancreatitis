@@ -254,11 +254,6 @@ public class ProfileFragment extends Fragment {
                             btnGetDump.setText("Запрос отправлен");
                             btnGetDump.setEnabled(false);
                             Toast.makeText(getContext(), "Запрос отправлен", Toast.LENGTH_SHORT).show();
-
-                            // Запускаем немедленную проверку ответа
-                            if (getActivity() instanceof MainActivity) {
-                                ((MainActivity) getActivity()).forceCheckAndDownloadData();
-                            }
                         } else {
                             btnGetDump.setEnabled(true);
                             Toast.makeText(getContext(), "Ошибка отправки запроса", Toast.LENGTH_SHORT).show();

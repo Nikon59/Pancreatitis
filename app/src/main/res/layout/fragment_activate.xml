@@ -1,12 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Логин"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/loginEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите логин"
+            android:inputType="text"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/rounded_background"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btn_activate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Запустить"
+            android:backgroundTint="@color/colorActive"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textAllCaps="false" />
+    </LinearLayout>
+
     <include
         android:id="@+id/loading_overlay"
-        layout="@layout/loading_overlay"
-        />
+        layout="@layout/loading_overlay" />
 </FrameLayout>

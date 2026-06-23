@@ -1,163 +1,219 @@
 package com.pancreatitis.ui.activate;
 
-import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.GridLayout;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.pancreatitis.MainActivity;
 import com.pancreatitis.R;
 import com.pancreatitis.modules.bip39.Bip39Decoder;
+import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
 import com.pancreatitis.modules.localstorage.LocalStorageModule;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ActivateFragment extends Fragment {
 
-    // Количество слов мнемонической фразы (12 или 24)
-    private static final int WORD_COUNT = 24;
-    // Количество столбцов в сетке
-    private static final int COLUMN_COUNT = 3;
+    private static final int TIMEOUT_SECONDS = 300;          // 5 минут
+    private static final int CHECK_INTERVAL_SECONDS = 3;    // проверка каждые 3 секунды
 
-    private View loadingOverlay;
-    private List<EditText> wordEditTexts;
-    private EditText loginEditTextGlobal;
+    private EditText loginEditText;
+    private Button activateButton;
+    private FrameLayout loadingOverlay;
+    private TextView timerTextView;
+
+    private ScheduledExecutorService scheduler;
+    private ScheduledFuture<?> checkFuture;
+    private ScheduledFuture<?> timerUpdateFuture;
+    private Handler uiHandler = new Handler(Looper.getMainLooper());
+    private int remainingSeconds = TIMEOUT_SECONDS;
+    private boolean isFinished = false; // флаг, чтобы не выполнять повторные действия
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_activate, container, false);
 
-        FrameLayout rootLayout = view.findViewById(R.id.root_layout);
+        loginEditText = view.findViewById(R.id.loginEditText);
+        activateButton = view.findViewById(R.id.btn_activate);
         loadingOverlay = view.findViewById(R.id.loading_overlay);
+        timerTextView = loadingOverlay.findViewById(R.id.timerTextView);
 
-        // Основной контейнер для контента
-        LinearLayout contentLayout = new LinearLayout(getContext());
-        contentLayout.setOrientation(LinearLayout.VERTICAL);
-        contentLayout.setPadding(16, 16, 16, 16);
-
-        // Заголовок
-        TextView title = new TextView(getContext());
-        title.setText("Введите мнемоническую фразу (" + WORD_COUNT + " слов)");
-        title.setTextSize(18);
-        title.setGravity(Gravity.CENTER);
-        title.setTextColor(Color.BLACK);
-        contentLayout.addView(title);
-
-        // Поле ввода логина
-        EditText loginEditText = new EditText(getContext());
-        loginEditText.setHint("Логин");
-        loginEditText.setSingleLine(true);
-        LinearLayout.LayoutParams loginParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        loginParams.setMargins(0, 16, 0, 16);
-        loginEditText.setLayoutParams(loginParams);
-        contentLayout.addView(loginEditText);
-        loginEditTextGlobal = loginEditText;
-
-        // Прокручиваемая сетка для слов
-        ScrollView scrollView = new ScrollView(getContext());
-        GridLayout gridLayout = new GridLayout(getContext());
-        gridLayout.setColumnCount(COLUMN_COUNT);
-        wordEditTexts = new ArrayList<>();
-
-        for (int i = 0; i < WORD_COUNT; i++) {
-            EditText editText = new EditText(getContext());
-            editText.setHint("Слово " + (i + 1));
-            editText.setSingleLine(true);
-
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            params.columnSpec = GridLayout.spec(i % COLUMN_COUNT, 1f);
-            params.rowSpec = GridLayout.spec(i / COLUMN_COUNT);
-            params.setMargins(4, 4, 4, 4);
-            editText.setLayoutParams(params);
-
-            gridLayout.addView(editText);
-            wordEditTexts.add(editText);
-        }
-        scrollView.addView(gridLayout);
-
-        // Даём прокрутке занять всё доступное пространство
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
-        contentLayout.addView(scrollView, scrollParams);
-
-        // Кнопка активации
-        Button activateButton = new Button(getContext());
-        activateButton.setText("Активация");
         activateButton.setOnClickListener(v -> onActivate());
-        activateButton.setBackgroundTintList(ContextCompat.getColorStateList(getContext(), R.color.colorActive));
-        activateButton.setTextColor(getResources().getColor(android.R.color.white, null));
-        contentLayout.addView(activateButton, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        // Добавляем контент в корень FrameLayout перед loading overlay
-        rootLayout.addView(contentLayout, 0);
 
         return view;
     }
 
-    /**
-     * Обработчик нажатия кнопки "Активация".
-     * Собирает слова из полей и передаёт в заглушку.
-     */
     private void onActivate() {
-        String login = loginEditTextGlobal.getText().toString().trim();
+        String login = loginEditText.getText().toString().trim();
         if (login.isEmpty()) {
             Toast.makeText(getContext(), "Введите логин", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        List<String> words = new ArrayList<>();
-        for (EditText et : wordEditTexts) {
-            String word = et.getText().toString().trim().toLowerCase();
-            if (word.isEmpty()) {
-                Toast.makeText(getContext(), "Заполните все поля", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            words.add(word);
+        // Блокируем UI и показываем оверлей
+        loadingOverlay.setVisibility(View.VISIBLE);
+        timerTextView.setVisibility(View.VISIBLE);
+        ((MainActivity) requireActivity()).lockNavigation();
+
+        // Сбрасываем счётчик
+        remainingSeconds = TIMEOUT_SECONDS;
+        isFinished = false;
+        updateTimerText();
+
+        // Создаём планировщик, если ещё не создан
+        if (scheduler == null || scheduler.isShutdown()) {
+            scheduler = Executors.newSingleThreadScheduledExecutor();
         }
 
-        // Показываем индикатор загрузки
-        loadingOverlay.setVisibility(View.VISIBLE);
-
-        new Thread(() -> {
-            try {
-                // Восстанавливаем ключ из мнемонической фразы
-                String mnemonic = String.join(" ", words);
-                byte[] encryptedKey = Bip39Decoder.fromMnemonic(mnemonic);
-
-                // Сохраняем ключ в папку пользователя
-                LocalStorageModule localStorage = LocalStorageModule.getInstance();
-                localStorage.createUserFolder(login);
-                localStorage.saveLocalUserKey(login, encryptedKey);
-
-                requireActivity().runOnUiThread(() -> {
-                    loadingOverlay.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Ключ успешно сохранён", Toast.LENGTH_SHORT).show();
-                });
-            } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    loadingOverlay.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Неправильный набор слов", Toast.LENGTH_LONG).show();
-                });
+        // Задача для обновления таймера на UI (каждую секунду)
+        Runnable timerUpdateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isFinished) return;
+                remainingSeconds--;
+                updateTimerText();
+                if (remainingSeconds <= 0) {
+                    // Время истекло – завершаем с ошибкой
+                    finishWithError("Время ожидания истекло. Файл не появился.");
+                } else {
+                    // Планируем следующее обновление через 1 секунду
+                    uiHandler.postDelayed(this, 1000);
+                }
             }
-        }).start();
+        };
+
+        // Задача для проверки наличия файла в облаке (периодическая)
+        Runnable checkRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isFinished) return;
+                try {
+                    CloudStorageModule cloud = CloudStorageModule.getInstance();
+                    String filePath = "/users/" + login + ".txt";
+
+                    // Проверяем существование файла
+                    if (cloud.fileExists(filePath)) {
+                        // Файл найден – скачиваем и обрабатываем
+                        byte[] fileData = cloud.downloadFile(filePath);
+                        String content = new String(fileData, StandardCharsets.UTF_8);
+                        String[] words = content.trim().split("\\s+");
+
+                        if (words.length != 24) {
+                            throw new Exception("Файл должен содержать ровно 24 слова");
+                        }
+
+                        // Восстанавливаем ключ из мнемонической фразы
+                        String mnemonic = String.join(" ", words);
+                        byte[] encryptedKey = Bip39Decoder.fromMnemonic(mnemonic);
+
+                        // Сохраняем ключ локально
+                        LocalStorageModule localStorage = LocalStorageModule.getInstance();
+                        localStorage.createUserFolder(login);
+                        localStorage.saveLocalUserKey(login, encryptedKey);
+
+                        // Удаляем файл из облака
+                        cloud.deleteFile(filePath);
+
+                        // Успех – завершаем с положительным результатом
+                        finishWithSuccess("Активация выполнена успешно!");
+                        return;
+                    }
+                } catch (FileNotFoundException e) {
+                    // Файл ещё не появился – ничего не делаем, продолжим проверку
+                } catch (Exception e) {
+                    // Ошибка при проверке или обработке – завершаем с ошибкой
+                    finishWithError("Ошибка: " + e.getMessage());
+                }
+            }
+        };
+
+        // Запускаем периодическую проверку (первый запуск сразу)
+        checkFuture = scheduler.scheduleAtFixedRate(checkRunnable, 0, CHECK_INTERVAL_SECONDS, TimeUnit.SECONDS);
+
+        // Запускаем обновление таймера (первый запуск через 1 секунду)
+        uiHandler.postDelayed(timerUpdateRunnable, 1000);
+    }
+
+    private void updateTimerText() {
+        int minutes = remainingSeconds / 60;
+        int seconds = remainingSeconds % 60;
+        String text = String.format("Осталось: %02d:%02d", minutes, seconds);
+        timerTextView.setText(text);
+    }
+
+    private void finishWithSuccess(String message) {
+        if (isFinished) return;
+        isFinished = true;
+        cancelTasks();
+        showToast(message);
+        hideOverlayAndUnlock();
+    }
+
+    private void finishWithError(String message) {
+        if (isFinished) return;
+        isFinished = true;
+        cancelTasks();
+        showToast(message);
+        hideOverlayAndUnlock();
+    }
+
+    private void cancelTasks() {
+        if (checkFuture != null) {
+            checkFuture.cancel(false);
+            checkFuture = null;
+        }
+        if (timerUpdateFuture != null) {
+            timerUpdateFuture.cancel(false);
+            timerUpdateFuture = null;
+        }
+        uiHandler.removeCallbacksAndMessages(null);
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+            scheduler = null;
+        }
+    }
+
+    private void hideOverlayAndUnlock() {
+        requireActivity().runOnUiThread(() -> {
+            loadingOverlay.setVisibility(View.GONE);
+            timerTextView.setVisibility(View.GONE);
+            ((MainActivity) requireActivity()).unlockNavigation();
+        });
+    }
+
+    private void showToast(String message) {
+        requireActivity().runOnUiThread(() ->
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
+        );
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        cancelTasks();
+        // Скрываем оверлей, если он виден
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.GONE);
+        }
+        if (timerTextView != null) {
+            timerTextView.setVisibility(View.GONE);
+        }
+        ((MainActivity) requireActivity()).unlockNavigation();
     }
 }

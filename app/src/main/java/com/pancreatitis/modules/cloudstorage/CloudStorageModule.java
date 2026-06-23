@@ -437,6 +437,21 @@ public class CloudStorageModule {
         connection.disconnect();
         return responseCode == 202 || responseCode == 204;
     }
+    public boolean fileExists(String path) throws Exception {
+        String encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
+        String url = API_URL + "?path=" + encodedPath;
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Authorization", "OAuth " + authToken);
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        try {
+            int responseCode = connection.getResponseCode();
+            return responseCode == 200;
+        } finally {
+            connection.disconnect();
+        }
+    }
 
     // Вспомогательные методы (остаются теми же)
     private byte[] downloadFileAsBytes(String downloadUrl) throws Exception {

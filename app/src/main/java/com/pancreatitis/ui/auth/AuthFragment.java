@@ -91,6 +91,8 @@ public class AuthFragment extends Fragment {
 
                             if (login.isEmpty() || password.isEmpty()) {
                                 message = "Введите логин и пароль";
+                            } else if (!localStorageModule.isUserFolderExists(login)) {
+                                message = "Аккаунт отсутствует";
                             } else {
                                 SecretKey key = authorizationModule.authenticateUser(login, password);
                                 if (key != null) {

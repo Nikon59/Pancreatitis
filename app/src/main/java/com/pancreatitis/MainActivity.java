@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
     private Runnable periodicTask;
     private SharedPreferences prefs;
     private static final long CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 минут
-    private static final long UPLOAD_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 часа
     private static final String PREF_LAST_ARCHIVE_UPLOAD = "last_archive_upload";
     private static final String PREF_REQUEST_SENT = "data_request_sent";
     private static final String PREF_PROCESSED_DOWNLOAD_FILES = "processed_download_files";
@@ -103,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startPeriodicUploadCheck() {
-        resetLastUploadTime();
+        //resetLastUploadTime();
         if (periodicHandler == null) {
             periodicHandler = new Handler(Looper.getMainLooper());
         }

@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,6 +19,7 @@ import java.util.Map;
 
 public class DatabaseHelper {
 
+    private static final String TAG = "DatabaseHelper";
     private static final String OLD_DB_NAME = "pancreatitis_v6.6.db";
     private static final String NEW_DB_NAME = "mobile.db";
     private static final String TARGET_DOCTOR_FIO = "Роман Святославович";
@@ -35,40 +35,43 @@ public class DatabaseHelper {
         this.newDbPath = context.getDatabasePath(NEW_DB_NAME).getPath();
     }
 
-    /**
-     * Вызывать в фоновом потоке.
-     * Управление миграцией:
-     * - если есть старая БД – выполняется миграция в новую (при необходимости новая копируется из assets);
-     * - если старой нет, а новой нет – копируется из assets;
-     * - если старой нет, а новая есть – ничего не делается.
-     */
     public void create_db() {
-        File oldDbFile = new File(oldDbPath);
         File newDbFile = new File(newDbPath);
-        boolean oldExists = oldDbFile.exists();
         boolean newExists = newDbFile.exists();
 
-        if (oldExists) {
-            // Если есть старая БД – мигрируем в новую
-            if (!newExists) {
-                copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
-            }
-            migrateDataFrom6To7();
-            // Удаляем старую БД после успешной миграции
-            if (oldDbFile.delete()) {
-                Log.d("DatabaseHelper", "Old database deleted");
-            } else {
-                Log.w("DatabaseHelper", "Could not delete old database");
-            }
-        } else {
-            // Старой нет – просто копируем новую, если её ещё нет
-            if (!newExists) {
-                copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
-            }
-            migrateDataFrom7to8();
+        if (!newExists) {
+            // Нет новой БД — копируем из assets
+            copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
         }
 
-        setDatabaseVersion();
+        int currentVersion = getCurrentDatabaseVersion();
+        Log.d(TAG, "Current DB version: " + currentVersion);
+
+        if (currentVersion < 7) {
+            // Миграция 6 → 7
+            migrateDataFrom6To7();
+            setDatabaseVersion(7);
+            currentVersion = 7;
+        }
+
+        if (currentVersion < 8) {
+            // Миграция 7 → 8
+            migrateDataFrom7to8();
+            setDatabaseVersion(8);
+        }
+    }
+
+    private int getCurrentDatabaseVersion() {
+        SQLiteDatabase db = null;
+        try {
+            db = SQLiteDatabase.openDatabase(newDbPath, null, SQLiteDatabase.OPEN_READONLY);
+            return (int) db.getVersion(); // использует PRAGMA user_version
+        } catch (Exception e) {
+            Log.w(TAG, "Cannot read DB version, assuming 0", e);
+            return 0;
+        } finally {
+            if (db != null) db.close();
+        }
     }
 
     public SQLiteDatabase getReadableDatabase() {
@@ -96,16 +99,22 @@ public class DatabaseHelper {
                 out.write(buffer, 0, length);
             }
             out.flush();
-            Log.d("DatabaseHelper", "Copied " + assetName);
+            Log.d(TAG, "Copied " + assetName);
         } catch (IOException e) {
-            Log.e("DatabaseHelper", "Failed to copy database from assets", e);
+            Log.e(TAG, "Failed to copy database from assets", e);
             throw new RuntimeException("Cannot copy database from assets", e);
         }
     }
 
-    // ======================== МИГРАЦИЯ ========================
+    // ======================== МИГРАЦИЯ 6 → 7 ========================
 
     private void migrateDataFrom6To7() {
+        File oldDbFile = new File(oldDbPath);
+        if (!oldDbFile.exists()) {
+            Log.w(TAG, "Old DB not found, skipping migration 6→7");
+            return;
+        }
+
         SQLiteDatabase oldDb = null;
         SQLiteDatabase newDb = null;
         try {
@@ -120,7 +129,7 @@ public class DatabaseHelper {
                     "SELECT id, fio, status, last_modified FROM doctors WHERE fio = ?",
                     new String[]{TARGET_DOCTOR_FIO});
             if (!doctorCursor.moveToFirst()) {
-                Log.w("Migration", "Doctor with fio=" + TARGET_DOCTOR_FIO + " not found in old DB");
+                Log.w(TAG, "Doctor with fio=" + TARGET_DOCTOR_FIO + " not found in old DB");
                 doctorCursor.close();
                 newDb.setTransactionSuccessful();
                 return;
@@ -138,11 +147,11 @@ public class DatabaseHelper {
             cvDoctor.putNull("phone");
             cvDoctor.putNull("email");
             cvDoctor.put("status", status);
-            cvDoctor.put("created_at", lastModified);
+            cvDoctor.put("created_at", lastModified); // last_modified → created_at
             long newDoctorId = newDb.insert("doctors", null, cvDoctor);
-            Log.d("Migration", "Created new doctor with id=" + newDoctorId + " for fio=" + fio);
+            Log.d(TAG, "Created new doctor with id=" + newDoctorId + " for fio=" + fio);
 
-            // 3. Найти всех пациентов, на которых ссылаются анкеты этого доктора или базовые (id_doctor = 100)
+            // 3. Пациенты: связанные с анкетами этого доктора или базовыми (id_doctor = 100)
             Cursor patientCursor = oldDb.rawQuery(
                     "SELECT DISTINCT id_patient FROM ankets WHERE id_doctor IN (?, ?)",
                     new String[]{String.valueOf(oldDoctorId), "100"});
@@ -155,17 +164,17 @@ public class DatabaseHelper {
                     String patientFio = pData.getString(0);
                     String patientLastModified = pData.getString(1);
                     ContentValues cvPatient = new ContentValues();
-                    cvPatient.put("id", patientId);       // сохраняем тот же id
+                    cvPatient.put("id", patientId);
                     cvPatient.put("fio", patientFio);
                     cvPatient.put("last_modified", patientLastModified);
                     newDb.insertWithOnConflict("patients", null, cvPatient, SQLiteDatabase.CONFLICT_REPLACE);
-                    Log.d("Migration", "Copied patient id=" + patientId);
+                    Log.d(TAG, "Copied patient id=" + patientId);
                 }
                 pData.close();
             }
             patientCursor.close();
 
-            // 4. Перенести все анкеты этого доктора И базовые анкеты (id_doctor = 100)
+            // 4. Анкеты
             Map<Long, Long> anketIdMap = new HashMap<>();
             Cursor ankCursor = oldDb.rawQuery(
                     "SELECT id, id_patient, id_doctor, id_expert, diagnosis, date_of_completion, admitted_from, last_modified " +
@@ -201,15 +210,15 @@ public class DatabaseHelper {
                 ankCount++;
             }
             ankCursor.close();
-            Log.d("Migration", "Migrated " + ankCount + " ankets (including base ones with id_doctor=100, now set to NULL)");
+            Log.d(TAG, "Migrated " + ankCount + " ankets");
 
-            // 5. Перенести characterization_anket_patient для всех перенесённых анкет
+            // 5. characterization_anket_patient
             if (!anketIdMap.isEmpty()) {
                 List<String> oldAnkIds = new ArrayList<>();
                 for (Long id : anketIdMap.keySet()) {
                     oldAnkIds.add(String.valueOf(id));
                 }
-                String idsIn = TextUtils.join(",", oldAnkIds);
+                String idsIn = TextUtils.join(",", oldAnkIds); // ← без пробелов!
                 Cursor capCursor = oldDb.rawQuery(
                         "SELECT id_characteristic, id_anket, id_value, value, created_at, last_modified " +
                                 "FROM characterization_anket_patient WHERE id_anket IN (" + idsIn + ")",
@@ -242,14 +251,14 @@ public class DatabaseHelper {
                     capCount++;
                 }
                 capCursor.close();
-                Log.d("Migration", "Migrated " + capCount + " characterization_anket_patient records");
+                Log.d(TAG, "Migrated " + capCount + " characterization records");
             }
 
             newDb.setTransactionSuccessful();
-            newDb.execSQL("PRAGMA user_version = 7;");
-            Log.d("Migration", "Migration for single doctor completed successfully");
+            Log.d(TAG, "Migration 6→7 completed successfully");
+
         } catch (Exception e) {
-            Log.e("Migration", "Migration failed", e);
+            Log.e(TAG, "Migration 6→7 failed", e);
         } finally {
             if (newDb != null) {
                 newDb.execSQL("PRAGMA foreign_keys=ON;");
@@ -258,18 +267,21 @@ public class DatabaseHelper {
             }
             if (oldDb != null) oldDb.close();
         }
+
+        // Удаляем старую БД после успешной миграции
+        if (oldDbFile.exists()) {
+            if (oldDbFile.delete()) {
+                Log.d(TAG, "Old database deleted");
+            } else {
+                Log.w(TAG, "Could not delete old database");
+            }
+        }
     }
 
-    /**
-     * Миграция данных из существующей mobile.db (старой версии) в новую mobile.db из assets.
-     * Предполагается, что старая БД существует и новая БД (из assets) уже скопирована во временный файл.
-     * Данные переносятся из всех пользовательских таблиц: doctors, patients, ankets,
-     * characterization_anket_patient (и при необходимости ankets_values).
-     * При конфликте первичных ключей используется REPLACE (замена).
-     */
+    // ======================== МИГРАЦИЯ 7 → 8 ========================
+
     private void migrateDataFrom7to8() {
         String tempDbPath = newDbPath + ".tmp";
-        // Копируем свежую БД из assets во временный файл
         copyDatabaseFromAssets(NEW_DB_NAME, tempDbPath);
 
         SQLiteDatabase oldDb = null;
@@ -281,20 +293,18 @@ public class DatabaseHelper {
             newDb.execSQL("PRAGMA foreign_keys=OFF;");
             newDb.beginTransaction();
 
-            // Перенос всех таблиц с заменой при конфликте
+            // Копируем пользовательские таблицы
             copyTable(oldDb, newDb, "doctors");
             copyTable(oldDb, newDb, "patients");
             copyTable(oldDb, newDb, "ankets");
             copyTable(oldDb, newDb, "characterization_anket_patient");
-            // Если используется таблица ankets_values, раскомментируйте следующую строку:
-            // copyTable(oldDb, newDb, "ankets_values");
+            // ankets_values — справочник, не копируем (берём из assets)
 
             newDb.setTransactionSuccessful();
-            newDb.execSQL("PRAGMA user_version = 7;"); // временно, позже установим 8
-            Log.d("Migration", "Data migrated from old mobile.db to new mobile.db");
+            Log.d(TAG, "Migration 7→8 data copied successfully");
+
         } catch (Exception e) {
-            Log.e("Migration", "Failed to migrate from old mobile.db", e);
-            // Можно попытаться удалить временный файл, чтобы не осталось мусора
+            Log.e(TAG, "Migration 7→8 failed", e);
             new File(tempDbPath).delete();
             return;
         } finally {
@@ -306,24 +316,19 @@ public class DatabaseHelper {
             if (oldDb != null) oldDb.close();
         }
 
-        // Замена старой БД на новую (из временного файла)
+        // Замена БД
         File oldFile = new File(newDbPath);
         File tempFile = new File(tempDbPath);
         boolean replaced = false;
-        if (oldFile.exists()) {
-            if (oldFile.delete()) {
-                if (tempFile.renameTo(oldFile)) {
-                    replaced = true;
-                    Log.d("Migration", "Replaced old mobile.db with new one");
-                } else {
-                    Log.e("Migration", "Failed to rename temp db to newDbPath");
-                }
-            } else {
-                Log.w("Migration", "Could not delete old mobile.db, trying copy");
+
+        if (oldFile.exists() && oldFile.delete()) {
+            if (tempFile.renameTo(oldFile)) {
+                replaced = true;
+                Log.d(TAG, "Replaced DB with migrated version");
             }
         }
+
         if (!replaced) {
-            // Если rename не удался, пробуем скопировать содержимое temp в newDbPath
             try (FileInputStream in = new FileInputStream(tempFile);
                  FileOutputStream out = new FileOutputStream(oldFile)) {
                 byte[] buffer = new byte[1024];
@@ -333,26 +338,19 @@ public class DatabaseHelper {
                 }
                 out.flush();
                 replaced = true;
-                Log.d("Migration", "Copied temp db to newDbPath");
+                Log.d(TAG, "Copied temp DB to final location");
             } catch (IOException e) {
-                Log.e("Migration", "Failed to copy temp db to newDbPath", e);
-            }
-        }
-        // Удаляем временный файл
-        if (tempFile.exists()) {
-            if (!tempFile.delete()) {
-                Log.w("Migration", "Could not delete temp file: " + tempDbPath);
+                Log.e(TAG, "Failed to copy temp DB", e);
             }
         }
 
-        // Устанавливаем целевую версию (8)
-        setDatabaseVersion();
+        if (tempFile.exists()) tempFile.delete();
     }
 
     private void copyTable(SQLiteDatabase source, SQLiteDatabase dest, String tableName) {
         Cursor cursor = source.query(tableName, null, null, null, null, null, null);
         if (cursor == null) {
-            Log.w("Migration", "Table " + tableName + " not found in source DB");
+            Log.w(TAG, "Table " + tableName + " not found in source DB");
             return;
         }
         try {
@@ -362,6 +360,7 @@ public class DatabaseHelper {
                 values.clear();
                 for (String col : columns) {
                     int index = cursor.getColumnIndex(col);
+                    if (index == -1) continue;
                     int type = cursor.getType(index);
                     switch (type) {
                         case Cursor.FIELD_TYPE_NULL:
@@ -380,31 +379,28 @@ public class DatabaseHelper {
                             values.put(col, cursor.getBlob(index));
                             break;
                         default:
-                            // fallback – как строка
                             values.put(col, cursor.getString(index));
                             break;
                     }
                 }
                 dest.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             }
-            Log.d("Migration", "Copied " + cursor.getCount() + " rows from " + tableName);
+            Log.d(TAG, "Copied " + cursor.getCount() + " rows from " + tableName);
         } finally {
             cursor.close();
         }
     }
 
-    private void setDatabaseVersion() {
+    private void setDatabaseVersion(int version) {
         SQLiteDatabase db = null;
         try {
             db = SQLiteDatabase.openDatabase(newDbPath, null, SQLiteDatabase.OPEN_READWRITE);
-            db.execSQL("PRAGMA user_version = " + TARGET_VERSION + ";");
-            Log.d("DatabaseHelper", "Database version set to " + TARGET_VERSION);
+            db.setVersion(version); // это делает PRAGMA user_version = ?
+            Log.d(TAG, "Database version set to " + version);
         } catch (Exception e) {
-            Log.e("DatabaseHelper", "Failed to set database version", e);
+            Log.e(TAG, "Failed to set database version to " + version, e);
         } finally {
-            if (db != null) {
-                db.close();
-            }
+            if (db != null) db.close();
         }
     }
 }

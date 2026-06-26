@@ -349,10 +349,6 @@ public class DatabaseHelper {
         setDatabaseVersion();
     }
 
-    /**
-     * Вспомогательный метод для копирования всех данных из одной таблицы в другую.
-     * Использует CONFLICT_REPLACE для разрешения конфликтов по PRIMARY KEY.
-     */
     private void copyTable(SQLiteDatabase source, SQLiteDatabase dest, String tableName) {
         Cursor cursor = source.query(tableName, null, null, null, null, null, null);
         if (cursor == null) {

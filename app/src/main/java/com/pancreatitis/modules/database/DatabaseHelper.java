@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,7 +65,7 @@ public class DatabaseHelper {
             if (!newExists) {
                 copyDatabaseFromAssets(NEW_DB_NAME, newDbPath);
             }
-            // иначе новая уже существует – ничего не делаем
+            migrateDataFrom7to8();
         }
 
         setDatabaseVersion();
@@ -260,9 +261,142 @@ public class DatabaseHelper {
     }
 
     /**
-     * Устанавливает пользовательскую версию для новой базы данных.
-     * Вызывать после успешной миграции или копирования из assets.
+     * Миграция данных из существующей mobile.db (старой версии) в новую mobile.db из assets.
+     * Предполагается, что старая БД существует и новая БД (из assets) уже скопирована во временный файл.
+     * Данные переносятся из всех пользовательских таблиц: doctors, patients, ankets,
+     * characterization_anket_patient (и при необходимости ankets_values).
+     * При конфликте первичных ключей используется REPLACE (замена).
      */
+    private void migrateDataFrom7to8() {
+        String tempDbPath = newDbPath + ".tmp";
+        // Копируем свежую БД из assets во временный файл
+        copyDatabaseFromAssets(NEW_DB_NAME, tempDbPath);
+
+        SQLiteDatabase oldDb = null;
+        SQLiteDatabase newDb = null;
+        try {
+            oldDb = SQLiteDatabase.openDatabase(newDbPath, null, SQLiteDatabase.OPEN_READONLY);
+            newDb = SQLiteDatabase.openDatabase(tempDbPath, null, SQLiteDatabase.OPEN_READWRITE);
+
+            newDb.execSQL("PRAGMA foreign_keys=OFF;");
+            newDb.beginTransaction();
+
+            // Перенос всех таблиц с заменой при конфликте
+            copyTable(oldDb, newDb, "doctors");
+            copyTable(oldDb, newDb, "patients");
+            copyTable(oldDb, newDb, "ankets");
+            copyTable(oldDb, newDb, "characterization_anket_patient");
+            // Если используется таблица ankets_values, раскомментируйте следующую строку:
+            // copyTable(oldDb, newDb, "ankets_values");
+
+            newDb.setTransactionSuccessful();
+            newDb.execSQL("PRAGMA user_version = 7;"); // временно, позже установим 8
+            Log.d("Migration", "Data migrated from old mobile.db to new mobile.db");
+        } catch (Exception e) {
+            Log.e("Migration", "Failed to migrate from old mobile.db", e);
+            // Можно попытаться удалить временный файл, чтобы не осталось мусора
+            new File(tempDbPath).delete();
+            return;
+        } finally {
+            if (newDb != null) {
+                newDb.execSQL("PRAGMA foreign_keys=ON;");
+                newDb.endTransaction();
+                newDb.close();
+            }
+            if (oldDb != null) oldDb.close();
+        }
+
+        // Замена старой БД на новую (из временного файла)
+        File oldFile = new File(newDbPath);
+        File tempFile = new File(tempDbPath);
+        boolean replaced = false;
+        if (oldFile.exists()) {
+            if (oldFile.delete()) {
+                if (tempFile.renameTo(oldFile)) {
+                    replaced = true;
+                    Log.d("Migration", "Replaced old mobile.db with new one");
+                } else {
+                    Log.e("Migration", "Failed to rename temp db to newDbPath");
+                }
+            } else {
+                Log.w("Migration", "Could not delete old mobile.db, trying copy");
+            }
+        }
+        if (!replaced) {
+            // Если rename не удался, пробуем скопировать содержимое temp в newDbPath
+            try (FileInputStream in = new FileInputStream(tempFile);
+                 FileOutputStream out = new FileOutputStream(oldFile)) {
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, len);
+                }
+                out.flush();
+                replaced = true;
+                Log.d("Migration", "Copied temp db to newDbPath");
+            } catch (IOException e) {
+                Log.e("Migration", "Failed to copy temp db to newDbPath", e);
+            }
+        }
+        // Удаляем временный файл
+        if (tempFile.exists()) {
+            if (!tempFile.delete()) {
+                Log.w("Migration", "Could not delete temp file: " + tempDbPath);
+            }
+        }
+
+        // Устанавливаем целевую версию (8)
+        setDatabaseVersion();
+    }
+
+    /**
+     * Вспомогательный метод для копирования всех данных из одной таблицы в другую.
+     * Использует CONFLICT_REPLACE для разрешения конфликтов по PRIMARY KEY.
+     */
+    private void copyTable(SQLiteDatabase source, SQLiteDatabase dest, String tableName) {
+        Cursor cursor = source.query(tableName, null, null, null, null, null, null);
+        if (cursor == null) {
+            Log.w("Migration", "Table " + tableName + " not found in source DB");
+            return;
+        }
+        try {
+            String[] columns = cursor.getColumnNames();
+            ContentValues values = new ContentValues();
+            while (cursor.moveToNext()) {
+                values.clear();
+                for (String col : columns) {
+                    int index = cursor.getColumnIndex(col);
+                    int type = cursor.getType(index);
+                    switch (type) {
+                        case Cursor.FIELD_TYPE_NULL:
+                            values.putNull(col);
+                            break;
+                        case Cursor.FIELD_TYPE_INTEGER:
+                            values.put(col, cursor.getLong(index));
+                            break;
+                        case Cursor.FIELD_TYPE_FLOAT:
+                            values.put(col, cursor.getDouble(index));
+                            break;
+                        case Cursor.FIELD_TYPE_STRING:
+                            values.put(col, cursor.getString(index));
+                            break;
+                        case Cursor.FIELD_TYPE_BLOB:
+                            values.put(col, cursor.getBlob(index));
+                            break;
+                        default:
+                            // fallback – как строка
+                            values.put(col, cursor.getString(index));
+                            break;
+                    }
+                }
+                dest.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+            }
+            Log.d("Migration", "Copied " + cursor.getCount() + " rows from " + tableName);
+        } finally {
+            cursor.close();
+        }
+    }
+
     private void setDatabaseVersion() {
         SQLiteDatabase db = null;
         try {

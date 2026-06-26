@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler periodicHandler;
     private Runnable periodicTask;
     private SharedPreferences prefs;
-    private static final long CHECK_INTERVAL_MS = 2 * 60 * 1000; // 30 минут
+    private static final long CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 минут
     private static final long UPLOAD_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 часа
     private static final String PREF_LAST_ARCHIVE_UPLOAD = "last_archive_upload";
     private static final String PREF_REQUEST_SENT = "data_request_sent";
@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startPeriodicUploadCheck() {
+        resetLastUploadTime();
         if (periodicHandler == null) {
             periodicHandler = new Handler(Looper.getMainLooper());
         }
@@ -139,11 +140,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void resetLastUploadTime() {
         prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        prefs.edit().remove(getLastArchiveUploadKey()).apply();
+        prefs.edit().clear().apply();
     }
 
     private void checkAndUploadArchive() {
-        // Проверка авторизации
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
             Log.d("MainActivity", "User not authorized, skip archive upload");
@@ -151,19 +151,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        long lastUpload = prefs.getLong(getLastArchiveUploadKey(), 0);
-        long now = System.currentTimeMillis();
+        String lastDateStr = prefs.getString(getLastArchiveUploadKey(), null);
+        String todayStr = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                .format(new java.util.Date());
 
-        if (now - lastUpload >= UPLOAD_PERIOD_MS) {
+        if (!todayStr.equals(lastDateStr)) {
             String result = QuestionnaireManagerModule.getInstance().uploadAllQuestionnairesAsArchive();
             if (result != null) {
-                prefs.edit().putLong(getLastArchiveUploadKey(), now).apply();
+                prefs.edit().putString(getLastArchiveUploadKey(), todayStr).apply();
                 runOnUiThread(() -> Toast.makeText(this, result, Toast.LENGTH_SHORT).show());
             } else {
-                Log.e("MainActivity", "Archive upload failed: " + result);
+                Log.e("MainActivity", "Archive upload failed");
             }
         } else {
-            Log.d("MainActivity", "Last upload was too recent, skipping");
+            Log.d("MainActivity", "Today's upload already done, skipping");
         }
     }
 

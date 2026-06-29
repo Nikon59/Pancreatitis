@@ -212,19 +212,13 @@ public class QuestionnaireManagerModule {
      */
     public String uploadAllQuestionnairesAsArchive() {
         User user = User.getInstance();
-        if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
-            return "Пользователь не авторизован";
-        }
 
         Doctor doctor = databaseModule.getDoctorByLogin(user.getLogin());
         if (doctor == null) {
-            return "Врач не найден в БД";
+            return null;
         }
 
         List<Update> updates = getAllUpdatesForDoctor(doctor);
-        if (updates.isEmpty()) {
-            return "Нет анкет для выгрузки";
-        }
 
         try {
             // Преобразуем список Update в JSON

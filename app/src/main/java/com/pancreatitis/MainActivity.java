@@ -209,8 +209,8 @@ public class MainActivity extends AppCompatActivity {
                 if (count > 0) {
                     anyImported = true;
                     processedFiles.add(fileName);
-                    cloud.deleteFile(filePath);
                 }
+                cloud.deleteFile(filePath);
             }
 
             if (anyFile) {

@@ -1,6 +1,5 @@
 package com.pancreatitis.adapters;
 
-
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,8 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.pancreatitis.R;
-import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.Patient;
 import com.pancreatitis.models.Questionnaire;
 import com.pancreatitis.models.QuestionnaireItem;
@@ -29,32 +28,94 @@ import java.util.Objects;
 public class QuestionnaireItemAdapter extends RecyclerView.Adapter<QuestionnaireItemAdapter.QuestionnaireViewHolder> {
 
     private List<QuestionnaireItem> questionnaireList;
-    private List<QuestionnaireItem> filtered_questionnaireList;
+    private List<QuestionnaireItem> filteredList;
     private OnItemClickListener listener;
+
+    // Текущие фильтры
+    private int currentStateFilter = 0;   // 0 – все, 1 – в процессе, 2 – завершено
+    private int currentDiagnosisFilter = 0; // 0 – все, 1,5,6 – коды диагнозов
 
     public interface OnItemClickListener {
         void onItemClick(QuestionnaireItem questionnaire);
     }
 
-    public void filter(String query) {
-        filtered_questionnaireList.clear();
-        if (query == null || query.trim().isEmpty()) {
-            filtered_questionnaireList.addAll(questionnaireList);
-        } else {
-            String q = query.toLowerCase();
-            for (QuestionnaireItem s : questionnaireList) {
-                if (s != null && s.getFioPatient().toLowerCase().contains(q)) {
-                    filtered_questionnaireList.add(s);
-                }
+    public QuestionnaireItemAdapter(List<QuestionnaireItem> questionnaireList, OnItemClickListener listener) {
+        this.questionnaireList = new ArrayList<>(questionnaireList);
+        this.filteredList = new ArrayList<>(questionnaireList);
+        this.listener = listener;
+    }
+
+    // Применяет все фильтры (текст, состояние, диагноз)
+    public void applyFilters(String query, int stateFilter, int diagnosisFilter) {
+        this.currentStateFilter = stateFilter;
+        this.currentDiagnosisFilter = diagnosisFilter;
+
+        filteredList.clear();
+        if (questionnaireList.isEmpty()) {
+            notifyDataSetChanged();
+            return;
+        }
+
+        for (QuestionnaireItem item : questionnaireList) {
+            // Поиск по имени
+            boolean nameMatches = (query == null || query.trim().isEmpty())
+                    || item.getFioPatient().toLowerCase().contains(query.toLowerCase().trim());
+
+            // Фильтр по состоянию
+            boolean stateMatches;
+            switch (stateFilter) {
+                case 1: // в процессе
+                    stateMatches = item.getDiagnosis().equals("-");
+                    break;
+                case 2: // завершено
+                    stateMatches = !item.getDiagnosis().equals("-");
+                    break;
+                default: // все
+                    stateMatches = true;
+                    break;
+            }
+
+            // Фильтр по диагнозу (текстовое представление)
+            boolean diagnosisMatches;
+            switch (diagnosisFilter) {
+                case 1:
+                    diagnosisMatches = item.getDiagnosis().equals("Отечный панкреатит");
+                    break;
+                case 5:
+                    diagnosisMatches = item.getDiagnosis().equals("Панкреонекроз среднетяжелое течение");
+                    break;
+                case 6:
+                    diagnosisMatches = item.getDiagnosis().equals("Панкреонекроз тяжелое течение");
+                    break;
+                default:
+                    diagnosisMatches = true;
+                    break;
+            }
+
+            if (nameMatches && stateMatches && diagnosisMatches) {
+                filteredList.add(item);
             }
         }
         notifyDataSetChanged();
     }
 
-    public QuestionnaireItemAdapter(List<QuestionnaireItem> questionnaireList, OnItemClickListener listener) {
-        this.questionnaireList = new ArrayList<>(questionnaireList); // Создаем копию
-        this.filtered_questionnaireList = new ArrayList<>(questionnaireList); // Инициализируем полный список
-        this.listener = listener;
+    // Обновление данных с сохранением текущих фильтров
+    public void updateData(List<QuestionnaireItem> newQuestionnaires) {
+        this.questionnaireList.clear();
+        this.questionnaireList.addAll(newQuestionnaires);
+        // Применяем текущие фильтры (сохраняем значения)
+        applyFilters(
+                null, // можно передать текущий текст поиска извне, но лучше передавать отдельно
+                currentStateFilter,
+                currentDiagnosisFilter
+        );
+        // Внимание: текст поиска не хранится в адаптере, его нужно передавать отдельно
+        // Для этого мы добавим метод applyFilters с query
+    }
+
+    // Удобный метод для фильтрации по тексту (используется из TextWatcher)
+    public void filter(String query) {
+        applyFilters(query, currentStateFilter, currentDiagnosisFilter);
     }
 
     public List<QuestionnaireItem> getSelectedQuestionnaires() {
@@ -67,14 +128,6 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         return selected;
     }
 
-    public void updateData(List<QuestionnaireItem> newQuestionnaires) {
-        this.questionnaireList.clear();
-        this.questionnaireList.addAll(newQuestionnaires);
-        this.filtered_questionnaireList.clear();
-        this.filtered_questionnaireList.addAll(newQuestionnaires);
-        notifyDataSetChanged();
-    }
-
     @NonNull
     @Override
     public QuestionnaireViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -85,13 +138,13 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
 
     @Override
     public void onBindViewHolder(@NonNull QuestionnaireViewHolder holder, int position) {
-        QuestionnaireItem questionnaire = filtered_questionnaireList.get(position);
+        QuestionnaireItem questionnaire = filteredList.get(position);
         holder.bind(questionnaire, listener);
     }
 
     @Override
     public int getItemCount() {
-        return filtered_questionnaireList.size();
+        return filteredList.size();
     }
 
     static class QuestionnaireViewHolder extends RecyclerView.ViewHolder {
@@ -109,33 +162,26 @@ public class QuestionnaireItemAdapter extends RecyclerView.Adapter<Questionnaire
         }
 
         public void bind(final QuestionnaireItem questionnaire, final OnItemClickListener listener) {
-            if (User.getInstance().getKey() == null){
+            if (User.getInstance().getKey() == null) {
                 isChecked.setVisibility(View.GONE);
             }
 
             isChecked.setChecked(questionnaire.isSelected());
-            isChecked.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    questionnaire.setSelected(!questionnaire.isSelected());
-                }
-            });
+            isChecked.setOnClickListener(v -> questionnaire.setSelected(!questionnaire.isSelected()));
 
             textPatientName.setText(questionnaire.getFioPatient());
             textDiagnosis.setText(
-                   questionnaire.getDiagnosis().length() > 20
+                    questionnaire.getDiagnosis().length() > 20
                             ? questionnaire.getDiagnosis().substring(0, 20) + "..."
                             : questionnaire.getDiagnosis()
             );
             textStatus.setText(Objects.equals(questionnaire.getDiagnosis(), "-") ? "В процессе" : "Завершено");
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (listener != null) {
-                        listener.onItemClick(questionnaire);
-                    }
-                    navigateToAnketFragment(v, questionnaire);
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClick(questionnaire);
                 }
+                navigateToAnketFragment(v, questionnaire);
             });
         }
 

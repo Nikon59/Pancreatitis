@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Состояние"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/radio_group_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radio_state_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Все" />
+
+        <RadioButton
+            android:id="@+id/radio_state_in_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="В процессе" />
+
+        <RadioButton
+            android:id="@+id/radio_state_completed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Завершено" />
+    </RadioGroup>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_marginVertical="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Диагноз"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/radio_group_diagnosis"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radio_diagnosis_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Все" />
+
+        <RadioButton
+            android:id="@+id/radio_diagnosis_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Отечный панкреатит" />
+
+        <RadioButton
+            android:id="@+id/radio_diagnosis_5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Панкреонекроз среднетяжелое течение" />
+
+        <RadioButton
+            android:id="@+id/radio_diagnosis_6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Панкреонекроз тяжелое течение" />
+    </RadioGroup>
+
+</LinearLayout>

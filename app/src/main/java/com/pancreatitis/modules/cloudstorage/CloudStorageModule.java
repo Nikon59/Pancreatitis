@@ -3,6 +3,8 @@ package com.pancreatitis.modules.cloudstorage;
 import android.content.Context;
 import android.util.Log;
 
+import com.pancreatitis.BuildConfig;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pancreatitis.models.Doctor;
@@ -36,7 +38,7 @@ import javax.crypto.SecretKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class CloudStorageModule {
-    private final String authToken = "y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw";
+    private final String authToken = BuildConfig.API_KEY;
     private static final String API_URL = "https://cloud-api.yandex.net/v1/disk/resources";
     private static CloudStorageModule instance;
     private static SafetyModule safetyModule;

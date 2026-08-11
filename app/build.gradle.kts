@@ -12,8 +12,9 @@ android {
         targetSdk = 36
         versionCode = 9
         versionName = "1.1.7"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_KEY", "\"y0__xC7koqFBxjIhTwg6O2OwBUwreWe7AeTLwUn1hxDxrN6Pp9NW10aTKlPGw\"")
     }
 
     buildTypes {
@@ -25,12 +26,15 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Pancreatitis</string>
+    <string name="app_name">Pancreolana</string>
     <string name="title_home">Главное меню</string>
     <string name="title_questionnaires">Менеджер анкет</string>
     <string name="title_predict">Предсказание</string>

@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -161,7 +162,10 @@ public class PatientInformationFragment extends Fragment {
     }
     private void reloadFragmentWithNewIds() {
         NavController navController = Navigation.findNavController(requireView());
-        navController.navigate(R.id.navigation_anket);
+        NavOptions options = new NavOptions.Builder()
+                .setPopUpTo(R.id.navigation_anket, true)
+                .build();
+        navController.navigate(R.id.navigation_anket, null, options);
     }
     private boolean checkValidForSave(Patient patient, Questionnaire questionnaire) {
         if (patient.getFio() == null || Objects.equals(patient.getFio(), "")) {

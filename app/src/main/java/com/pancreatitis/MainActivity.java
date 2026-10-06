@@ -262,31 +262,39 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                int currentDestId = navController.getCurrentDestination().getId();
-
-                if (currentDestId == R.id.navigation_anket) {
-                    QuestionnaireManagerModule questionnaireManagerModule = QuestionnaireManagerModule.getInstance();
-                    questionnaireManagerModule.setPatient(new Patient());
-                    questionnaireManagerModule.setQuestionnaire(new Questionnaire());
-                    questionnaireManagerModule.setCharacterizationAnketPatients(new ArrayList<>());
-                    return;
-                }
-
-                Set<Integer> mainScreens = new HashSet<>(Arrays.asList(
-                        R.id.navigation_home,
-                        R.id.navigation_auth,
-                        R.id.navigation_helps
-                ));
-
-                if (!mainScreens.contains(currentDestId)) {
-                    navController.navigateUp();
-                } else {
-                    finish();
-                }
+                handleBackNavigation();
             }
         });
+    }
 
+    private void handleBackNavigation() {
+        if (navController == null || navController.getCurrentDestination() == null) {
+            finish();
+            return;
+        }
 
+        int currentDestId = navController.getCurrentDestination().getId();
+
+        if (currentDestId == R.id.navigation_anket) {
+            QuestionnaireManagerModule m = QuestionnaireManagerModule.getInstance();
+            m.setPatient(new Patient());
+            m.setQuestionnaire(new Questionnaire());
+            m.setCharacterizationAnketPatients(new ArrayList<>());
+            navController.navigateUp();
+            return;
+        }
+
+        Set<Integer> mainScreens = new HashSet<>(Arrays.asList(
+                R.id.navigation_home,
+                R.id.navigation_auth,
+                R.id.navigation_helps
+        ));
+
+        if (!mainScreens.contains(currentDestId)) {
+            navController.navigateUp();
+        } else {
+            finish();
+        }
     }
 
     private String getLastArchiveUploadKey() {
@@ -324,11 +332,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         if (backButton != null) {
-            backButton.setOnClickListener(v -> {
-                if (navController != null) {
-                    navController.navigateUp();
-                }
-            });
+            backButton.setOnClickListener(v ->
+                    getOnBackPressedDispatcher().onBackPressed());
         }
     }
 

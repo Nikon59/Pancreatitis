@@ -16,6 +16,8 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -72,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setupWindowInsets();
+
         DatabaseModule databaseModule = DatabaseModule.getInstance();
         databaseModule.setContext(getApplicationContext());
         databaseModule.initWork();
@@ -125,6 +129,21 @@ public class MainActivity extends AppCompatActivity {
         if (periodicHandler != null && periodicTask != null) {
             periodicHandler.removeCallbacks(periodicTask);
         }
+    }
+
+    private void setupWindowInsets() {
+        View root = findViewById(R.id.main_root);
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
+            androidx.core.graphics.Insets bars =
+                    windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Отступы сверху/снизу, чтобы панели не залезали под статус-бар
+            // и под системную навигацию. Слева/справа — для ландшафта и "вырезов".
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     private String getRequestSentKey() {

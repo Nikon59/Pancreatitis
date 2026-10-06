@@ -35,7 +35,7 @@
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="5dp"
-            android:text="Предсказать диагнроз" />
+            android:text="Предсказать диагноз" />
 
         <Button
             android:id="@+id/btn_save"

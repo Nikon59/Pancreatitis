@@ -11,7 +11,6 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="24dp"
         android:background="#FFFFFF"
         tools:context=".ui.auth.AuthFragment">
 
@@ -40,6 +39,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:text="Логин"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -50,6 +50,7 @@
             android:id="@+id/loginEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:hint="Введите логин"
             android:textSize="16sp"
             android:padding="12dp"
@@ -60,6 +61,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:text="Пароль"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -70,6 +72,7 @@
             android:id="@+id/passwordEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:hint="Введите пароль"
             android:inputType="text"
             android:textSize="16sp"
@@ -82,6 +85,7 @@
             android:id="@+id/btn_login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:backgroundTint="@color/colorActive"
             android:text="Войти"
             android:textAllCaps="false"

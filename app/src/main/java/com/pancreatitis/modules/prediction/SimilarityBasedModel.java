@@ -4,6 +4,11 @@ package com.pancreatitis.modules.prediction;
 import com.pancreatitis.models.Characteristic;
 import java.util.*;
 
+/**
+ * Устаревший алгоритм оценки на основе сходства векторных признаков.
+ * Заменен на OnnxInferenceEngine в модуле :core.
+ */
+@Deprecated
 public class SimilarityBasedModel {
 
     private static class CharacteristicInfo {

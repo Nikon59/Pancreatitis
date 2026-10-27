@@ -26,6 +26,25 @@ public class DiagnosisItem {
     public void setValue(int value) {
         this.value = value;
     }
+    public void setOptions(List<String> newOptions) {
+        if (newOptions != null && !newOptions.isEmpty()) {
+            this.options.clear();
+            this.options.add("Нет данных");
+            for (String opt : newOptions) {
+                if (!this.options.contains(opt)) {
+                    this.options.add(opt);
+                }
+            }
+        }
+    }
+
+    public String getSelectedDiagnosis() {
+        if (value >= 0 && value < options.size()) {
+            return options.get(value);
+        }
+        return "";
+    }
+
     public String getCodeDiagnosis(){
         if (value == 0){
             return "";

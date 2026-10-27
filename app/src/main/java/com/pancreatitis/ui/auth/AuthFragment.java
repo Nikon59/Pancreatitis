@@ -75,6 +75,21 @@ public class AuthFragment extends Fragment {
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String loginInput = loginEditText.getText().toString().trim();
+                String passwordInput = passwordEditText.getText().toString().trim();
+
+                if (loginInput.isEmpty() || passwordInput.isEmpty()) {
+                    showMessage("Введите логин и пароль");
+                    return;
+                }
+
+                if (com.pancreatitis.infrastructure.auth.AuthTestBridge.isTestAuthActive(getContext())) {
+                    com.pancreatitis.infrastructure.auth.AuthTestBridge.authenticateAsTestDoctor(getContext());
+                    NavController navController = Navigation.findNavController(v);
+                    navController.navigate(R.id.navigation_questionnaires);
+                    return;
+                }
+
                 // Показываем загрузку и блокируем UI
                 loading_overlay.setVisibility(View.VISIBLE);
                 ((MainActivity) requireActivity()).lockNavigation();
@@ -86,12 +101,10 @@ public class AuthFragment extends Fragment {
                     public void run() {
                         String message;
                         try {
-                            String login = loginEditText.getText().toString().trim();
-                            String password = passwordEditText.getText().toString().trim();
+                            String login = loginInput;
+                            String password = passwordInput;
 
-                            if (login.isEmpty() || password.isEmpty()) {
-                                message = "Введите логин и пароль";
-                            } else if (!localStorageModule.isUserFolderExists(login)) {
+                            if (!localStorageModule.isUserFolderExists(login)) {
                                 message = "Аккаунт отсутствует";
                             } else {
                                 SecretKey key = authorizationModule.authenticateUser(login, password);

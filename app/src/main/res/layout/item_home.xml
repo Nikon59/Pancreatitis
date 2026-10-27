@@ -35,7 +35,7 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select Diagnosis"
+            android:text="@string/home_select_diagnosis"
             android:textSize="20sp"
             android:textStyle="bold"/>
 
@@ -43,7 +43,7 @@
             android:id="@+id/text"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:text="Start a new diagnostic questionaire"
+            android:text="@string/home_start_questionnaire"
             android:textSize="16sp"/>
 
     </LinearLayout>

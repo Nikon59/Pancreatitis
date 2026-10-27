@@ -23,6 +23,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.debug.DebugDiagnosticsActivity"
+            android:exported="false"
+            android:label="@string/debug_title" />
     </application>
 
 </manifest>

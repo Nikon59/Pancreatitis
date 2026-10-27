@@ -1,35 +1,58 @@
 package com.pancreatitis.modules.prediction;
 
 import android.content.Context;
-import android.widget.Toast;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 
+import com.pancreatitis.core.ml.InferenceEngine;
+import com.pancreatitis.core.ml.OnnxInferenceEngine;
+import com.pancreatitis.core.model.ml.FeatureSchema;
+import com.pancreatitis.core.model.ml.ManifestParser;
+import com.pancreatitis.core.model.ml.ModelManifest;
+import com.pancreatitis.core.model.ml.ModelMetadata;
+import com.pancreatitis.infrastructure.ml.ModelAssetManager;
 import com.pancreatitis.models.Characteristic;
 import com.pancreatitis.models.CharasteristicDTO;
-import com.pancreatitis.modules.cloudstorage.CloudStorageModule;
-import com.pancreatitis.modules.localstorage.LocalStorageModule;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class PredictionModule {
-    private SimilarityBasedModel currentModel;
-    private List<Characteristic> lastLoadedCharacteristics;
-    private static PredictionModule instance;
-    private Context context;
-    private byte[] cachedTrainingData;
 
-    private PredictionModule() {
-        this.currentModel = null;
-        this.lastLoadedCharacteristics = null;
-        this.cachedTrainingData = null;
+    private static final String TAG = "PredictionModule";
+    private static PredictionModule instance;
+
+    private Context context;
+    private OnnxInferenceEngine inferenceEngine;
+    private ModelManifest manifest;
+    private String activeModelId = "catboost";
+    private List<Characteristic> lastLoadedCharacteristics;
+
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    public interface PredictionCallback {
+        void onSuccess(PredictionResult result);
+        void onError(Throwable error);
     }
 
-    public static PredictionModule getInstance(){
-        if (instance == null){
+    private PredictionModule() {
+        this.lastLoadedCharacteristics = null;
+    }
+
+    public static synchronized PredictionModule getInstance() {
+        if (instance == null) {
             instance = new PredictionModule();
         }
         return instance;
@@ -39,44 +62,170 @@ public class PredictionModule {
         return context;
     }
 
-    public void setContext(Context context) {
-        this.context = context;
+    public synchronized void setContext(Context context) {
+        this.context = (context != null) ? context.getApplicationContext() : null;
+        if (this.context != null && this.inferenceEngine == null) {
+            backgroundExecutor.execute(() -> {
+                try {
+                    ensureInitialized();
+                } catch (Exception e) {
+                    Log.e(TAG, "Background initialization of ML engine failed", e);
+                }
+            });
+        }
     }
 
-    public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) throws Exception {
+    public synchronized void ensureInitialized() throws Exception {
         if (context == null) {
             throw new IllegalStateException("Context not set. Call setContext() first.");
         }
-        LocalStorageModule localStorageModule = LocalStorageModule.getInstance();
-        localStorageModule.setContext(getContext());
+        if (inferenceEngine != null && inferenceEngine.isModelLoaded()) {
+            return;
+        }
 
-        // 1. Получаем тренировочные данные из assets
-        byte[] rawTrainingData = localStorageModule.getTrainingData();
+        File modelsDir = ModelAssetManager.ensureModelsExtracted(context);
+        File manifestFile = new File(modelsDir, "model_manifest.json");
 
-        TrainingData trainingData = TrainingDataParser.parseFromFile(
-                new ByteArrayInputStream(rawTrainingData)
-        );
+        if (!manifestFile.exists()) {
+            try (InputStream in = context.getAssets().open("models/model_manifest.json")) {
+                this.manifest = ManifestParser.parse(in);
+            }
+        } else {
+            this.manifest = ManifestParser.parse(manifestFile.toPath());
+        }
 
-        // 2. Преобразуем DTO в Characteristic (без значения)
-        List<Characteristic> characteristics = extractCharacteristicsFromDTO(characteristicDTOs);
-        this.lastLoadedCharacteristics = characteristics;
+        Path modelsDirPath = modelsDir.toPath();
+        this.inferenceEngine = new OnnxInferenceEngine(manifest, modelsDirPath);
 
-        // 3. Создаем модель
-        currentModel = new SimilarityBasedModel(trainingData, characteristics);
+        List<String> modelIds = inferenceEngine.getAvailableModelIds();
+        if (modelIds.contains("catboost")) {
+            activeModelId = "catboost";
+        } else if (!modelIds.isEmpty()) {
+            activeModelId = modelIds.get(0);
+        }
 
-        // 4. Извлекаем признаки из DTO
-        float[] features = extractFeaturesFromDTO(characteristicDTOs, trainingData);
-
-        // 5. Выполняем прогнозирование
-        return currentModel.predict(features);
+        inferenceEngine.loadModel(activeModelId);
+        Log.i(TAG, "ML engine initialized successfully with model: " + activeModelId);
     }
 
-    /**
-     * Извлекает список Characteristic из DTO (без значений)
-     */
-    private List<Characteristic> extractCharacteristicsFromDTO(List<CharasteristicDTO> dtoList) {
-        List<Characteristic> characteristics = new ArrayList<>();
+    public PredictionResult predict(List<CharasteristicDTO> characteristicDTOs) throws Exception {
+        Future<PredictionResult> future = backgroundExecutor.submit(new Callable<PredictionResult>() {
+            @Override
+            public PredictionResult call() throws Exception {
+                return executeInference(characteristicDTOs);
+            }
+        });
+        return future.get();
+    }
 
+    public void predictAsync(List<CharasteristicDTO> characteristicDTOs, PredictionCallback callback) {
+        backgroundExecutor.execute(() -> {
+            try {
+                PredictionResult result = executeInference(characteristicDTOs);
+                mainHandler.post(() -> {
+                    if (callback != null) {
+                        callback.onSuccess(result);
+                    }
+                });
+            } catch (Throwable t) {
+                Log.e(TAG, "Async inference error", t);
+                mainHandler.post(() -> {
+                    if (callback != null) {
+                        callback.onError(t);
+                    }
+                });
+            }
+        });
+    }
+
+    private synchronized PredictionResult executeInference(List<CharasteristicDTO> characteristicDTOs) throws Exception {
+        ensureInitialized();
+
+        if (context != null) {
+            com.pancreatitis.infrastructure.debug.DebugPreferences prefs =
+                    com.pancreatitis.infrastructure.debug.DebugPreferences.getInstance(context);
+            if (prefs.isSimulateInferenceError()) {
+                throw new ai.onnxruntime.OrtException(
+                        ai.onnxruntime.OrtException.OrtErrorCode.ORT_FAIL,
+                        "Симулированный сбой инференса (Debug Diagnostics Simulation)"
+                );
+            }
+            inferenceEngine.setNormalizeEnabled(prefs.isZScoreNormalizationEnabled());
+            inferenceEngine.setClampEnabled(prefs.isPhysiologicalClampEnabled());
+            inferenceEngine.setDefaultFallbackEnabled(prefs.isDefaultFallbackEnabled());
+            inferenceEngine.setChecksumVerificationEnabled(prefs.isCheckSha256Enabled());
+
+            String debugModelId = prefs.getActiveModelId(null);
+            if (debugModelId != null && !debugModelId.equalsIgnoreCase(activeModelId)) {
+                try {
+                    selectModel(debugModelId);
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to apply debug active model: " + debugModelId, e);
+                }
+            }
+        }
+
+        this.lastLoadedCharacteristics = extractCharacteristicsFromDTO(characteristicDTOs);
+        Map<String, Float> featureMap = buildFeatureMap(characteristicDTOs, manifest);
+
+        com.pancreatitis.core.model.ml.PredictionResult coreResult = inferenceEngine.predict(featureMap);
+        return new PredictionResult(coreResult);
+    }
+
+    private Map<String, Float> buildFeatureMap(List<CharasteristicDTO> dtoList, ModelManifest manifest) {
+        Map<String, Float> featureMap = new HashMap<>();
+        if (manifest == null || manifest.getFeatures() == null) {
+            return featureMap;
+        }
+
+        Map<String, Float> dtoByName = new HashMap<>();
+        Map<Integer, Float> dtoById = new HashMap<>();
+
+        if (dtoList != null) {
+            for (CharasteristicDTO dto : dtoList) {
+                if (dto == null) continue;
+                float val = dto.getValue();
+                if (Float.isNaN(val) || Float.isInfinite(val)) {
+                    continue;
+                }
+                if (dto.getName() != null) {
+                    dtoByName.put(dto.getName().trim().toLowerCase(), val);
+                }
+                dtoById.put(dto.getId(), val);
+            }
+        }
+
+        for (FeatureSchema schema : manifest.getFeatures()) {
+            String featureKey = schema.getKey();
+            float value = schema.getDefaultValue();
+
+            Float matchedVal = null;
+            if (dtoByName.containsKey(featureKey.toLowerCase())) {
+                matchedVal = dtoByName.get(featureKey.toLowerCase());
+            } else {
+                int matchedId = schema.getIndex() + 3;
+                if (dtoById.containsKey(matchedId)) {
+                    matchedVal = dtoById.get(matchedId);
+                }
+            }
+
+            if (matchedVal != null && !Float.isNaN(matchedVal) && !Float.isInfinite(matchedVal)) {
+                value = schema.clamp(matchedVal);
+            } else {
+                value = schema.clamp(schema.getDefaultValue());
+            }
+
+            featureMap.put(featureKey, value);
+        }
+
+        return featureMap;
+    }
+
+    private List<Characteristic> extractCharacteristicsFromDTO(List<CharasteristicDTO> dtoList) {
+        if (dtoList == null) {
+            return Collections.emptyList();
+        }
+        List<Characteristic> characteristics = new ArrayList<>();
         for (CharasteristicDTO dto : dtoList) {
             Characteristic ch = new Characteristic();
             ch.setId(dto.getId());
@@ -88,46 +237,42 @@ public class PredictionModule {
             ch.setMaxValue(dto.getMaxValue());
             characteristics.add(ch);
         }
-
         return characteristics;
     }
 
-    /**
-     * Извлекает признаки с учетом пересечения характеристик по id
-     */
-    private float[] extractFeaturesFromDTO(List<CharasteristicDTO> dtoList,
-                                           TrainingData trainingData) {
-        // Получаем id характеристик из тренировочных данных
-        int[] trainingCharIds = trainingData.getCharacteristicIds();
-
-        // Создаем мапу DTO по id для быстрого поиска
-        Map<Integer, CharasteristicDTO> dtoMap = new HashMap<>();
-        for (CharasteristicDTO dto : dtoList) {
-            dtoMap.put(dto.getId(), dto);
+    public synchronized void selectModel(String modelId) throws Exception {
+        ensureInitialized();
+        if (inferenceEngine != null) {
+            inferenceEngine.loadModel(modelId);
+            this.activeModelId = modelId;
+            Log.i(TAG, "Switched active ML model to: " + modelId);
         }
-
-        // Создаем массив признаков по размеру тренировочных характеристик
-        float[] features = new float[trainingCharIds.length];
-
-        for (int i = 0; i < trainingCharIds.length; i++) {
-            int charId = trainingCharIds[i];
-
-            // Проверяем, есть ли эта характеристика в DTO
-            CharasteristicDTO dto = dtoMap.get(charId);
-            if (dto != null) {
-                // Характеристика есть в DTO - используем ее значение
-                features[i] = dto.getValue();
-            } else {
-                // Характеристики нет в DTO - используем дефолтное значение (0)
-                features[i] = 0f;
-            }
-        }
-
-        return features;
     }
 
-    public boolean isReady() {
-        return currentModel != null;
+    public synchronized String getActiveModelId() {
+        return activeModelId;
+    }
+
+    public synchronized ModelMetadata getActiveModelMetadata() {
+        return (inferenceEngine != null) ? inferenceEngine.getActiveModelMetadata() : null;
+    }
+
+    public synchronized List<ModelMetadata> getAvailableModels() {
+        return (manifest != null && manifest.getModels() != null)
+                ? manifest.getModels()
+                : Collections.emptyList();
+    }
+
+    public synchronized ModelManifest getManifest() {
+        return manifest;
+    }
+
+    public synchronized boolean isReady() {
+        return inferenceEngine != null && inferenceEngine.isModelLoaded();
+    }
+
+    public synchronized OnnxInferenceEngine getInferenceEngine() {
+        return inferenceEngine;
     }
 
     public List<Characteristic> getLastLoadedCharacteristics() {

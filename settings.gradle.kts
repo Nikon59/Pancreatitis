@@ -20,4 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Pancreatitis"
+include(":core")
 include(":app")

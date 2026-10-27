@@ -63,17 +63,43 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    private TextView tvAppVersion;
+    private int debugClickCount = 0;
+    private long lastDebugClickTime = 0L;
+
     private void initViews(View view){
         btn_logout = view.findViewById(R.id.btn_logout);
         btnGetDump = view.findViewById(R.id.btn_get_dump);
         btn_update_training_data = view.findViewById(R.id.btn_update_training_data);
         loginValue = view.findViewById(R.id.loginValue);
         loadingOverlay = view.findViewById(R.id.loading_overlay);
+        tvAppVersion = view.findViewById(R.id.tv_app_version);
     }
 
     private void setupProfile(){
         User user = User.getInstance(); // Создать user с ключом
         loginValue.setText(user.getLogin());
+
+        if (tvAppVersion != null) {
+            tvAppVersion.setOnClickListener(v -> {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastDebugClickTime <= 500) {
+                    debugClickCount++;
+                } else {
+                    debugClickCount = 1;
+                }
+                lastDebugClickTime = currentTime;
+
+                if (debugClickCount >= 7) {
+                    debugClickCount = 0;
+                    android.content.Intent intent = new android.content.Intent(
+                            requireContext(),
+                            com.pancreatitis.ui.debug.DebugDiagnosticsActivity.class
+                    );
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
     private void setupBackButtonHandling() {

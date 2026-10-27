@@ -49,11 +49,18 @@ public class Questionnaire {
     }
 
     private String codeToDiagnosis(String code){
+        if (code == null || code.trim().isEmpty()) {
+            return "-";
+        }
         Map<String, String> diagnosisMap = new HashMap<>();
-        diagnosisMap.put("1", "Отечный панкреатит");
+        diagnosisMap.put("0", "Отёчный панкреатит");
+        diagnosisMap.put("1", "Панкрионекроз");
         diagnosisMap.put("5", "Панкреонекроз среднетяжелое течение");
         diagnosisMap.put("6", "Панкреонекроз тяжелое течение");
-        return diagnosisMap.getOrDefault(code, "-");
+        if (diagnosisMap.containsKey(code)) {
+            return diagnosisMap.get(code);
+        }
+        return code;
     }
 
     // Геттеры и сеттеры

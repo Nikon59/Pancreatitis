@@ -25,34 +25,49 @@
         android:id="@+id/btns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:orientation="horizontal">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_predict"
-            android:layout_width="wrap_content"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/colorActive"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="5dp"
-            android:text="Предсказать диагноз" />
+            android:layout_marginEnd="6dp"
+            android:text="@string/action_predict" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="10dp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-            android:text="Сохранить анкету"/>
+            android:layout_marginStart="6dp"
+            android:text="@string/action_save_questionnaire"/>
     </LinearLayout>
-    <Button
-        android:id="@+id/btn_delete"
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_generate_protocol"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/white"
-        android:textColor="@color/black"
-        android:text="Удалить анкету"/>
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="6dp"
+        android:text="@string/action_generate_protocol" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_delete"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="?attr/colorError"
+        app:strokeColor="?attr/colorError"
+        android:text="@string/action_delete_questionnaire"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
 </LinearLayout>

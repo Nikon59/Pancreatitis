@@ -52,6 +52,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.crypto.SecretKey;
+import com.pancreatitis.infrastructure.debug.DebugPreferences;
+import com.google.android.material.card.MaterialCardView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,6 +61,11 @@ public class MainActivity extends AppCompatActivity {
     private NavController navController;
     private ImageView backButton;
     private TextView toolbarTitle;
+
+    private MaterialCardView cardDebugWarningBanner;
+    private TextView tvDebugWarningText;
+    private final Handler bannerHandler = new Handler(Looper.getMainLooper());
+    private Runnable dismissBannerRunnable;
 
     // Для периодической проверки
     private Handler periodicHandler;
@@ -96,12 +103,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        checkAndShowDebugWarningBanner();
         startPeriodicUploadCheck();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        if (dismissBannerRunnable != null) {
+            bannerHandler.removeCallbacks(dismissBannerRunnable);
+        }
         stopPeriodicUploadCheck();
     }
 
@@ -162,6 +173,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkAndUploadArchive() {
+        if (DebugPreferences.getInstance(this).isForceOffline()) {
+            Log.d("MainActivity", "Force offline mode active, skipping archive upload");
+            return;
+        }
+
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
             Log.d("MainActivity", "User not authorized, skip archive upload");
@@ -195,6 +211,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void checkAndDownloadData() {
+        if (DebugPreferences.getInstance(this).isForceOffline()) {
+            Log.d("MainActivity", "Force offline mode active, skipping download check");
+            return;
+        }
+
         User user = User.getInstance();
         if (user == null || user.getLogin() == null || user.getLogin().isEmpty()) {
             Log.d("MainActivity", "User not authorized, skip download check");
@@ -269,10 +290,18 @@ public class MainActivity extends AppCompatActivity {
                 LocalStorageModule localStorage = LocalStorageModule.getInstance();
                 localStorage.setContext(getBaseContext());
                 if (!localStorage.isTrainingData()) {
-                    localStorage.copyAlgorithmFromAssets("algorithm_2026_04_24_10_45_18.txt");
+                    String[] assetFiles = getAssets().list("");
+                    if (assetFiles != null) {
+                        for (String f : assetFiles) {
+                            if (f.startsWith("algorithm_") && f.endsWith(".txt")) {
+                                localStorage.copyAlgorithmFromAssets(f);
+                                break;
+                            }
+                        }
+                    }
                 }
             } catch (Exception e) {
-                Log.e("MainActivity", "Error checking algorithm file", e);
+                Log.e("MainActivity", "Error checking legacy algorithm file", e);
             }
         }).start();
     }
@@ -325,6 +354,47 @@ public class MainActivity extends AppCompatActivity {
         prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         backButton = findViewById(R.id.btn_back);
         toolbarTitle = findViewById(R.id.toolbar_title);
+        cardDebugWarningBanner = findViewById(R.id.card_debug_warning_banner);
+        tvDebugWarningText = findViewById(R.id.tv_debug_warning_text);
+    }
+
+    private void checkAndShowDebugWarningBanner() {
+        if (cardDebugWarningBanner == null || tvDebugWarningText == null) {
+            return;
+        }
+
+        DebugPreferences debugPreferences = DebugPreferences.getInstance(this);
+        if (debugPreferences.isAnyDebugOverrideActive()) {
+            List<String> overrides = debugPreferences.getActiveOverridesList();
+            String details = String.join(", ", overrides);
+            String warningText = getString(R.string.debug_banner_warning_format, details);
+            tvDebugWarningText.setText(warningText);
+
+            if (dismissBannerRunnable != null) {
+                bannerHandler.removeCallbacks(dismissBannerRunnable);
+            }
+
+            cardDebugWarningBanner.setVisibility(View.VISIBLE);
+            cardDebugWarningBanner.setAlpha(0f);
+            cardDebugWarningBanner.setTranslationY(-120f);
+            cardDebugWarningBanner.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(400)
+                    .start();
+
+            dismissBannerRunnable = () -> {
+                cardDebugWarningBanner.animate()
+                        .alpha(0f)
+                        .translationY(-120f)
+                        .setDuration(400)
+                        .withEndAction(() -> cardDebugWarningBanner.setVisibility(View.GONE))
+                        .start();
+            };
+            bannerHandler.postDelayed(dismissBannerRunnable, 5000);
+        } else {
+            cardDebugWarningBanner.setVisibility(View.GONE);
+        }
     }
 
     private void setupNavigation() {

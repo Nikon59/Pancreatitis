@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Legacy compatibility colors in Dark Theme -->
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="colorActive">#60A5FA</color>
+    <color name="colorNoActive">#94A3B8</color>
+    <color name="colorCircle">#1E293B</color>
+
+    <!-- Material 3 Dark Color System (WCAG 2.1 AA Compliant) -->
+    <color name="md_theme_dark_primary">#60A5FA</color>
+    <color name="md_theme_dark_onPrimary">#0F172A</color>
+    <color name="md_theme_dark_primaryContainer">#1E3A8A</color>
+    <color name="md_theme_dark_onPrimaryContainer">#DBEAFE</color>
+
+    <color name="md_theme_dark_secondary">#38BDF8</color>
+    <color name="md_theme_dark_onSecondary">#082F49</color>
+    <color name="md_theme_dark_secondaryContainer">#075985</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E0F2FE</color>
+
+    <color name="md_theme_dark_tertiary">#2DD4BF</color>
+    <color name="md_theme_dark_onTertiary">#042F2E</color>
+    <color name="md_theme_dark_tertiaryContainer">#115E59</color>
+    <color name="md_theme_dark_onTertiaryContainer">#CCFBF1</color>
+
+    <color name="md_theme_dark_error">#F87171</color>
+    <color name="md_theme_dark_onError">#450A0A</color>
+    <color name="md_theme_dark_errorContainer">#7F1D1D</color>
+    <color name="md_theme_dark_onErrorContainer">#FEE2E2</color>
+
+    <color name="md_theme_dark_background">#0B1120</color>
+    <color name="md_theme_dark_onBackground">#F1F5F9</color>
+    <color name="md_theme_dark_surface">#111827</color>
+    <color name="md_theme_dark_onSurface">#F8FAFC</color>
+    <color name="md_theme_dark_surfaceVariant">#1E293B</color>
+    <color name="md_theme_dark_onSurfaceVariant">#CBD5E1</color>
+    <color name="md_theme_dark_outline">#64748B</color>
+    <color name="md_theme_dark_outlineVariant">#334155</color>
+
+    <!-- Semantic Clinical Risk Palette (Dark Theme) -->
+    <!-- Low risk: Soft teal-emerald for dark backgrounds -->
+    <color name="clinical_risk_low">#2DD4BF</color>
+    <color name="clinical_risk_low_container">#134E4A</color>
+    <color name="clinical_risk_low_on_container">#99F6E4</color>
+
+    <!-- Medium risk: Warm amber for dark backgrounds -->
+    <color name="clinical_risk_medium">#FBBF24</color>
+    <color name="clinical_risk_medium_container">#78350F</color>
+    <color name="clinical_risk_medium_on_container">#FEF3C7</color>
+
+    <!-- High risk: High-contrast coral-red for dark backgrounds -->
+    <color name="clinical_risk_high">#F87171</color>
+    <color name="clinical_risk_high_container">#7F1D1D</color>
+    <color name="clinical_risk_high_on_container">#FECACA</color>
+
+    <!-- Surface Card and Input Fields in Dark Theme -->
+    <color name="surface_card">#1E293B</color>
+    <color name="surface_card_stroke">#334155</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#CBD5E1</color>
+    <color name="text_tertiary">#94A3B8</color>
+</resources>

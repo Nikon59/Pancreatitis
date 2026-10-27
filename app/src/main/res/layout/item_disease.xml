@@ -29,7 +29,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pancreatits"
+                android:text="@string/disease_pancreatitis_title"
                 android:textColor="@color/black"
                 android:textSize="20dp"/>
         </LinearLayout>
@@ -38,12 +38,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="Inflammationof the pancreas, often accompanied by abdominal pain and digestive issues"/>
+            android:text="@string/disease_pancreatitis_desc"/>
         <Button
             android:id="@+id/btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select"
+            android:text="@string/action_select"
             android:background="@drawable/rounded_background"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

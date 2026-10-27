@@ -29,6 +29,7 @@ import com.pancreatitis.models.CharacterizationAnketPatient;
 import com.pancreatitis.models.CharacterizationValue;
 import com.pancreatitis.modules.database.DatabaseModule;
 import com.pancreatitis.modules.questionnairemanager.QuestionnaireManagerModule;
+import com.pancreatitis.infrastructure.clinical.ClinicalTerminology;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -151,7 +152,8 @@ public class CharacteristicFragment extends Fragment {
 
     private void loadData() {
         characteristic = databaseModule.getCharacteristicById(idCharacteristic);
-        nameCharacteristic.setText(characteristic.getOpis());
+        String clinicalName = ClinicalTerminology.formatClinicalFeatureName(characteristic.getName(), characteristic.getOpis());
+        nameCharacteristic.setText(clinicalName);
         List<CharacteristicItem> characteristicItems = loadCharacteristicItems(characteristic);
         adapter = new UnifiedCharacteristicAdapter(characteristicItems, idQuestionnaire, false);
         recyclerView.setAdapter(adapter);
@@ -160,6 +162,7 @@ public class CharacteristicFragment extends Fragment {
     private List<CharacteristicItem> loadCharacteristicItems(Characteristic characteristic) {
         List<CharacteristicItem> characteristicItems = new ArrayList<>();
         List<CharacterizationAnketPatient> characterizationAnketPatients = databaseModule.getCharacterizationsForAnket(idQuestionnaire);
+        String clinicalName = ClinicalTerminology.formatClinicalFeatureName(characteristic.getName(), characteristic.getOpis());
 
         for (CharacterizationAnketPatient characterizationAnketPatient : characterizationAnketPatients) {
             if (characterizationAnketPatient.getIdCharacteristic() == characteristic.getId()) {
@@ -173,7 +176,7 @@ public class CharacteristicFragment extends Fragment {
                     CharacteristicItemNonNumeric characteristicItem = new CharacteristicItemNonNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
                     characteristicItem.setIdType(characteristic.getIdType());
-                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setName(clinicalName);
                     characteristicItem.setHint(characteristic.getHints());
                     characteristicItem.setCreatedAt(characterizationAnketPatient.getCreatedAt());
                     characteristicItem.setValue(characterizationAnketPatient.getIdValue());
@@ -184,7 +187,7 @@ public class CharacteristicFragment extends Fragment {
                     CharacteristicItemNumeric characteristicItem = new CharacteristicItemNumeric();
                     characteristicItem.setIdCharacteristic(characteristic.getId());
                     characteristicItem.setIdType(characteristic.getIdType());
-                    characteristicItem.setName(characteristic.getOpis());
+                    characteristicItem.setName(clinicalName);
                     characteristicItem.setHint(characteristic.getHints());
                     characteristicItem.setCreatedAt(characterizationAnketPatient.getCreatedAt());
                     characteristicItem.setValue(characterizationAnketPatient.getValue());
@@ -197,6 +200,7 @@ public class CharacteristicFragment extends Fragment {
     }
 
     private void addNewCharacteristicItem() {
+        String clinicalName = ClinicalTerminology.formatClinicalFeatureName(characteristic.getName(), characteristic.getOpis());
         if (characteristic.getIdType() == 1 || characteristic.getIdType() == 2) {
             List<CharacterizationValue> characterizationValues = databaseModule.getValuesForCharacteristic(characteristic.getId());
             List<String> options = new ArrayList<>(Arrays.asList("Нет данных"));
@@ -207,7 +211,7 @@ public class CharacteristicFragment extends Fragment {
             CharacteristicItemNonNumeric newItem = new CharacteristicItemNonNumeric();
             newItem.setIdCharacteristic(characteristic.getId());
             newItem.setIdType(characteristic.getIdType());
-            newItem.setName(characteristic.getOpis());
+            newItem.setName(clinicalName);
             newItem.setHint(characteristic.getHints());
             newItem.setValue(0);
             newItem.setOptions(options);
@@ -219,7 +223,7 @@ public class CharacteristicFragment extends Fragment {
             CharacteristicItemNumeric newItem = new CharacteristicItemNumeric();
             newItem.setIdCharacteristic(characteristic.getId());
             newItem.setIdType(characteristic.getIdType());
-            newItem.setName(characteristic.getOpis());
+            newItem.setName(clinicalName);
             newItem.setHint(characteristic.getHints());
             newItem.setValue(-1f);
             newItem.setNewItem(true);
@@ -232,12 +236,12 @@ public class CharacteristicFragment extends Fragment {
 
     private void showSaveConfirmationDialog() {
         new AlertDialog.Builder(getContext())
-                .setTitle("Подтверждение сохранения")
-                .setMessage("Вы уверены, что хотите сохранить изменения?")
-                .setPositiveButton("Да", (dialog, which) -> {
+                .setTitle(R.string.dialog_save_confirm_title)
+                .setMessage(R.string.dialog_save_confirm_message)
+                .setPositiveButton(R.string.action_yes, (dialog, which) -> {
                     saveChanges();
                 })
-                .setNegativeButton("Отмена", null)
+                .setNegativeButton(R.string.action_cancel, null)
                 .show();
     }
 

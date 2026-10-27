@@ -18,6 +18,41 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Предупреждающий баннер активных отладочных режимов -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_debug_warning_banner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/clinical_risk_medium_container"
+        app:strokeColor="@color/clinical_risk_medium"
+        app:strokeWidth="1dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_debug_warning_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/clinical_risk_medium_on_container"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- Контент между панелями -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"

@@ -1,19 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pancreolana</string>
+
+    <!-- Navigation and Menu Titles -->
     <string name="title_home">Главное меню</string>
     <string name="title_questionnaires">Менеджер анкет</string>
-    <string name="title_predict">Предсказание</string>
-    <string name="title_profile">Профиль</string>
+    <string name="title_predict">Оценка клинической формы</string>
+    <string name="title_profile">Профиль врача</string>
     <string name="title_auth">Аутентификация</string>
     <string name="title_register">Регистрация</string>
-    <string name="title_helps">Помощь</string>
-    <string name="title_activate">Активация аккаунт</string>
-    <string name="title_characteristic">Характеристика</string>
+    <string name="title_helps">Справочная информация</string>
+    <string name="title_activate">Активация учетной записи</string>
+    <string name="title_characteristic">Клинический показатель</string>
+    <string name="title_patient_information">Информация о пациенте</string>
+    <string name="title_clinical_characteristics">Клинико-лабораторные показатели</string>
+    <string name="title_diagnosis">Клиническая форма заболевания</string>
+
+    <!-- Actions -->
+    <string name="action_predict">Рассчитать вероятность</string>
+    <string name="action_generate_protocol">Сформировать протокол</string>
+    <string name="protocol_copied_snackbar">Медицинский протокол скопирован в буфер обмена</string>
+    <string name="action_save_questionnaire">Сохранить анкету</string>
+    <string name="action_delete_questionnaire">Удалить анкету</string>
+    <string name="action_apply_diagnosis">Внести в анкету</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_yes">Да</string>
+    <string name="action_no">Нет</string>
+    <string name="action_ok">Понятно</string>
+
+    <!-- Debug & Diagnostics -->
+    <string name="debug_title">Инженерная диагностика и отладка</string>
+    <string name="debug_section_auth">Авторизация и сеть</string>
+    <string name="debug_mock_auth">Тестовая авторизация (Mock Auth)</string>
+    <string name="debug_force_offline">Принудительный офлайн (Force Offline)</string>
+    <string name="debug_btn_reset_session">Сбросить текущую сессию</string>
+    <string name="debug_section_model">Глобальный выбор активной модели</string>
+    <string name="debug_section_pipeline">Инженерные переключатели пайплайна</string>
+    <string name="debug_toggle_sha256">Проверка SHA-256</string>
+    <string name="debug_toggle_normalization">Z-score нормализация</string>
+    <string name="debug_toggle_clamp">Физиологический clamp [min, max]</string>
+    <string name="debug_toggle_fallback">Подстановка значений по умолчанию (Default fallback)</string>
+    <string name="debug_section_benchmark">Сводный бенчмарк и стресс-тест всех моделей</string>
+    <string name="debug_btn_run_benchmark">Запустить сравнительный тест</string>
+    <string name="debug_section_tensors">Инспектор тензоров и симулятор ошибок</string>
+    <string name="debug_btn_fail_inference">Спровоцировать сбой инференса</string>
+    <string name="debug_btn_restore_assets">Восстановить модели из Assets</string>
+    <string name="debug_session_reset_success">Сессия успешно сброшена. Требуется повторный вход.</string>
+    <string name="debug_models_restored_success">Файлы моделей успешно восстановлены из assets.</string>
+    <string name="debug_inference_failed_simulated">Симуляция ошибки инференса активирована.</string>
+    <string name="debug_banner_warning_format">Внимание: активны отладочные режимы (%1$s)</string>
+
+    <!-- Clinical Inference Dialog -->
+    <string name="prediction_dialog_title">Оценка клинической формы заболевания</string>
+    <string name="prediction_dialog_subtitle">Математическая модель дифференциальной диагностики на основе ONNX</string>
+    <string name="clinical_status_title">КЛИНИЧЕСКИЙ СТАТУС</string>
+    <string name="risk_high_label">ВЫСОКИЙ КЛИНИЧЕСКИЙ РИСК</string>
+    <string name="risk_low_label">НИЗКИЙ КЛИНИЧЕСКИЙ РИСК</string>
+    <string name="probabilities_distribution_title">Расчётная вероятность формы заболевания</string>
+    <string name="active_model_label">Используемый алгоритм:</string>
+    <string name="metrics_header">Диагностическая точность алгоритма (ROC-AUC, F1):</string>
+
+    <!-- Formats -->
+    <string name="probability_confidence_format">Расчётная вероятность формы заболевания: %1$s</string>
+    <string name="features_coverage_format">Учтено клинико-лабораторных показателей: %1$d из %2$d</string>
+    <string name="diagnosis_applied_format">Диагноз «%1$s» внесен в анкету</string>
+
+    <!-- Confirmations and Validations -->
+    <string name="dialog_save_confirm_title">Подтверждение сохранения</string>
+    <string name="dialog_save_confirm_message">Вы уверены, что хотите сохранить изменения в анкете?</string>
+    <string name="dialog_delete_confirm_title">Подтверждение удаления</string>
+    <string name="dialog_delete_confirm_message">Вы уверены, что хотите удалить эту анкету?</string>
+    <string name="error_empty_patient_name">ФИО пациента не может быть пустым</string>
+    <string name="error_empty_admitted_from">Поле «Откуда поступил пациент» обязательно для заполнения</string>
+    <string name="error_empty_features">Заполните клинико-лабораторные показатели для выполнения расчёта</string>
+    <string name="error_inference_failed">Не удалось выполнить расчёт для выбранного алгоритма. Попробуйте выбрать другую модель.</string>
+
+    <!-- Additional UI and Status Labels -->
+    <string name="action_add">Добавить</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_select">Выбрать</string>
+    <string name="status_in_progress">В процессе</string>
+    <string name="status_completed">Завершено</string>
+    <string name="status_all">Все</string>
+    <string name="placeholder_patient_name">Пациент</string>
+    <string name="disease_pancreatitis_title">Панкреатит</string>
+    <string name="disease_pancreatitis_desc">Воспаление поджелудочной железы, сопровождающееся абдоминальным болевым синдромом и диспепсическими расстройствами</string>
+    <string name="home_select_diagnosis">Выбор диагноза</string>
+    <string name="home_start_questionnaire">Создание новой клинической анкеты</string>
+    <string name="label_patient_name">ФИО пациента</string>
+    <string name="label_admitted_from">Откуда поступил</string>
+    <string name="label_creation_date">Дата создания</string>
+    <string name="dialog_delete_countdown_format">Анкета будет удалена через: %1$dс</string>
+
+    <!-- Standard Classifier Classes (ICD-10: K85) -->
+    <string name="class_edematous">Острый панкреатит: отёчная форма</string>
+    <string name="class_necrotic">Острый панкреатит: некротическая форма (панкреонекроз)</string>
+
+    <!-- Questionnaire Diagnosis Spinner Items -->
     <string-array name="spinner_items">
         <item>Нет данных</item>
-        <item>Отечный панкреатит</item>
-        <item>Панкреонекроз среднетяжелое течение</item>
-        <item>Панкреонекроз тяжелое течение</item>
+        <item>Острый панкреатит: отёчная форма</item>
+        <item>Острый панкреатит: некротическая форма (панкреонекроз)</item>
     </string-array>
 </resources>
